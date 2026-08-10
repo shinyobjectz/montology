@@ -10,6 +10,8 @@ dependencies = [
     "montology-server",
     "montology-dataforseo",
     "montology-scrapecreators",
+    "montology-crawl",
+    "montology-warehouse",
 ]
 
 [tool.uv.workspace]
@@ -20,6 +22,8 @@ members = [
     "server",
     "tools/dataforseo",
     "tools/scrapecreators",
+    "tools/crawl",
+    "warehouse",
 ]
 
 [tool.uv.sources]
@@ -29,6 +33,8 @@ montology-zoo = { workspace = true }
 montology-server = { workspace = true }
 montology-dataforseo = { workspace = true }
 montology-scrapecreators = { workspace = true }
+montology-crawl = { workspace = true }
+montology-warehouse = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

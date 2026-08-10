@@ -25,6 +25,8 @@ montology data pull     # fetch the taxonomies into the local database
 | "What is this creator posting? How is it doing?" | ScrapeCreators tools: `creator_profile`, `creator_posts` |
 | "Which of our captions are alike?" | the zoo: `montology zoo list`, then embed locally |
 | "What do we call this?" | the ontology: check before naming, one word one meaning |
+| "Analyze this spreadsheet / join it with categories" | the warehouse: `montology data load`, then `montology sql` (DuckDB; registries attached) |
+| "What does this brand's site say / look like?" | crawl tools: `fetch_page`, `brand_kit`, `page_sections` — see the brand-crawl skill |
 
 ## Rules that keep answers honest
 

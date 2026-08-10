@@ -1,10 +1,11 @@
 """The curated shelf: every model the zoo has ruled on, and where weights live.
 
 CURATED, NOT SCRAPED — and the ruling is a column. ``carried`` rows have
-verified artifact pointers and appear in ``zoo fit``; ``evaluate`` rows are
-promising with a named open question; ``skip`` rows were considered and
-declined, with the reason, so nothing gets re-litigated each time a model
-list makes the rounds. Moving a model between statuses is a reviewed change.
+verified artifact pointers and appear in ``zoo fit``; ``skip`` rows were
+considered and declined, with the reason, so nothing gets re-litigated each
+time a model list makes the rounds. (The evaluate tier was retired
+2026-08-10 — a shelf tracks decisions, not hypotheticals; a candidate worth
+carrying arrives as a carried row with verified artifacts.)
 
 Artifact POINTERS live here; artifact SIZES and architecture facts do not —
 ``zoo sync`` fetches those from the HuggingFace API so every byte count in
@@ -48,22 +49,6 @@ MODELS = [
      "Long-context English with Matryoshka dims; strong mid-size choice."),
 
     # ── text embedders, ruled on ────────────────────────────────────────────
-    ("text-nemotron3-1b", "nvidia/NVIDIA-Nemotron-3-Embed-1B", "embed", "text", 2048,
-     "openmdw-1.1", "retrieval", "evaluate",
-     "Tops RTEB (July 2026) at 1.14B, permissive license. Open question: "
-     "ONNX/GGUF artifacts and laptop CPU latency — sync when a build lands."),
-    ("text-gte-qwen2-1.5b", "Alibaba-NLP/gte-Qwen2-1.5B-instruct", "embed", "text",
-     3584, "apache-2.0", "retrieval", "evaluate",
-     "Near-SOTA, but ~3GB at fp16: the tier above 'any laptop'. Decide when a "
-     "workload proves the carried embedders insufficient."),
-    ("text-jina-v5-small", "jinaai/jina-embeddings-v5-text-small", "embed", "text",
-     1024, "unknown", "retrieval", "evaluate",
-     "SOTA under 1B on MTEB v2. Open question: license — Jina has shipped "
-     "CC-BY-NC before, which a commercial marketing tool cannot carry."),
-    ("multimodal-qwen3-vl-2b", "Qwen/Qwen3-VL-Embedding-2B", "embed", "image-text",
-     2048, "apache-2.0", "retrieval", "evaluate",
-     "One vector space for copy AND creative — the unified-search prize. At the "
-     "2B ceiling; needs a quantized build and a laptop latency measurement."),
     ("text-bge-large", "BAAI/bge-large-en-v1.5", "embed", "text", 1024, "mit",
      "retrieval", "skip",
      "Covered: bge-m3 (multilingual, stronger) and nomic-v1.5 (same size class)."),
@@ -95,13 +80,20 @@ MODELS = [
     ("classify-ner", "dslim/bert-base-NER", "classify", "text", None, "mit",
      "scoring", "carried",
      "Entities in mentions — who and what a post talks about, for brand monitoring."),
+    ("classify-topic-cardiff", "cardiffnlp/tweet-topic-latest-multi", "classify",
+     "text", None, "mit", "scoring", "skip",
+     "The social topic classifier everyone reaches for — but the repo ships "
+     "PyTorch only, no ONNX. The topic lane is covered without it: fixed labels "
+     "via carried classify-zeroshot, DISCOVERED topics via BERTopic/KeyBERT over "
+     "the carried embedders (montology-zoo[topics]). Flip this ruling if an "
+     "ONNX export lands."),
+    ("classify-emotion-cardiff", "cardiffnlp/twitter-roberta-base-emotion-multilabel-latest",
+     "classify", "text", None, "mit", "scoring", "skip",
+     "Same PyTorch-only blocker as its topic sibling; sentiment (carried) plus "
+     "zero-shot emotion labels cover the need meanwhile."),
     ("classify-distilbert-sst2", "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
      "classify", "text", None, "apache-2.0", "scoring", "skip",
      "Covered: twitter-roberta is social-tuned, which is what marketing text is."),
-    ("classify-ai-text", "nature-scireports-2026-distilbert-ai-detector", "classify",
-     "text", None, "unknown", "scoring", "evaluate",
-     "AI-copy authenticity checks (99.4% in-domain, Nature Sci Reports 1/2026). "
-     "Open question: which published checkpoint, if any, reproduces the paper."),
 
     # ── creative: image ─────────────────────────────────────────────────────
     ("visual-siglip2", "google/siglip2-base-patch16-224", "embed-image", "image-text",
@@ -117,40 +109,16 @@ MODELS = [
     ("visual-clip-l14", "openai/clip-vit-large-patch14", "embed-image", "image-text",
      768, "mit", "text-query-only", "skip",
      "Between carried CLIP-B/32 and SigLIP2 there is no seat left for it."),
-    ("detect-sam3", "facebook/sam3", "classify", "image-text", None, "sam", "scoring",
-     "evaluate",
-     "Concept-prompted segmentation ('logo', 'product') over UGC at ~840M — the "
-     "creative-intelligence prize. Open question: ONNX export and license terms."),
-    ("detect-yolo11", "ultralytics/YOLO11", "classify", "image-text", None, "agpl-3.0",
-     "scoring", "evaluate",
-     "Logo/product detection works, but AGPL is a hard question for a public "
-     "commercial toolkit — Ultralytics sells commercial licenses for a reason."),
-    ("detect-rtdetr", "PekingU/rtdetr_r18vd", "classify", "image-text", None,
-     "apache-2.0", "scoring", "evaluate",
-     "The Apache-licensed detector lane if logo detection lands; needs a "
-     "fine-tune story before it earns carried."),
     ("classify-mobilenet", "google/mobilenet_v3_small", "classify", "image-text", None,
      "apache-2.0", "scoring", "skip",
      "ImageNet classes answer no marketing question without a fine-tune; "
      "zero-shot needs go to SigLIP2."),
-    ("ocr-trocr-small", "microsoft/trocr-small-printed", "classify", "image-text",
-     None, "mit", "scoring", "evaluate",
-     "Ad/packaging text extraction is real, but TrOCR is recognition-only — it "
-     "needs a detector in front. Decide with paddleocr as one OCR-lane call."),
-    ("ocr-paddle", "PaddlePaddle/PaddleOCR", "classify", "image-text", None,
-     "apache-2.0", "scoring", "evaluate",
-     "The full OCR pipeline, but it brings its own runtime (Paddle) — against "
-     "the two-runtime rule. Evaluate only if the OCR lane opens."),
 
     # ── creative: audio ─────────────────────────────────────────────────────
     ("audio-clap", "laion/larger_clap_general", "embed-audio", "audio", 512,
      "apache-2.0", "retrieval", "carried",
      "Sound and music similarity (LAION's general CLAP) — trend-tracking for "
      "audio-led platforms."),
-    ("audio-yamnet", "google/yamnet", "classify", "audio", None, "apache-2.0",
-     "scoring", "evaluate",
-     "521 sound-event classes at 3.7M params — but TensorFlow-shaped; needs a "
-     "maintained ONNX conversion before it can be carried."),
     ("audio-vggish", "google/vggish", "embed-audio", "audio", 128, "apache-2.0",
      "retrieval", "skip",
      "CLAP covers audio embedding with text queries on top; VGGish adds nothing "
@@ -163,21 +131,6 @@ MODELS = [
     ("asr-whisper-small", "openai/whisper-small", "asr", "audio", None, "apache-2.0",
      "transcribe", "carried",
      "The accuracy step up that still runs on every laptop CPU."),
-    ("asr-qwen3-1.7b", "Qwen/Qwen3-ASR-1.7B", "asr", "audio", None, "apache-2.0",
-     "transcribe", "evaluate",
-     "SOTA open ASR (5.76 WER, 52 languages). Open question: runtime — no "
-     "whisper.cpp lane; needs its own stack or an ONNX build."),
-    ("asr-distil-large-v3", "distil-whisper/distil-large-v3", "asr", "audio", None,
-     "mit", "transcribe", "evaluate",
-     "Within 1% of Large V3 at 6x speed, English-only. Worth carrying when the "
-     "multi-file ONNX (encoder+decoder) artifact story is built."),
-    ("asr-moonshine", "UsefulSensors/moonshine-base", "asr", "audio", None, "mit",
-     "transcribe", "evaluate",
-     "27-62M edge ASR, ONNX-native — same multi-file artifact question as distil."),
-    ("asr-parakeet-tdt", "nvidia/parakeet-tdt-1.1b", "asr", "audio", None, "cc-by-4.0",
-     "transcribe", "evaluate",
-     "Fastest streaming ASR, but NeMo-shaped — a third runtime this shelf "
-     "does not want. Revisit if live-call transcription becomes a need."),
     ("asr-canary-qwen", "nvidia/canary-qwen-2.5b", "asr", "audio", None, "cc-by-4.0",
      "transcribe", "skip",
      "Best English WER but 2.5B — over the ceiling this zoo promised laptops."),
@@ -187,12 +140,6 @@ MODELS = [
      "documented upgrade path, not a second carried row."),
 
     # ── tabular (CRM, campaign tables) ──────────────────────────────────────
-    ("tabular-tabpfn", "Prior-Labs/TabPFN", "classify", "tabular", None, "apache-2.0",
-     "scoring", "evaluate",
-     "Churn/LTV/lead-scoring in one second on small tables — but TabPFN (and "
-     "FT-Transformer/TabNet/TabM behind it) is LIBRARY-shaped, not "
-     "artifact-shaped. If tabular work lands, it enters as a [tabular] extra, "
-     "not a weights row."),
 
     # ── generative: the API-only ones, ruled on ─────────────────────────────
     ("gen-muse-image", "meta/muse-image", "generate", "image-text", None,

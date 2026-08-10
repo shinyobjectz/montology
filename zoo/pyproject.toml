@@ -8,6 +8,10 @@ dependencies = ["huggingface-hub", "httpx"]
 [project.optional-dependencies]
 onnx = ["onnxruntime", "tokenizers"]
 gguf = ["llama-cpp-python"]
+# Topic DISCOVERY (BERTopic/KeyBERT) is library-shaped, not weights-shaped:
+# both compose over the zoo's carried embedders — the lane is an extra, not
+# a model row.
+topics = ["bertopic", "keybert"]
 
 [build-system]
 requires = ["hatchling"]

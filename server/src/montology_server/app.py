@@ -77,6 +77,31 @@ for fn in (serp_search, keyword_ideas, creator_profile, creator_posts):
 
 
 @mcp.tool
+def query_warehouse(sql: str) -> str:
+    """SQL over the marketer's local data (DuckDB) plus the attached
+    registries: ontology.word, ontology.taxonomy, zoo.model, zoo.artifact,
+    and any table loaded via `montology data load`.
+
+    Args:
+        sql: The query. Reads files directly too: SELECT * FROM 'file.csv'.
+    """
+    from montology_warehouse import query
+
+    return query(sql)
+
+
+# Crawl tools register softly: montology-crawl brings Playwright, and a
+# server missing it should serve everything else rather than die.
+try:
+    from montology_crawl import brand_kit, fetch_page, page_sections
+
+    for fn in (fetch_page, brand_kit, page_sections):
+        mcp.tool(fn)
+except ImportError:
+    pass
+
+
+@mcp.tool
 def taxonomy_tree_artifact(source: str = "iab-content", top: str = "") -> dict:
     """An interactive taxonomy tree as an MCP Apps artifact (mcp-ui).
 

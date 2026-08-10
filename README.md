@@ -49,6 +49,8 @@ uvx montology      # the CLI: install data, run the server, manage keys
 | `server/` | `montology_server` | FastMCP server (stateless HTTP-ready) returning MCP Apps artifacts via `mcp-ui-server`. |
 | `tools/dataforseo/` | `montology_dataforseo` | DataForSEO wrapped as Mellea tools. |
 | `tools/scrapecreators/` | `montology_scrapecreators` | ScrapeCreators wrapped as Mellea tools. |
+| `warehouse/` | `montology_warehouse` | DuckDB — the analytical engine over your data, with the SQLite registries attached. |
+| `tools/crawl/` | `montology_crawl` | Local AI crawling (crawl4ai): pages as markdown, measured brand kits, component-ready sections. |
 | `skills/` | — | Agent Skills: how to use all of the above, in the agent's language. |
 
 ## Alignment decisions (why it is shaped this way)
@@ -67,6 +69,13 @@ uvx montology      # the CLI: install data, run the server, manage keys
 - **Taxonomies are fetched, not vendored.** IAB Tech Lab licenses its
   taxonomies for use with attribution; `montology data pull` fetches the
   current TSVs from the official repo into the local database.
+- **SQLite is the record, DuckDB is the engine.** Registries stay SQLite
+  (tiny, transactional); analysis runs in DuckDB, which attaches them
+  read-only — one SQL surface over taxonomies, the model shelf, and the
+  user's campaign files.
+- **The agent writes the React.** Brand component libraries come from
+  crawled sections + a measured brand kit, converted by the agent — not by
+  a mechanical HTML-to-JSX tool (ruled on in montology-crawl).
 - **API keys stay in the environment.** `DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`
   and `SCRAPECREATORS_API_KEY`, read at call time, never stored in the repo.
 

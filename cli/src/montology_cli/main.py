@@ -19,9 +19,11 @@ app = typer.Typer(
 data_app = typer.Typer(help="The taxonomy database.", no_args_is_help=True)
 onto_app = typer.Typer(help="The vocabulary.", no_args_is_help=True)
 zoo_app = typer.Typer(help="Local embedding models.", no_args_is_help=True)
+crawl_app = typer.Typer(help="Local crawling (brand sites, pages).", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(onto_app, name="onto")
 app.add_typer(zoo_app, name="zoo")
+app.add_typer(crawl_app, name="crawl")
 
 
 @app.command()
@@ -131,3 +133,43 @@ def zoo_pull(model_id: str) -> None:
     from montology_zoo.pull import pull
 
     typer.echo(pull(model_id))
+
+
+@app.command()
+def sql(query_text: str = typer.Argument(..., help="SQL over your data + the registries.")) -> None:
+    """Query the warehouse (DuckDB): your loaded files, plus ontology.* and zoo.*."""
+    from montology_warehouse import query
+
+    typer.echo(query(query_text))
+
+
+@data_app.command("load")
+def data_load(path: str, table: str) -> None:
+    """Load a CSV/Parquet/JSON file into a warehouse table for SQL."""
+    from montology_warehouse import load_file
+
+    typer.echo(load_file(path, table))
+
+
+@crawl_app.command("setup")
+def crawl_setup() -> None:
+    """One-time: install the crawler's browser (Chromium via Playwright)."""
+    from montology_crawl.tools import setup
+
+    typer.echo(setup())
+
+
+@crawl_app.command("page")
+def crawl_page(url: str) -> None:
+    """One page as LLM-ready markdown."""
+    from montology_crawl import fetch_page
+
+    typer.echo(fetch_page(url))
+
+
+@crawl_app.command("brand")
+def crawl_brand(url: str) -> None:
+    """A brand kit measured from a homepage: colors, fonts, logo, voice."""
+    from montology_crawl import brand_kit
+
+    typer.echo(brand_kit(url))

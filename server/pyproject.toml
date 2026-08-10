@@ -9,6 +9,7 @@ dependencies = [
     "montology-ontology",
     "montology-dataforseo",
     "montology-scrapecreators",
+    "montology-warehouse",
 ]
 
 [project.scripts]
@@ -18,6 +19,7 @@ montology-mcp = "montology_server.app:main"
 montology-ontology = { workspace = true }
 montology-dataforseo = { workspace = true }
 montology-scrapecreators = { workspace = true }
+montology-warehouse = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

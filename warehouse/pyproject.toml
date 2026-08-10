@@ -1,0 +1,10 @@
+[project]
+name = "montology-warehouse"
+version = "0.1.0"
+description = "The analytical lane: DuckDB over the user's marketing data, with the registries attached."
+requires-python = ">=3.12"
+dependencies = ["duckdb"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
