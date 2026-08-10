@@ -28,6 +28,18 @@ app.add_typer(crawl_app, name="crawl")
 app.add_typer(gen_app, name="gen")
 
 
+def _gen_backend_ok() -> bool:
+    import urllib.request
+
+    if os.environ.get("MONTOLOGY_MODEL_URL"):
+        return True
+    try:
+        urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2)
+        return True
+    except Exception:
+        return False
+
+
 @app.command()
 def doctor() -> None:
     """Is everything set up? Says what is missing and how to fix it."""
@@ -39,6 +51,8 @@ def doctor() -> None:
          "export DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD (app.dataforseo.com/api-access)"),
         (bool(os.environ.get("SCRAPECREATORS_API_KEY")), "ScrapeCreators key",
          "export SCRAPECREATORS_API_KEY (scrapecreators.com)"),
+        (_gen_backend_ok(), "gen backend (model for montology gen)",
+         "run: montology gen setup  (or set MONTOLOGY_MODEL_URL)"),
     ]
     for ok, name, repair in checks:
         mark = "ok " if ok else "MISSING"
@@ -194,6 +208,23 @@ def gen_word_cmd(name: str, context: str = typer.Option("", help="Usage context 
     from montology_gen import gen_word
 
     typer.echo(gen_word(name, context))
+
+
+@gen_app.command("setup")
+def gen_setup_cmd() -> None:
+    """One-time: pull the gen system's default drafter (qwen3:1.7b via Ollama)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("ollama"):
+        typer.echo("Ollama is not installed. Repair: install it from ollama.com, then rerun "
+                   "`montology gen setup`. (Or set MONTOLOGY_MODEL_URL to any "
+                   "OpenAI-compatible endpoint instead — no Ollama needed.)")
+        raise typer.Exit(1)
+    r = subprocess.run(["ollama", "pull", "qwen3:1.7b"], capture_output=True, text=True)
+    typer.echo("drafter ready (qwen3:1.7b)" if r.returncode == 0
+               else f"pull failed: {r.stderr[-300:]}")
+    raise typer.Exit(r.returncode)
 
 
 @gen_app.command("lint")
