@@ -51,8 +51,8 @@ def doctor() -> None:
          "export DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD (app.dataforseo.com/api-access)"),
         (bool(os.environ.get("SCRAPECREATORS_API_KEY")), "ScrapeCreators key",
          "export SCRAPECREATORS_API_KEY (scrapecreators.com)"),
-        (_gen_backend_ok(), "gen backend (model for montology gen)",
-         "run: montology gen setup  (or set MONTOLOGY_MODEL_URL)"),
+        (_gen_backend_ok(), "gen backend (optional — without one, gen hands drafts to the host agent)",
+         "for autonomous gen: montology gen setup, or set MONTOLOGY_MODEL_URL"),
     ]
     for ok, name, repair in checks:
         mark = "ok " if ok else "MISSING"

@@ -45,6 +45,14 @@ instruments and regenerate, never the file. `gen lint` runs in `just
 check`, so a skill that names a tool the AST does not know is a build
 failure, not a doc bug.
 
+THE DEFAULT DRAFTER IS THE HOST AGENT — you. Without a model backend,
+`montology gen skill <name>` emits the grounded task (instruments, spec,
+laws) for you to fulfill; treat it as work, write the file, run `gen
+lint`. A lint FAIL after a surface change means regenerate that skill —
+the failing build is the hook that forces it. A served model
+(MONTOLOGY_MODEL_URL, ideally the Switch family for calibrated
+requirement-check) is the autonomous lane, not a prerequisite.
+
 ## Ground rules
 
 - A word means one thing. Before naming anything in the ontology, check it:

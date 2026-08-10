@@ -34,5 +34,8 @@ montology data pull     # fetch the taxonomies into the local database
   follower count — if a tool did not return it in this session, do not state it.
 - **Categories are looked up, not guessed.** "That's probably IAB 634" is not
   a category; `taxonomy_search` output is.
+- **When `montology gen` hands you a draft task, it is yours.** Fulfill the
+  spec exactly, write the file, run `montology gen lint`; a FAIL is your next
+  edit, not a report.
 - **When a key is missing, relay the repair** the tool gives (which env var,
   where to get it) — do not improvise workarounds.
