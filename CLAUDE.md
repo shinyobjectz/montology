@@ -32,6 +32,19 @@ compliance.
   `DATAFORSEO_PASSWORD`, `SCRAPECREATORS_API_KEY`. Never in code, never in
   the plugin.
 
+## Everything prose is generated
+
+Skills, docs and ontology words are produced by `montology gen` (the
+montology-gen package): INSTRUMENTS measure the truth (AST surfaces,
+warehouse shape, skill inventory), Mellea `@generative` STUBS turn facts
+into prose (docstrings are specs — a prompt-shaped string fails `gen
+lint`), and LAWS check the result deterministically against the same
+instruments. A generation that fails its laws after one repair is REFUSED,
+never written. Generated files carry a provenance header; edit the
+instruments and regenerate, never the file. `gen lint` runs in `just
+check`, so a skill that names a tool the AST does not know is a build
+failure, not a doc bug.
+
 ## Ground rules
 
 - A word means one thing. Before naming anything in the ontology, check it:

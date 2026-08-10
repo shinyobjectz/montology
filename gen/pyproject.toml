@@ -1,0 +1,20 @@
+[project]
+name = "montology-gen"
+version = "0.1.0"
+description = "The generative system: skills, docs and words produced by Mellea from instruments — never from hand-written prompts."
+requires-python = ">=3.12"
+dependencies = [
+    "mellea",
+    "pyyaml",
+    "montology-ontology",
+    "montology-warehouse",
+]
+
+[tool.uv.sources]
+mellea = { git = "https://github.com/generative-computing/mellea.git", rev = "72488902af314c290392c689e90e0395eca49b44" }
+montology-ontology = { workspace = true }
+montology-warehouse = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

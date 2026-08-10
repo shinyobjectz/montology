@@ -20,10 +20,12 @@ data_app = typer.Typer(help="The taxonomy database.", no_args_is_help=True)
 onto_app = typer.Typer(help="The vocabulary.", no_args_is_help=True)
 zoo_app = typer.Typer(help="Local embedding models.", no_args_is_help=True)
 crawl_app = typer.Typer(help="Local crawling (brand sites, pages).", no_args_is_help=True)
+gen_app = typer.Typer(help="Generate skills, docs and words from instruments (Mellea).", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(onto_app, name="onto")
 app.add_typer(zoo_app, name="zoo")
 app.add_typer(crawl_app, name="crawl")
+app.add_typer(gen_app, name="gen")
 
 
 @app.command()
@@ -173,3 +175,33 @@ def crawl_brand(url: str) -> None:
     from montology_crawl import brand_kit
 
     typer.echo(brand_kit(url))
+
+
+@gen_app.command("skill")
+def gen_skill_cmd(
+    name: str = typer.Argument(..., help="Skill to (re)generate: " ),
+    write: bool = typer.Option(False, "--write", help="Write skills/<name>/SKILL.md (default: print)."),
+) -> None:
+    """Generate a package's skill from its instruments — AST surface, warehouse shape, house rules."""
+    from montology_gen import gen_skill
+
+    typer.echo(gen_skill(name, write=write))
+
+
+@gen_app.command("word")
+def gen_word_cmd(name: str, context: str = typer.Option("", help="Usage context grounding the definition.")) -> None:
+    """Propose an ontology word, law-checked (free, one meaning, no vendors)."""
+    from montology_gen import gen_word
+
+    typer.echo(gen_word(name, context))
+
+
+@gen_app.command("lint")
+def gen_lint_cmd() -> None:
+    """Deterministic, model-free: every skill against its laws; the no-prompt ban."""
+    from montology_gen import lint
+
+    lines = lint()
+    for line in lines:
+        typer.echo(line)
+    raise typer.Exit(1 if any(l.startswith("FAIL") for l in lines) else 0)

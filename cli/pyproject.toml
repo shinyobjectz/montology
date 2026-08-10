@@ -9,6 +9,7 @@ dependencies = [
     "montology-zoo",
     "montology-server",
     "montology-warehouse",
+    "montology-gen",
 ]
 
 [project.scripts]
@@ -19,6 +20,7 @@ montology-ontology = { workspace = true }
 montology-zoo = { workspace = true }
 montology-server = { workspace = true }
 montology-warehouse = { workspace = true }
+montology-gen = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -13,6 +13,7 @@ members = [
     "montology",
     "montology-crawl",
     "montology-dataforseo",
+    "montology-gen",
     "montology-ontology",
     "montology-scrapecreators",
     "montology-server",
@@ -1907,6 +1908,7 @@ name = "montology"
 version = "0.1.0"
 source = { editable = "cli" }
 dependencies = [
+    { name = "montology-gen" },
     { name = "montology-ontology" },
     { name = "montology-server" },
     { name = "montology-warehouse" },
@@ -1916,6 +1918,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "montology-gen", editable = "gen" },
     { name = "montology-ontology", editable = "ontology" },
     { name = "montology-server", editable = "server" },
     { name = "montology-warehouse", editable = "warehouse" },
@@ -1953,6 +1956,25 @@ dependencies = [
 requires-dist = [
     { name = "httpx" },
     { name = "mellea", git = "https://github.com/generative-computing/mellea.git?rev=72488902af314c290392c689e90e0395eca49b44" },
+]
+
+[[package]]
+name = "montology-gen"
+version = "0.1.0"
+source = { editable = "gen" }
+dependencies = [
+    { name = "mellea" },
+    { name = "montology-ontology" },
+    { name = "montology-warehouse" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mellea", git = "https://github.com/generative-computing/mellea.git?rev=72488902af314c290392c689e90e0395eca49b44" },
+    { name = "montology-ontology", editable = "ontology" },
+    { name = "montology-warehouse", editable = "warehouse" },
+    { name = "pyyaml" },
 ]
 
 [[package]]
@@ -2023,6 +2045,7 @@ dependencies = [
     { name = "montology" },
     { name = "montology-crawl" },
     { name = "montology-dataforseo" },
+    { name = "montology-gen" },
     { name = "montology-ontology" },
     { name = "montology-scrapecreators" },
     { name = "montology-server" },
@@ -2035,6 +2058,7 @@ requires-dist = [
     { name = "montology", editable = "cli" },
     { name = "montology-crawl", editable = "tools/crawl" },
     { name = "montology-dataforseo", editable = "tools/dataforseo" },
+    { name = "montology-gen", editable = "gen" },
     { name = "montology-ontology", editable = "ontology" },
     { name = "montology-scrapecreators", editable = "tools/scrapecreators" },
     { name = "montology-server", editable = "server" },

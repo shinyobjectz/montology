@@ -9,9 +9,10 @@ setup:
 
 # What must pass before a commit
 check:
-    uv run python -m compileall -q cli ontology zoo server tools && echo "syntax ok"
+    uv run python -m compileall -q cli ontology zoo server tools warehouse gen && echo "syntax ok"
     uv run montology onto check montology > /dev/null 2>&1; test $? -eq 1 && echo "ontology answers"
     uv run python -c "import json; json.load(open('plugin.json')); json.load(open('mcp.json')); print('plugin manifests parse')"
+    uv run montology gen lint
 
 # Seed the vocabulary and pull every core taxonomy
 data-pull:
