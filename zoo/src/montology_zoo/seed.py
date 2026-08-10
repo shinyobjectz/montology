@@ -141,13 +141,23 @@ MODELS = [
 
     # ── tabular (CRM, campaign tables) ──────────────────────────────────────
 
-    ("gen-gemma4-e4b", "google/gemma-4-E4B-it-assistant", "generate", "text-gen",
+    ("gen-gemma4-eseries", "google/gemma-4-E4B-it", "generate", "text-gen",
      None, "gemma", "drafting", "skip",
-     "Effective-4B (MatFormer, raw ~8B): a ~4 GB-class download — twice the "
-     "Switch 3B already ruled too big for a default, and multimodal "
-     "any-to-any is more model than gen needs. Same ruling covers E2B "
-     "(~2-3 GB): local body drafting costs ~2 GB minimum in any family, or "
-     "costs nothing via the host-agent handoff, which is the default."),
+     "The FULL Gemma 4 E-series (effective-4B/2B MatFormer): ~2-4 GB-class "
+     "downloads — the arithmetic ruling: local body drafting costs ~2 GB "
+     "minimum in any family, or costs nothing via the host-agent handoff, "
+     "which is the default."),
+    ("gen-gemma4-assistant", "google/gemma-4-E4B-it-assistant", "generate", "text-gen",
+     None, "gemma", "drafting", "skip",
+     "CORRECTED RULING 2026-08-10 (a prior row misread this repo as the full "
+     "E4B): the -assistant repos are Gemma4AssistantForCausalLM — 4-layer "
+     "speculative-decoding drafters (E4B's: hidden 256, 159 MB, nearly all "
+     "params the 262k-vocab embedding table) that REQUIRE the big sibling "
+     "loaded to verify their token proposals. Standalone they cannot follow "
+     "instructions; they make the big lane faster, not the small lane "
+     "possible. Genuinely useful in ONE place: assisted generation on a "
+     "served big-sibling endpoint (the MONTOLOGY_MODEL_URL lane) — a serving "
+     "optimization, not a package model."),
     ("gen-supra2-100m", "SupraLabs/Supra2-100M-Instruct", "generate", "text-gen",
      None, "apache-2.0", "drafting", "skip",
      "A tiny-model enthusiast lab's week-old 100M chat-tune (self-tagged sota, "
