@@ -142,6 +142,74 @@ def taxonomy_tree_artifact(source: str = "iab-content", top: str = "") -> dict:
     )
 
 
+@mcp.tool
+def zoo_fit_artifact() -> dict:
+    """The model shelf's fit table for THIS machine, as an MCP Apps artifact —
+    which local models run here, with measured sizes and estimated peaks."""
+    from mcp_ui_server import create_ui_resource
+
+    from montology_zoo import fit_report
+
+    rows = ""
+    for line in fit_report():
+        s = line.strip()
+        if not s or s.startswith(("this machine", "peak figures")):
+            continue
+        cells = s.split(None, 2)
+        verdict = cells[0] if cells else ""
+        color = {"fits": "#15803d", "tight": "#b45309", "no": "#b91c1c",
+                 "no-disk": "#b91c1c"}.get(verdict, "#334155")
+        rows += (f"<tr><td style='color:{color};font-weight:600'>{html.escape(verdict)}</td>"
+                 f"<td>{html.escape(cells[1] if len(cells) > 1 else '')}</td>"
+                 f"<td>{html.escape(cells[2] if len(cells) > 2 else '')}</td></tr>")
+    head = html.escape(fit_report()[0])
+    page = ("<!doctype html><meta charset='utf-8'>"
+            "<div style='font-family:system-ui;padding:12px'>"
+            f"<h2>zoo fit</h2><p>{head}</p>"
+            "<table style='border-collapse:collapse;font-size:14px' cellpadding='6'>"
+            f"<tr><th>verdict</th><th>model</th><th>detail</th></tr>{rows}</table></div>")
+    return create_ui_resource({
+        "uri": "ui://montology/zoo/fit",
+        "content": {"type": "rawHtml", "htmlString": page},
+        "encoding": "text",
+    })
+
+
+@mcp.tool
+def gen_assay_artifact() -> dict:
+    """Every generation outcome on record, per model — the assay as a page:
+    which drafter earned which tier, with the failed laws named."""
+    from mcp_ui_server import create_ui_resource
+
+    from montology_warehouse import connect
+
+    try:
+        rows = connect().execute(
+            "SELECT strftime(ran_at, '%m-%d %H:%M') t, task, target, model, outcome, "
+            "laws_failed FROM gen_runs ORDER BY ran_at DESC LIMIT 60"
+        ).fetchall()
+    except Exception:  # noqa: BLE001 — an empty assay is a fine page
+        rows = []
+    body = "".join(
+        f"<tr><td>{html.escape(str(r[0]))}</td><td>{html.escape(str(r[1]))}</td>"
+        f"<td>{html.escape(str(r[2]))}</td><td>{html.escape(str(r[3]))}</td>"
+        f"<td style='font-weight:600;color:"
+        f"{ {'accepted': '#15803d', 'handoff': '#334155'}.get(str(r[4]), '#b91c1c') }'>"
+        f"{html.escape(str(r[4]))}</td><td>{html.escape(', '.join(r[5] or []))}</td></tr>"
+        for r in rows
+    ) or "<tr><td colspan='6'>no generations recorded yet — run montology gen</td></tr>"
+    page = ("<!doctype html><meta charset='utf-8'>"
+            "<div style='font-family:system-ui;padding:12px'><h2>gen assay</h2>"
+            "<table style='border-collapse:collapse;font-size:14px' cellpadding='6'>"
+            "<tr><th>when</th><th>task</th><th>target</th><th>model</th><th>outcome</th>"
+            f"<th>laws failed</th></tr>{body}</table></div>")
+    return create_ui_resource({
+        "uri": "ui://montology/gen/assay",
+        "content": {"type": "rawHtml", "htmlString": page},
+        "encoding": "text",
+    })
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="The montology MCP server.")
     parser.add_argument("--http", action="store_true", help="serve stateless Streamable HTTP instead of stdio")
