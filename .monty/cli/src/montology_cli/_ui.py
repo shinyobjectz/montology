@@ -105,3 +105,16 @@ def emit(line: str) -> None:
 def emit_all(lines) -> None:
     for line in lines:
         emit(line)
+
+
+def next_steps(steps: list[tuple[str, str]]) -> None:
+    """The what-now block: unmissable, one command per line, the command
+    loud and the why quiet. Suggestions that whisper don't get run."""
+    console.print()
+    console.print(Text("  ── what now ", style="bold") +
+                  Text("─" * 42, style="dim"))
+    for cmd, why in steps:
+        row = Text("   → ", style="bold yellow")
+        row.append(f"{cmd:<28}", style="bold cyan")
+        row.append(why, style="dim")
+        console.print(row)

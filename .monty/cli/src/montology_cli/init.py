@@ -227,6 +227,12 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
             echo(("  note: " if i == 0 else "  note  ") + part)
     for m in missing:
         echo(f"  warn missing: {m['bin']} — {m['repair']}")
-    echo("")
-    echo("  next: `monty lint` (the gate) · `monty design candidates` · "
-         "`monty scan --candidates`")
+    if not as_json:
+        from ._ui import next_steps
+
+        next_steps([
+            ("monty lint", "the gate — drift with receipts; put it in CI"),
+            ("monty design candidates", "the values your styles want named"),
+            ("monty scan --candidates", "the words your code is asking for"),
+            ("monty onto audit", "semantic hearing — meanings that collide"),
+        ])
