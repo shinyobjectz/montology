@@ -414,8 +414,8 @@ def migrate(was: str, now: str,
 
 @app.command()
 def explain(no_draft: bool = typer.Option(False, "--no-draft", help="Skip atomic-tier definition drafts.")) -> None:
-    """The one-shot conceptual X-ray: vocabulary, clusters, design, contradictions
-    — terminal summary + a rendered report at .monty/explain.html."""
+    """The one-shot conceptual X-ray: surface, vocabulary had and asked-for,
+    clusters vs directories, design, contradictions."""
     from ._ui import emit_all
     from montology_scan import explain as scan_explain
 

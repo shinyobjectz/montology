@@ -67,10 +67,8 @@ definitions drafted on the atomic tier when one serves — law-checked,
 refused over wrong), **where meanings actually gather** (semantic
 clusters vs the directory tree's claimed architecture: cross-cutting
 concepts, grab-bag directories), the design system as measured, and
-every place the repo contradicts itself — as a terminal summary plus a
-rendered dark report at `.monty/explain.html`:
-
-![the rendered X-ray artifact](docs/explain-artifact.png)
+every place the repo contradicts itself — straight to the terminal,
+because an instrument prints findings, it does not decorate them.
 
 ## The part that keeps you: words
 

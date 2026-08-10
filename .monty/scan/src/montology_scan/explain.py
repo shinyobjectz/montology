@@ -11,18 +11,16 @@ measure into one anatomy:
     versus the directory structure's claimed architecture: concepts that
     span many directories are cross-cutting; directories whose names
     scatter across many clusters are grab-bags;
-  * the DESIGN SYSTEM as measured (palette with real chips, tokens vs
-    rogues, escapes);
+  * the DESIGN SYSTEM as measured (tokens vs rogues, escapes);
   * CONTRADICTIONS: meanings that collide, near-duplicate colors, ghost
     classes — everything the repo says twice or says wrong.
 
-Deterministic except the optional definition drafts; renders a terminal
-summary and a self-contained dark HTML report (.monty/explain.html).
+Deterministic except the optional definition drafts. The terminal IS the
+report — an instrument prints findings, it does not decorate them.
 """
 
 from __future__ import annotations
 
-import html as html_mod
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -179,111 +177,9 @@ def render_terminal(r: dict) -> list[str]:
     if r["styles"]["rogues"]:
         top = ", ".join(f"{c} ×{n}" for c, n, _ in r["styles"]["rogues"][:5])
         lines.append(f"design: {len(r['styles']['rogues'])} unnamed color(s): {top}")
-    lines.append(f"explained — full report: .monty/explain.html")
     return lines
-
-
-def _chip(color: str, label: str) -> str:
-    return (f'<span class="chip"><i style="background:{color}"></i>'
-            f"{html_mod.escape(label)}</span>")
-
-
-def render_html(r: dict) -> str:
-    e = html_mod.escape
-    parts = [f"""<!doctype html><meta charset="utf-8">
-<title>{e(r['name'])} — montology X-ray</title>
-<style>
- body{{background:#0d0d14;color:#cdd6f4;font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
-      max-width:960px;margin:2rem auto;padding:0 1.2rem}}
- h1{{font-size:1.3rem}} h2{{font-size:1.02rem;color:#8aadf4;margin-top:2.2rem;
-     border-bottom:1px solid #24273a;padding-bottom:.35rem}}
- .stat{{display:inline-block;background:#181825;border:1px solid #24273a;border-radius:8px;
-       padding:.45rem .8rem;margin:.2rem .3rem .2rem 0}}
- .stat b{{color:#a6da95}}
- table{{border-collapse:collapse;width:100%}} td,th{{text-align:left;padding:.28rem .6rem;
-       border-bottom:1px solid #1e1e2c;vertical-align:top}} th{{color:#8aadf4}}
- .chip{{display:inline-flex;align-items:center;gap:.45rem;background:#181825;
-       border:1px solid #24273a;border-radius:999px;padding:.25rem .7rem;margin:.18rem}}
- .chip i{{width:1rem;height:1rem;border-radius:4px;display:inline-block;
-         border:1px solid #363a4f}}
- .cluster{{background:#141420;border:1px solid #24273a;border-radius:10px;
-          padding:.7rem 1rem;margin:.5rem 0}}
- .k-word{{color:#a6da95}} .k-candidate{{color:#eed49f}}
- .warn{{color:#eed49f}} .dim{{color:#6c7086}}
- .draft{{color:#94e2d5}}
-</style>
-<h1>{e(r['name'])} <span class="dim">— the conceptual X-ray</span></h1>
-<div>
- <span class="stat"><b>{r['surface']['decls']}</b> declarations</span>
- <span class="stat"><b>{r['surface']['files']}</b> files</span>
- <span class="stat"><b>{len(r['vocab'])}</b> words</span>
- <span class="stat"><b>{len(r['tokens'])}</b> tokens</span>
- <span class="stat"><b>{len(r['candidates'])}</b> unclaimed concepts</span>
-</div>"""]
-
-    if r["styles"]["colors"]:
-        parts.append("<h2>The palette, as measured</h2><div>")
-        token_vals = {norm_color(t["value"]): t["name"] for t in r["tokens"]
-                      if t["category"] == "color"}
-        for c, n, *_ in [(c, n) for c, n in r["styles"]["colors"]]:
-            name = token_vals.get(c)
-            label = f"{name} · {c}" if name else f"{c} ×{n} (unnamed)"
-            parts.append(_chip(c, label))
-        parts.append("</div>")
-
-    if r["vocab"]:
-        parts.append("<h2>The vocabulary it has</h2><table>"
-                     "<tr><th>word</th><th>code</th><th>is</th></tr>")
-        for w in r["vocab"]:
-            parts.append(f"<tr><td class=k-word>{e(w['name'])}</td>"
-                         f"<td class=dim>{e(w['code'] or '—')}</td>"
-                         f"<td>{e(w['definition'])}</td></tr>")
-        parts.append("</table>")
-
-    if r["candidates"]:
-        parts.append("<h2>The vocabulary it is asking for</h2><table>"
-                     "<tr><th>uses</th><th>name</th><th>drafted definition</th></tr>")
-        for c in r["candidates"][:12]:
-            d = r["drafted"].get(c["name"], "")
-            parts.append(f"<tr><td>{c['count']}×</td><td class=k-candidate>{e(c['name'])}</td>"
-                         f"<td class=draft>{e(d) if d else '<span class=dim>—</span>'}</td></tr>")
-        parts.append("</table>")
-
-    if r["clusters"]:
-        parts.append("<h2>Where meanings actually gather</h2>")
-        for c in r["clusters"][:8]:
-            members = " ".join(
-                f"<span class='k-{m['kind']}'>{e(m['name'])}</span>" for m in c["members"])
-            dirs = (f"<div class=dim>spans: {e(', '.join(c['dirs']))}</div>"
-                    if c["dirs"] else "")
-            parts.append(f"<div class=cluster>{members}{dirs}</div>")
-
-    tensions = []
-    for c in r["cross_cutting"][:4]:
-        tensions.append("concept group [" + ", ".join(e(m["name"]) for m in c["members"][:4])
-                        + f"] cuts across <b>{e(', '.join(c['dirs'][:6]))}</b>")
-    for d in r["grab_bags"]:
-        tensions.append(f"<b>{e(d)}/</b> appears in many unrelated clusters — a grab-bag")
-    if tensions:
-        parts.append("<h2>The architecture the directory tree does not show</h2><ul>")
-        parts += [f"<li class=warn>{t}</li>" for t in tensions]
-        parts.append("</ul>")
-
-    if r["contradictions"]:
-        parts.append("<h2>Where it contradicts itself</h2><ul>")
-        for line in r["contradictions"][:10]:
-            parts.append(f"<li class=warn>{e(line.removeprefix('note semantics: '))}</li>")
-        parts.append("</ul>")
-
-    parts.append('<p class=dim>rendered by <b>monty explain</b> — montology, '
-                 'the ontology layer. Prose is rendered, never authored.</p>')
-    return "\n".join(parts)
 
 
 def explain(root: Path | None = None, draft: bool = True) -> list[str]:
     root = root or workspace_root()
-    report = build(root, draft=draft)
-    out = root / ".monty" / "explain.html"
-    out.parent.mkdir(exist_ok=True)
-    out.write_text(render_html(report))
-    return render_terminal(report)
+    return render_terminal(build(root, draft=draft))

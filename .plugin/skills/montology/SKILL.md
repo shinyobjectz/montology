@@ -54,7 +54,7 @@ It fails open outside montology workspaces. `monty guard` is the entry
 
 `monty explain` — the one-shot anatomy of any repo: surface, vocabulary
 had and asked-for, semantic clusters vs directory structure, design
-system, contradictions. Renders .monty/explain.html. Run it FIRST on an
+system, contradictions — straight to the terminal. Run it FIRST on an
 unfamiliar codebase — it is the fastest orientation montology offers.
 
 ## Rulings: how arguments end

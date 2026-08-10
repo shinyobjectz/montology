@@ -38,7 +38,7 @@ def repo(tmp_path, onto_db, monkeypatch):
 
 
 def test_explain_composes_the_anatomy(repo):
-    from montology_scan.explain import build, render_html, render_terminal
+    from montology_scan.explain import build, render_terminal
 
     r = build(repo, draft=False)
     assert r["surface"]["decls"] >= 4
@@ -55,17 +55,10 @@ def test_explain_composes_the_anatomy(repo):
     assert any("declarations" in line for line in lines)
     assert any(line.startswith("cluster:") for line in lines)
 
-    html = render_html(r)
-    assert "conceptual X-ray" in html
-    assert 'style="background:#061a1c"' in html      # a real chip
-    assert "brand · #061a1c" in html                  # named
-    assert "#06191b ×1 (unnamed)" in html             # rogue named as unnamed
-    assert "invoice" in html and "k-candidate" in html
 
-
-def test_explain_writes_the_artifact(repo):
+def test_explain_is_terminal_only(repo):
     from montology_scan import explain
 
     lines = explain(repo, draft=False)
-    assert (repo / ".monty" / "explain.html").exists()
-    assert any("explain.html" in line for line in lines)
+    assert any("declarations" in line for line in lines)
+    assert not (repo / ".monty" / "explain.html").exists()   # no decoration
