@@ -1,0 +1,11 @@
+name = "montology"
+created = "2026-08-10"
+engine = "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli"
+
+[scan]
+# montology's own source lives under the (hidden) marker — include it
+include = [".monty"]
+enforced_kinds = ["core", "inner"]
+# `words`/`word`/`check`/`add` etc. are the ontology package's OWN functions —
+# a system may declare the words it is the system FOR
+allow = ["ontology", "word", "code", "doctrine", "scan", "collision", "candidate", "workspace", "sync"]

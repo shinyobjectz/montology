@@ -1,8 +1,8 @@
-"""montology-ontology: the marketing vocabulary as a queryable database."""
+"""montology-ontology: a repo's vocabulary as a queryable database."""
 
-from .db import add, check, connect, db_path, map_word, mappings, words
-from .pull import pull
+from .db import (add, check, connect, db_path, doctrines, overloads,
+                 record_run, rule, words)
 from .seed import seed
-from .sources import SOURCES, by_status
 
-__all__ = ["SOURCES", "add", "by_status", "check", "connect", "db_path", "map_word", "mappings", "pull", "seed", "words"]
+__all__ = ["add", "check", "connect", "db_path", "doctrines", "overloads",
+           "record_run", "rule", "seed", "words"]

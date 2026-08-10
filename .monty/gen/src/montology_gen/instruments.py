@@ -1,126 +1,41 @@
 """Instruments: deterministic context collectors. Facts in, facts out.
 
-Everything a stub is allowed to know arrives through here — the AST, the
-warehouse, the skills on disk. An instrument never calls a model and never
-guesses: if it cannot measure something, the field is absent, not invented.
-`fingerprint()` hashes what was collected so a generated file can say
-exactly which facts produced it.
+Everything a stub or a rendered file is allowed to know arrives through
+here — the vocabulary from the database, the code surface from the scan.
+An instrument never calls a model and never guesses: if it cannot measure
+something, the field is absent, not invented. `fingerprint()` hashes what
+was collected so a generated file can say exactly which facts produced it.
 """
 
 from __future__ import annotations
 
-import ast
 import hashlib
 import json
 import re
-from pathlib import Path
 
 import yaml
 
-from montology_core import workspace_root
-
-
-def _pkg_root(pkg_path: str) -> Path:
-    """Locate a package's source via import — site-packages when installed
-    as a wheel, the checkout under .monty/ in dev. The LABEL in surfaces
-    stays the repo path either way, so fingerprints are stable across both."""
-    import importlib
-
-    mod = importlib.import_module(pkg_path.rsplit("/", 1)[-1])
-    return Path(mod.__file__).resolve().parent
-
-
-# skill name ↔ the package whose surface grounds it
-SKILL_PACKAGES = {
-    "dataforseo": ".monty/tools/dataforseo/src/montology_dataforseo",
-    "scrapecreators": ".monty/tools/scrapecreators/src/montology_scrapecreators",
-    "brand-crawl": ".monty/tools/crawl/src/montology_crawl",
-    "montology": ".monty/cli/src/montology_cli",
-    "warehouse": ".monty/warehouse/src/montology_warehouse",
-}
-
-# functions that are plumbing, not marketer surface — piecewise generation
-# skips them; mentioning them stays legal (tools_exist reads the full surface)
-INFRA_NAMES = ("mellea_tools", "setup", "main")
-
-# the env vars that exist; a generated skill may name no others
+# the env vars that exist; generated prose may name no others
 KNOWN_ENV = (
-    "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD", "SCRAPECREATORS_API_KEY",
-    "MONTOLOGY_MODEL_URL", "MONTOLOGY_MODEL", "MONTOLOGY_MODEL_KEY",
+    "MONTOLOGY_WORKSPACE", "MONTOLOGY_MODEL_URL", "MONTOLOGY_MODEL",
+    "MONTOLOGY_MODEL_KEY", "MONTOLOGY_MODEL_TINY", "MONTY_FROM",
 )
 
 
-def package_surface(pkg_path: str) -> dict:
-    """A package's real public surface, from the AST: every public function
-    with its signature and first docstring line. This is what a skill may
-    claim exists — nothing else."""
-    root = _pkg_root(pkg_path)
-    surface: dict = {"package": pkg_path, "functions": []}
-    for py in sorted(root.glob("*.py")):
-        tree = ast.parse(py.read_text())
-        for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) \
-                    and not node.name.startswith("_"):
-                doc = (ast.get_docstring(node) or "").split("\n")[0]
-                args = ", ".join(
-                    a.arg + (f": {ast.unparse(a.annotation)}" if a.annotation else "")
-                    for a in node.args.args
-                )
-                returns = f" -> {ast.unparse(node.returns)}" if node.returns else ""
-                surface["functions"].append({
-                    "name": node.name,
-                    "signature": f"{node.name}({args}){returns}",
-                    "doc": doc,
-                    "module": py.stem,
-                    "infra": node.name in INFRA_NAMES,
-                })
-    return surface
+def vocabulary() -> dict:
+    """The ontology as facts: words, doctrine, rulings — what sync renders
+    and what a word draft must not collide with."""
+    from montology_ontology import doctrines, overloads, words
+
+    return {"words": words(), "doctrine": doctrines(), "overloads": overloads()}
 
 
-def duck_shape(limit_tables: int = 12) -> dict:
-    """What the warehouse actually holds: attached catalogs, tables, columns,
-    and a taxonomy census — the data's shape, measured, for grounding."""
-    try:
-        from montology_warehouse import connect
-    except ImportError:
-        return {"available": False}
-    try:
-        conn = connect()
-        tables = conn.execute(
-            "SELECT table_catalog, table_schema, table_name FROM information_schema.tables "
-            "WHERE table_schema NOT LIKE 'pg_%' LIMIT ?", [limit_tables * 4]
-        ).fetchall()
-        shape: dict = {"available": True, "tables": []}
-        for cat, schema, name in tables[:limit_tables]:
-            cols = conn.execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_catalog=? AND table_name=? LIMIT 20", [cat, name]
-            ).fetchall()
-            shape["tables"].append({"table": f"{cat}.{name}", "columns": [c[0] for c in cols]})
-        try:
-            shape["taxonomy_census"] = dict(conn.execute(
-                "SELECT source, COUNT(*) FROM ontology.taxonomy GROUP BY source"
-            ).fetchall())
-        except Exception:  # noqa: BLE001 — registries may not be pulled yet
-            pass
-        return shape
-    except Exception as e:  # noqa: BLE001
-        return {"available": False, "why": str(e)[:200]}
+def code_surface() -> dict:
+    """The workspace's declarations, via the scan package."""
+    from montology_core import workspace_root
+    from montology_scan import declarations
 
-
-def skills_inventory() -> list[dict]:
-    """Every skill on disk: name, description, generated-or-authored, path."""
-    out = []
-    ws = workspace_root()
-    for spec in sorted((ws / ".plugin" / "skills").glob("*/SKILL.md")):
-        fm, body = parse_frontmatter(spec.read_text())
-        out.append({
-            "path": str(spec.relative_to(ws)),
-            "name": fm.get("name", spec.parent.name),
-            "description": fm.get("description", ""),
-            "generated": "GENERATED by monty gen" in body[:500],
-        })
-    return out
+    return declarations(workspace_root())
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:

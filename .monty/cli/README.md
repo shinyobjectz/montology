@@ -1,5 +1,4 @@
-# montology
+# montology (the CLI)
 
-The montology CLI: install data, check the vocabulary, pull models, serve MCP.
-
-Part of [montology](https://github.com/socialite-ml/montology) — marketing + monorepo + ontology. Install the whole workspace: `git clone https://github.com/socialite-ml/montology && cd montology && uv sync`.
+`monty` — the ontology context layer for any monorepo. See the repo root
+README; this package carries the CLI, the MCP server, and `monty init`.

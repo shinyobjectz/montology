@@ -1,12 +1,13 @@
-"""Every registry writes to tmp — a test that touches the real dbs is a bug."""
+"""Offline fixtures: every db pinned into tmp, the workspace pinned by env."""
+
 import sys
 from pathlib import Path
 
 import pytest
 
-for pkg in ("onto", "zoo", "warehouse", "gen", "cli", "media", "tools/dataforseo",
-            "tools/scrapecreators", "tools/crawl"):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / ".monty" / pkg / "src"))
+ROOT = Path(__file__).resolve().parents[1]
+for member in ("core", "onto", "scan", "gen", "cli"):
+    sys.path.insert(0, str(ROOT / ".monty" / member / "src"))
 
 
 @pytest.fixture()
@@ -15,20 +16,3 @@ def onto_db(tmp_path, monkeypatch):
 
     monkeypatch.setattr(odb, "DB_PATH", tmp_path / "ontology.db")
     return odb
-
-
-@pytest.fixture()
-def zoo_db(tmp_path, monkeypatch):
-    from montology_zoo import db as zdb, seed as zseed
-
-    monkeypatch.setattr(zdb, "DB_PATH", tmp_path / "zoo.db")
-    return zdb, zseed
-
-
-@pytest.fixture()
-def warehouse(tmp_path, monkeypatch):
-    from montology_warehouse import db as wdb
-
-    monkeypatch.setattr(wdb, "WAREHOUSE_PATH", tmp_path / "warehouse.duckdb")
-    monkeypatch.setattr(wdb, "_REGISTRIES", {})
-    return wdb

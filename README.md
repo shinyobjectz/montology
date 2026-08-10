@@ -1,106 +1,85 @@
 # montology
 
-**M**arketing + m**on**orepo + on**tology**. One repo that gives a marketing
-team — and the agent working for them — a shared vocabulary, real taxonomies,
-local embeddings, and tools that answer with data instead of vibes.
+**The ontology context layer for any monorepo.** A repo's vocabulary lives
+in a database — words with one meaning each, dotted codes, doctrine, and
+rulings — rendered to prose for agents, and **enforced against the code**:
+a tree-sitter scan of every declaration, a lint that fails CI when code
+and vocabulary disagree, and errors that carry their repair.
 
-Montology is three things at once:
-
-1. **An ontology.** A relational vocabulary for marketing, stored in SQLite,
-   authored in one place, and enforced by tooling — plus the industry
-   taxonomies everyone already speaks (IAB Content Taxonomy 3.x, Audience
-   Taxonomy, Ad Product Taxonomy), ingested into the same database so a
-   category is a row you can join against, not a PDF you squint at.
-2. **A Python monorepo on uv workspaces.** Packages for the ontology, an
-   embedding zoo (HuggingFace models run locally via ONNX/GGUF), Mellea-wrapped
-   marketing tools (DataForSEO, ScrapeCreators), and an MCP server that ships
-   interactive artifacts via [MCP Apps / mcp-ui](https://github.com/MCP-UI-Org/mcp-ui).
-3. **An [Agent Plugin](https://agent-plugins.org).** `.plugin/` is a valid
-   Agent Plugins 1.0.0 folder — `plugin.json`, `skills/`, `mcp.json` — so it
-   installs into ChatGPT, Codex, Cursor, GitHub Copilot, and VS Code, and
-   Claude Code reads the same `skills/` natively (a workspace symlinks them
-   into `.claude/skills` at init).
-
-## Who this is for
-
-Marketers, not engineers. You know your brand, your competitors, and your
-channels; your agent (Claude Code or any Agent Plugins client) knows montology.
-You ask marketing questions; the agent uses the vocabulary, the taxonomies,
-the embeddings and the tools on your behalf.
+Born from a private system that ran this discipline for real: the last
+vocabulary was prose kept in sync by remembering to, which is how a
+correctly written permission check came to exist and never be called.
+A vocabulary with a gate cannot drift silently.
 
 ## Quick start
 
 ```sh
-npm install -g montology    # a thin launcher: ensures uv, runs the engine via uvx
-mkdir my-workspace && cd my-workspace
-monty init                  # onboarding: scaffold, installs (model weights,
-                            # Chromium, render deps) with progress, first project
+npm install -g montology     # a thin launcher: ensures uv, runs the engine via uvx
+cd your-repo
+monty init                   # .monty/ (the db + config), agent wiring, the words skill
 ```
 
-`monty init` creates a WORKSPACE — `.plugin/` (the agent face), `data/` (the
-vocabulary + taxonomies + model shelf), `design/` (the render harness),
-`projects/` (engagements) — and wires Claude Code automatically (`.mcp.json`,
-`.claude/skills`). Open your agent inside it and everything is live. Agents
-run the same init non-interactively: `monty init --yes --json` (secrets from
-the environment, gaps reported with their repair).
+`monty init` is deliberately minimal inside YOUR repo: it creates
+`.monty/` (an empty ontology — yours to author), appends a marked section
+to CLAUDE.md / AGENTS.md (never overwrites), merges one key into
+`.mcp.json` (Claude Code) and `.cursor/mcp.json` (Cursor), and renders the
+generated `words` skill. Codex users get the exact `~/.codex/config.toml`
+snippet printed — montology never edits files outside your repo.
+
+## The loop
 
 ```sh
-# contributors work the repo itself (it is a workspace too):
-git clone https://github.com/socialite-ml/montology && cd montology
-uv sync && just             # the action surface: what is live, what to do
+monty onto check thread          # FREE / TAKEN / RULED — before naming ANYTHING
+monty scan --candidates          # what the codebase is asking for: recurring
+                                 # declared names with no word
+monty onto add thread "a stateful user↔agent session" --code atl.thread
+monty grep 'class $C' --lang python    # structural search (ast-grep)
+monty lint                       # the gate: collisions, code resolution, drift
 ```
+
+- **Collision**: a `class Atlas` when `atlas` is a core word meaning
+  something else → FAIL with the repair (rename, or record the exception
+  in `.monty/montology.toml [scan] allow` — a decision, not a silence).
+- **Codes are a tree**: `har.cell` cannot exist without a word owning `har`.
+- **Prose is rendered, never authored**: the `words` skill regenerates from
+  the db (`monty sync`); lint fails when it goes stale.
+
+## The multiast layer
+
+tree-sitter (via `tree-sitter-language-pack` — 100+ maintained grammars)
+measures declarations across python, typescript/tsx, javascript, go, rust,
+elixir, ruby, java, c, c++ out of the box; unsupported languages are
+skipped *and said to be skipped*. ast-grep (invoked, never linked — one
+static binary) powers structural search: patterns that parse, not regexes.
+
+## For agents
+
+`.plugin/` is an Agent Plugins 1.0.0 folder (plugin.json · mcp.json ·
+skills/). The MCP server exposes `ontology_check`, `ontology_add`,
+`ontology_words`, `scan_surface`, `scan_candidates`, `ontology_lint`,
+`structural_search`. The generated `words` skill puts the whole
+vocabulary in the agent's context, and the doctrine — the *why* behind
+each decision — travels with it.
 
 ## The shape
 
 ```
-.justfile      the ACTION SURFACE — `just` answers: what is live, what exists, what to do
-.plugin/       the Agent Plugins face (plugin.json · mcp.json · skills/) — install THIS folder
-.monty/        the engine: python packages (onto, zoo, warehouse, gen, media, cli, tools/)
-               and .monty/cache/ — weights, browsers, embeddings; refetchable, never tracked
-data/          the TRACKED central store: ontology.db, zoo.db (the registries ship with the repo)
-design/        the node workspace — brand-AGNOSTIC mediums (components · email · image ·
-               presentation · video · web) + the one shared render harness; imports `@brand/*`,
-               bound to a project at render time
-projects/      ENGAGEMENTS — each carries a brand instantiation (tokens, manifest, assets,
-               sources) and its deliverables; user data, gitignored
+.monty/          the engine (uv workspace: core · onto · scan · gen · cli)
+.plugin/         the Agent Plugins face
+npm/             the npm launcher (package `montology`, bin `monty`)
 ```
 
-Two workspaces, one orchestrator: uv owns `.monty/*`, npm owns `design/`,
-`just` sees both. Projects are neither — each is the user's own uv/react
-ground, consuming montology.
+In YOUR repo, montology's whole footprint is `.monty/` (db + config), the
+generated skill, and the marked sections it appended. `rm -rf .monty
+.claude/skills/words` and the sections is a full uninstall.
 
-## Alignment decisions (why it is shaped this way)
+## Contributors
 
-- **uv workspaces ARE the monorepo framework.** One `uv.lock` at the root,
-  every package a member, `tool.uv.sources` wiring them together. No second
-  build system on top — anything else would fight uv.
-- **Agent Plugins is the packaging layer, not the product.** Skills and MCP
-  configs compiled here publish as one folder that any conforming client
-  installs. New skills and servers accrete over time; the plugin is how they
-  ship.
-- **FastMCP for the server, mcp-ui for the artifacts.** FastMCP is the Python
-  MCP framework with first-class stateless HTTP; `mcp-ui-server` returns
-  MCP Apps UI resources from tools. Artifacts can be authored with any
-  frontend framework — they travel as sandboxed HTML resources.
-- **Taxonomies are fetched, not vendored.** IAB Tech Lab licenses its
-  taxonomies for use with attribution; `monty data pull` fetches the
-  current TSVs from the official repo into the local database.
-- **SQLite is the record, DuckDB is the engine.** Registries stay SQLite
-  (tiny, transactional); analysis runs in DuckDB, which attaches them
-  read-only — one SQL surface over taxonomies, the model shelf, and the
-  user's campaign files.
-- **The agent writes the React.** Brand component libraries come from
-  crawled sections + a measured brand kit, converted by the agent — not by
-  a mechanical HTML-to-JSX tool (ruled on in montology-crawl).
-- **API keys stay in the environment.** `DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`
-  and `SCRAPECREATORS_API_KEY`, read at call time, never stored in the repo.
+```sh
+git clone https://github.com/socialite-ml/montology && cd montology
+uv sync && just              # the action surface
+just check                   # the gate (montology lints itself)
+```
 
-## Status
-
-Working. The runtime is real and live-tested: embed/transcribe/topics run
-locally, eleven taxonomies ingest (30k+ rows), the crawler measures real
-sites, the MCP server answers real clients, and the gen system's laws are
-enforced in CI (`just check` = lint + the committed test suite). PyPI
-publish is one trusted-publisher registration away (see
-`.github/workflows/publish.yml`). `CLAUDE.md` says how the agent of record
-works on this repo.
+The marketing-era codebase (brand crawling, embedding zoo, creative
+production) lives at the `marketing-era` tag.

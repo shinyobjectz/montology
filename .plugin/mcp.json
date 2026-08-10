@@ -6,12 +6,7 @@
         "--from",
         "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli",
         "montology-mcp"
-      ],
-      "env": {
-        "DATAFORSEO_LOGIN": "${DATAFORSEO_LOGIN}",
-        "DATAFORSEO_PASSWORD": "${DATAFORSEO_PASSWORD}",
-        "SCRAPECREATORS_API_KEY": "${SCRAPECREATORS_API_KEY}"
-      }
+      ]
     }
   }
 }

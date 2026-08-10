@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "montology",
-  "description": "Marketing + monorepo + ontology: a relational marketing vocabulary (SQLite), IAB taxonomies, an embedding zoo, and Mellea-wrapped DataForSEO / ScrapeCreators tools — packaged as one Agent Plugin.",
+  "description": "The ontology context layer for any monorepo: a vocabulary as a database (words, codes, doctrine), enforced against the code by a tree-sitter scan \u2014 check before naming, lint in CI, prose rendered never authored.",
   "version": "0.1.0",
   "homepage": "https://github.com/socialite-ml/montology"
 }

@@ -9,18 +9,3 @@ dist/
 .env
 .env.*
 !.env.example
-
-# THE CACHE: everything under .monty/cache is refetchable — weights,
-# embeddings, browsers. Never tracked; big artifacts would be LFS anyway.
-.monty/cache/
-
-# data/ IS tracked (the central store: ontology.db, zoo.db — the registries
-# ship). The warehouse is the user's analytical scratch and stays local.
-data/warehouse.duckdb
-
-# projects are ENGAGEMENTS — user data, except the checked-in example
-projects/*
-!projects/00_example/
-
-# node
-design/node_modules/

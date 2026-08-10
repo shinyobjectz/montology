@@ -1,65 +1,73 @@
-"""The database: house words and ingested taxonomies, one SQLite file.
+"""The ontology: a repo's vocabulary as a database, not a doc.
 
-Two tables, deliberately separate:
+One SQLite file inside the `.monty/` marker. Four tables:
 
-  * ``word`` — OUR vocabulary: a term montology defines, with a one-line
-    definition and a test. Authored only in ``seed.py``.
-  * ``taxonomy`` — THEIR vocabularies: rows ingested from registered sources
-    (``sources.py``), namespaced by source id so ``iab-content:53`` and a
-    house word can never collide.
+  * ``word`` — one term, one meaning: name, kind, an optional owner (the
+    word it lives inside), a definition, the one-line "what is it" test,
+    and an optional dotted CODE (``har``, ``har.cell``) that scan and
+    tag systems can resolve.
+  * ``doctrine`` — the decisions worth writing down, ordered; a decision
+    that is not written down gets re-litigated.
+  * ``overload`` — "do not say X, say Y": the words a repo has ruled on.
+  * ``gen_runs`` — the assay: every generative attempt (word definitions),
+    with outcome and failed laws. Memory, queryable.
 
-The join is the point: a house word may ``map_to`` taxonomy rows, which is
-how "what we call it" stays connected to "what the industry transacts in".
+Prose renders FROM this (``monty sync`` → the words skill); it is never
+the source. That is the whole trade: a vocabulary kept in prose stays
+correct only as long as someone remembers to keep it correct.
 """
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 
 from montology_core import workspace_root
 
-# Tests pin DB_PATH directly; when None it resolves lazily from the
-# workspace (the tracked data/ store — the user asked for the dbs in git).
+# Tests pin DB_PATH directly; when None it resolves lazily from the workspace.
 DB_PATH: Path | None = None
+
+CODE_RE = re.compile(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)*$")
 
 
 def db_path() -> Path:
-    """Where the ontology db lives: pinned, or the workspace's data/."""
     if DB_PATH is not None:
         return DB_PATH
-    return workspace_root() / "data" / "ontology.db"
+    return workspace_root() / ".monty" / "ontology.db"
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS word (
   name        TEXT PRIMARY KEY,
-  kind        TEXT NOT NULL,          -- core | inner | adopted
-  owner       TEXT,                   -- which core word it lives inside
+  kind        TEXT NOT NULL,          -- core | inner | adopted | custom
+  owner       TEXT,                   -- which word it lives inside
   definition  TEXT NOT NULL,
   test        TEXT,                   -- the one-line "what is it" test
   note        TEXT,
-  code        TEXT                   -- optional dotted code, socialite-style
+  code        TEXT UNIQUE             -- dotted, socialite-style: har, har.cell
 );
 
-CREATE TABLE IF NOT EXISTS taxonomy (
-  source      TEXT NOT NULL,          -- sources.py id, e.g. 'iab-content'
-  code        TEXT NOT NULL,          -- the source's own id for the row
-  name        TEXT NOT NULL,
-  parent      TEXT,                   -- parent code within the same source
-  tier        INTEGER,
-  path        TEXT,                   -- 'Tier1 > Tier2 > name' for display
-  PRIMARY KEY (source, code)
+CREATE TABLE IF NOT EXISTS doctrine (
+  title       TEXT PRIMARY KEY,
+  ord         INTEGER NOT NULL,
+  body        TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS mapping (
-  word        TEXT NOT NULL REFERENCES word(name),
-  source      TEXT NOT NULL,
-  code        TEXT NOT NULL,
-  note        TEXT,
-  PRIMARY KEY (word, source, code)
+CREATE TABLE IF NOT EXISTS overload (
+  dont_say    TEXT PRIMARY KEY,
+  say         TEXT NOT NULL,
+  why         TEXT
 );
 
-CREATE INDEX IF NOT EXISTS taxonomy_name ON taxonomy(name);
+CREATE TABLE IF NOT EXISTS gen_runs (
+  ran_at      TEXT NOT NULL,
+  task        TEXT NOT NULL,
+  target      TEXT NOT NULL,
+  model       TEXT NOT NULL,
+  outcome     TEXT NOT NULL,          -- accepted | refused | errored | handoff
+  laws_failed TEXT
+);
 """
 
 
@@ -75,39 +83,56 @@ def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Conn
     return c
 
 
-def _migrate(conn: sqlite3.Connection) -> None:
-    """Additive migrations only — the db is user data once custom words land."""
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(word)")}
-    if "code" not in cols:
-        conn.execute("ALTER TABLE word ADD COLUMN code TEXT")
-    if "owner" not in cols:  # pre-migration dbs
-        conn.execute("ALTER TABLE word ADD COLUMN owner TEXT")
+def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
+    """Is this name spoken for? Human-readable findings; [] = free.
+
+    THE GATE: run before naming anything — a class, a concept, a tag.
+    Checks the name and the code namespace both."""
+    if c is None and not db_path().exists():
+        return []
+    conn = c or connect(readonly=True)
+    low = name.strip().lower()
+    findings: list[str] = []
+    w = conn.execute("SELECT * FROM word WHERE lower(name)=?", (low,)).fetchone()
+    if w:
+        code = f" [{w['code']}]" if w["code"] else ""
+        findings.append(f"TAKEN  {w['name']} ({w['kind']}){code} — {w['definition']}")
+    cw = conn.execute("SELECT name, code FROM word WHERE code=?", (low,)).fetchone()
+    if cw and not w:
+        findings.append(f"CODE   {cw['code']} belongs to {cw['name']!r}")
+    o = conn.execute("SELECT * FROM overload WHERE lower(dont_say)=?", (low,)).fetchone()
+    if o:
+        findings.append(f"RULED  do not say {o['dont_say']!r} — say {o['say']!r}"
+                        + (f" ({o['why']})" if o["why"] else ""))
+    return findings
 
 
 def add(name: str, definition: str, *, test: str | None = None,
         note: str | None = None, kind: str = "custom",
         owner: str | None = None, code: str | None = None) -> str:
-    """Author a word of YOUR OWN — the same table our words live in, so
-    every surface (onto check, taxonomy_search, the MCP tools) speaks it
-    immediately. Check-first is the contract: a taken name is refused with
-    its findings, because one word means one thing. Custom words survive
-    re-seeding — the seed only replaces its own names."""
+    """Author a word — check-first is the contract: a taken name is refused
+    WITH its findings, because one word means one thing."""
     findings = check(name)
     if findings:
-        return "REFUSED — the name is spoken for:\n" + "\n".join(findings) \
-            + "\nPick a different word; one word means one thing."
+        return ("REFUSED — the name is spoken for:\n" + "\n".join(findings)
+                + "\nPick a different word; one word means one thing.")
     conn = connect()
-    _migrate(conn)
     if owner:
-        have = conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (owner.lower(),)).fetchone()
-        if not have:
+        if not conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (owner.lower(),)).fetchone():
             known = [r[0] for r in conn.execute("SELECT name FROM word ORDER BY name")]
             return (f"REFUSED — owner {owner!r} is not a word yet. Add it first, "
-                    f"or pick from: {', '.join(known[:20])}")
+                    f"or pick from: {', '.join(known[:20]) or '(none yet)'}")
     if code:
+        if not CODE_RE.match(code):
+            return f"REFUSED — code {code!r} is not dotted-lowercase (like `har` or `har.cell`)."
         taken = conn.execute("SELECT name FROM word WHERE code=?", (code,)).fetchone()
         if taken:
             return f"REFUSED — code {code!r} already belongs to {taken[0]!r}."
+        if "." in code:
+            prefix = code.rsplit(".", 1)[0]
+            if not conn.execute("SELECT 1 FROM word WHERE code=?", (prefix,)).fetchone():
+                return (f"REFUSED — code prefix {prefix!r} resolves to no word. "
+                        "Dotted codes live INSIDE a word that holds the prefix.")
     conn.execute("INSERT INTO word (name, kind, owner, definition, test, note, code) "
                  "VALUES (?,?,?,?,?,?,?)",
                  (name.strip(), kind, owner, definition.strip(), test, note, code))
@@ -116,44 +141,19 @@ def add(name: str, definition: str, *, test: str | None = None,
     return f"added  {name} ({kind}{', inside ' + owner if owner else ''}){tail} — {definition.strip()}"
 
 
-def map_word(word: str, source: str, taxo_code: str, note: str | None = None) -> str:
-    """Pin a house word to the taxonomy row the industry uses for the same
-    idea — the join that makes the ontology RELATIONAL. Both ends must
-    exist: an unmapped word is fine, a mapping to nothing is a typo."""
+def rule(dont_say: str, say: str, why: str | None = None) -> str:
+    """Record an overload ruling: from now on, X is said as Y."""
     conn = connect()
-    _migrate(conn)
-    if not conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (word.lower(),)).fetchone():
-        return f"REFUSED — no word named {word!r}. `monty onto add` it first."
-    row = conn.execute("SELECT name, path FROM taxonomy WHERE source=? AND code=?",
-                       (source, taxo_code)).fetchone()
-    if row is None:
-        near = conn.execute(
-            "SELECT code, name FROM taxonomy WHERE source=? AND name LIKE ? LIMIT 5",
-            (source, f"%{word}%")).fetchall()
-        hint = ("; near matches: " + ", ".join(f"{r['code']} ({r['name']})" for r in near)) if near else ""
-        return (f"REFUSED — {source}:{taxo_code} is not an ingested taxonomy row"
-                f" (did you `monty data pull {source}`?){hint}")
-    conn.execute("INSERT OR REPLACE INTO mapping VALUES (?,?,?,?)",
-                 (word, source, taxo_code, note))
+    conn.execute("INSERT OR REPLACE INTO overload VALUES (?,?,?)", (dont_say, say, why))
     conn.commit()
-    return f"mapped  {word} -> {source}:{taxo_code}  ({row['path'] or row['name']})"
-
-
-def mappings(word: str | None = None) -> list[dict]:
-    conn = connect()
-    sql = ("SELECT m.word, m.source, m.code, m.note, t.name, t.path FROM mapping m "
-           "LEFT JOIN taxonomy t ON t.source = m.source AND t.code = m.code")
-    args: list = []
-    if word:
-        sql += " WHERE lower(m.word)=?"
-        args.append(word.lower())
-    return [dict(r) for r in conn.execute(sql + " ORDER BY m.word", args)]
+    return f"ruled  do not say {dont_say!r} — say {say!r}"
 
 
 def words(kind: str | None = None) -> list[dict]:
-    """The vocabulary as rows — ours and yours, distinguishable by kind."""
+    if DB_PATH is None and not db_path().exists():
+        return []
     conn = connect(readonly=db_path().exists())
-    sql = "SELECT name, kind, definition, test FROM word"
+    sql = "SELECT name, kind, owner, definition, test, code FROM word"
     args: list = []
     if kind:
         sql += " WHERE kind=?"
@@ -161,27 +161,26 @@ def words(kind: str | None = None) -> list[dict]:
     return [dict(r) for r in conn.execute(sql + " ORDER BY kind, name", args)]
 
 
-def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
-    """Is this name spoken for? Returns human-readable findings; [] = free.
+def overloads() -> list[dict]:
+    if not db_path().exists():
+        return []
+    conn = connect(readonly=True)
+    return [dict(r) for r in conn.execute("SELECT * FROM overload ORDER BY dont_say")]
 
-    The agent-facing gate: run before naming anything. Checks house words
-    first, then exact hits in every ingested taxonomy.
-    """
-    conn = c or connect(readonly=db_path().exists())
-    low = name.strip().lower()
-    findings: list[str] = []
-    w = conn.execute("SELECT * FROM word WHERE lower(name)=?", (low,)).fetchone()
-    if w:
-        findings.append(f"TAKEN  {w['name']} ({w['kind']}) — {w['definition']}")
-        try:
-            for m in conn.execute(
-                "SELECT source, code FROM mapping WHERE lower(word)=?", (low,)
-            ):
-                findings.append(f"       maps to {m['source']}:{m['code']}")
-        except sqlite3.OperationalError:
-            pass
-    for t in conn.execute(
-        "SELECT source, code, name, path FROM taxonomy WHERE lower(name)=? LIMIT 10", (low,)
-    ):
-        findings.append(f"IN TAXONOMY  {t['source']}:{t['code']} — {t['path'] or t['name']}")
-    return findings
+
+def doctrines() -> list[dict]:
+    if not db_path().exists():
+        return []
+    conn = connect(readonly=True)
+    return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
+
+
+def record_run(task: str, target: str, model: str, outcome: str,
+               laws_failed: list[str]) -> None:
+    from datetime import UTC, datetime
+
+    conn = connect()
+    conn.execute("INSERT INTO gen_runs VALUES (?,?,?,?,?,?)",
+                 (datetime.now(UTC).isoformat(), task, target, model, outcome,
+                  "; ".join(laws_failed)))
+    conn.commit()

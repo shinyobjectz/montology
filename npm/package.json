@@ -1,14 +1,32 @@
 {
   "name": "montology",
   "version": "0.1.0",
-  "description": "Marketing + monorepo + ontology — the `monty` CLI. A thin launcher: ensures uv, then runs the Python engine via uvx.",
-  "bin": { "monty": "bin/monty.js" },
-  "files": ["bin"],
-  "engines": { "node": ">=18" },
+  "description": "The ontology layer for any monorepo \u2014 the monty CLI. A thin launcher: ensures uv, then runs the Python engine via uvx.",
+  "bin": {
+    "monty": "bin/monty.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "license": "Apache-2.0",
   "homepage": "https://github.com/socialite-ml/montology",
-  "repository": { "type": "git", "url": "git+https://github.com/socialite-ml/montology.git" },
-  "keywords": ["marketing", "ontology", "iab", "agent", "mcp", "claude"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/socialite-ml/montology.git"
+  },
+  "keywords": [
+    "ontology",
+    "vocabulary",
+    "lint",
+    "tree-sitter",
+    "ast-grep",
+    "agent",
+    "mcp",
+    "claude"
+  ],
   "montology": {
     "engine": "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli"
   }

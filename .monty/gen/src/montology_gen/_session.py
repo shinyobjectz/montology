@@ -19,13 +19,12 @@ import os
 import urllib.request
 
 NO_BACKEND = (
-    "No model backend is reachable for generation. This is usually fine:\n"
-    "  - skill drafting needs NO model — it hands the grounded task to the host agent;\n"
-    "  - one-line stubs (gen word) need only the 292 MB atomic tier: install Ollama "
-    "(ollama.com) and run `monty gen setup`;\n"
-    "  - a served endpoint (MONTOLOGY_MODEL_URL, any OpenAI-compatible) is the sole "
-    "heavier lane, and it lives on a server, never on this machine.\n"
-    "Deterministic commands (gen lint) never need a model."
+    "No model backend is reachable. This is usually fine:\n"
+    "  - definitions are best written by you or the host agent (`monty onto add`);\n"
+    "  - the autonomous lane for one-liners is the 292 MB atomic tier: install "
+    "Ollama (ollama.com) and `ollama pull gemma3:270m`;\n"
+    "  - a served endpoint (MONTOLOGY_MODEL_URL, any OpenAI-compatible) also works.\n"
+    "Deterministic commands (sync, lint, scan) never need a model."
 )
 
 OLLAMA_URL = "http://localhost:11434"

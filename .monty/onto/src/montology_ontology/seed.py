@@ -1,8 +1,8 @@
-"""The house vocabulary. THE one place montology's own words are authored.
+"""Montology's OWN vocabulary — the dogfood seed.
 
-Small on purpose: the industry taxonomies carry the category systems, and a
-house word earns its row by meaning something none of them say. A starter
-set, marked as such — grow it by decision, not by accretion.
+This seeds the montology repo's ontology (the system described in its own
+terms). A target repo's ontology starts empty and is authored through
+`monty onto add` — their words, not these.
 """
 
 from __future__ import annotations
@@ -10,44 +10,59 @@ from __future__ import annotations
 from .db import connect
 
 WORDS = [
-    # (name, kind, owner, definition, test)
-    ("montology", "core", None,
-     "marketing + monorepo + ontology — this system", "what this repo is"),
-    ("source", "core", None,
-     "a registered external taxonomy, with a status ruling (core/extra/evaluate/skip)",
-     "whose words are these"),
-    ("word", "core", None,
-     "one house term with one meaning, authored in seed.py", "what we mean"),
-    ("mapping", "core", None,
-     "a house word pinned to the taxonomy rows the industry uses for the same idea",
-     "how our word trades"),
-    ("zoo", "core", None,
-     "the local embedding models: registered, downloaded, run on-device",
-     "what makes text comparable"),
-    ("skill", "adopted", None,
-     "an Agent Skills folder: SKILL.md frontmatter, body, scripts/",
-     "how the agent learns a method"),
-    ("gen", "core", None,
-     "the generative system: skills, docs and words produced by Mellea from instruments, law-checked, never hand-prompted",
-     "how prose stays true"),
-    ("instrument", "core", None,
-     "a deterministic context collector — AST surface, warehouse shape, skill inventory — whose measured output is all a stub may know",
-     "where facts come from"),
-    ("plugin", "adopted", None,
-     "the Agent Plugins 1.0.0 package: plugin.json + skills/ + mcp.json — how montology ships",
-     "how it installs"),
-    ("workspace", "core", None,
-     "the directory `monty init` lays down — .monty/ (cache), .plugin/ (the agent face), data/, design/, projects/ — found from anywhere inside by walking up for .monty, the way git finds .git",
+    # (name, kind, owner, code, definition, test)
+    ("ontology", "core", None, "onto",
+     "a repo's vocabulary as a database: words, doctrine, rulings — enforced by scan, rendered to prose, never authored in prose",
+     "what the words are"),
+    ("word", "core", "ontology", "onto.word",
+     "one term with one meaning: definition, the one-line test, an optional owner and dotted code",
+     "what we mean"),
+    ("code", "core", "ontology", "onto.code",
+     "a word's dotted address (har, har.cell) — prefixes must resolve to words, so the namespace stays a tree",
+     "where a word lives"),
+    ("doctrine", "core", "ontology", "onto.doctrine",
+     "a decision written down in the database — because a decision that is not written down gets re-litigated",
+     "why it is this way"),
+    ("scan", "core", None, "scan",
+     "the tree-sitter sweep of a codebase: every declaration measured, checked against the vocabulary",
+     "what the code claims"),
+    ("collision", "core", "scan", "scan.collision",
+     "a declaration named after a word that means something else — the failure scan exists to catch",
+     "where code and vocabulary disagree"),
+    ("candidate", "core", "scan", "scan.candidate",
+     "a recurring declared name with no word — vocabulary the codebase is asking for",
+     "what wants a definition"),
+    ("workspace", "core", None, "ws",
+     "any repo montology is initialized into — found by walking up for .monty, the way git finds .git",
      "where work happens"),
+    ("sync", "core", "ontology", "onto.sync",
+     "rendering the database to the generated words skill — prose is output, never source",
+     "how agents read it"),
+]
+
+DOCTRINE = [
+    ("Prose is rendered, never authored", 10,
+     "The database is the truth. The words skill, the CLAUDE.md section, any "
+     "listing — all render FROM it (`monty sync`). A vocabulary kept in prose "
+     "stays correct only as long as someone remembers to keep it correct; the "
+     "last one drifted, which is why this one is a database with a gate."),
+    ("The gate is the point", 20,
+     "`monty lint` fails a build: collisions (a declaration named after a word "
+     "that means something else), unresolvable code prefixes, generated prose "
+     "gone stale behind the database. Errors carry the repair. An ontology "
+     "without enforcement is a glossary."),
 ]
 
 
 def seed() -> str:
     conn = connect()
-    for name, kind, owner, definition, test in WORDS:
+    for name, kind, owner, code, definition, test in WORDS:
         conn.execute(
-            "INSERT OR REPLACE INTO word (name, kind, owner, definition, test, note) VALUES (?,?,?,?,?,NULL)",
-            (name, kind, owner, definition, test),
+            "INSERT OR REPLACE INTO word (name, kind, owner, definition, test, note, code) "
+            "VALUES (?,?,?,?,?,NULL,?)",
+            (name, kind, owner, definition, test, code),
         )
+    for title, ord_, body in DOCTRINE:
+        conn.execute("INSERT OR REPLACE INTO doctrine VALUES (?,?,?)", (title, ord_, body))
     conn.commit()
-    return f"seeded {len(WORDS)} words"
+    return f"seeded {len(WORDS)} words, {len(DOCTRINE)} doctrine blocks"

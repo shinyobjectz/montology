@@ -1,7 +1,7 @@
 [project]
 name = "montology"
 version = "0.1.0"
-description = "The montology CLI: install data, check the vocabulary, pull models, serve MCP."
+description = "The montology CLI (`monty`): an ontology context layer for any monorepo — check, scan, lint, sync, serve."
 requires-python = ">=3.12"
 license = "Apache-2.0"
 readme = "README.md"
@@ -15,13 +15,9 @@ dependencies = [
     "typer",
     "rich",
     "montology-ontology",
-    "montology-zoo",
-        "montology-warehouse",
+    "montology-scan",
     "montology-gen",
-    "montology-crawl",
-    "montology-media",
     "fastmcp",
-    "mcp-ui-server",
 ]
 
 [project.scripts]
@@ -32,11 +28,8 @@ montology-mcp = "montology_cli.mcp_server:main"  # what .plugin/mcp.json runs
 [tool.uv.sources]
 montology-core = { workspace = true }
 montology-ontology = { workspace = true }
-montology-zoo = { workspace = true }
-montology-warehouse = { workspace = true }
+montology-scan = { workspace = true }
 montology-gen = { workspace = true }
-montology-crawl = { workspace = true }
-montology-media = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
@@ -45,18 +38,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # project name `montology` ≠ package dir `montology_cli`; hatchling needs telling
 packages = ["src/montology_cli"]
-
-# THE SCAFFOLD RIDES IN THE WHEEL: `monty init` materializes a workspace
-# from these — the plugin face, the shipped registries, the design mediums.
-# Paths reach out of this member into the repo root, which exists wherever
-# the wheel is built from a checkout (uvx from git builds exactly that way).
-[tool.hatch.build.targets.wheel.force-include]
-"../../.plugin" = "montology_cli/_scaffold/.plugin"
-"../../data/ontology.db" = "montology_cli/_scaffold/data/ontology.db"
-"../../data/zoo.db" = "montology_cli/_scaffold/data/zoo.db"
-"../../design/package.json" = "montology_cli/_scaffold/design/package.json"
-"../../design/package-lock.json" = "montology_cli/_scaffold/design/package-lock.json"
-"../../design/render.mjs" = "montology_cli/_scaffold/design/render.mjs"
 
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"

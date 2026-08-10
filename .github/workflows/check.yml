@@ -11,5 +11,5 @@ jobs:
       - run: uv sync
       - run: uv run python -m compileall -q .monty && echo "syntax ok"
       - run: uv run python -c "import json; json.load(open('.plugin/plugin.json')); json.load(open('.plugin/mcp.json'))"
-      - run: uv run monty gen lint
-      - run: uv run pytest tests -m "not integration"
+      - run: uv run monty lint
+      - run: uv run pytest tests -q
