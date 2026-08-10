@@ -1,14 +1,24 @@
-"""montology-zoo: local embeddings for marketing text and creative.
+"""montology-zoo: small models for marketing work, run on YOUR laptop.
 
-THE REGISTRY IS A PERMISSIONS TABLE, NOT METADATA. Each model declares its
-role — what question it may answer. A model that cannot tell two captions
-apart must not be allowed to claim two captions are alike. (A lesson
-imported from production: role gates are invariants, not config.)
+THE DATABASE IS THE REGISTRY (zoo/data/zoo.db) — models and artifacts as
+rows, sizes and architecture as MEASURED facts fetched by `zoo sync` from
+the HuggingFace API, never typed by hand. `zoo fit` does the peak-RAM math
+against this machine, with its estimate constants named and justified in
+fit.py.
 
-Weights are DOWNLOADED, never bundled: `montology zoo pull <id>` fetches
-from HuggingFace onto the user's disk under zoo/models/.
+ROLE IS A PERMISSIONS TABLE, NOT METADATA. A model that cannot tell two
+captions apart must not be allowed to claim two captions are alike —
+`text-query-only` rows may answer a typed query and nothing more.
+
+ONNX-first: encoders run through onnxruntime (prebuilt wheels, every OS).
+The GGUF shelf (tiny generative) is served by an installed Ollama or
+llama.cpp — montology never compiles C++ on a marketer's laptop.
 """
 
-from .registry import MODELS, EmbeddingModel, get
+from .db import DB_PATH, connect
+from .fit import machine, report as fit_report
+from .pull import pull
+from .seed import seed
+from .sync import sync
 
-__all__ = ["MODELS", "EmbeddingModel", "get"]
+__all__ = ["DB_PATH", "connect", "fit_report", "machine", "pull", "seed", "sync"]

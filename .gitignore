@@ -12,6 +12,7 @@ dist/
 # fetched, never vendored
 ontology/data/*.tsv
 zoo/models/
+zoo/data/zoo.db
 
 # the database is generated from seed.py + pulled taxonomies; regenerate with
 # `montology data pull`. Committed snapshots are a release decision, not a

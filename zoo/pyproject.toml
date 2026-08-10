@@ -3,7 +3,7 @@ name = "montology-zoo"
 version = "0.1.0"
 description = "Embedding models from HuggingFace, run locally — a registry, a downloader, one embed() call."
 requires-python = ">=3.12"
-dependencies = ["huggingface-hub"]
+dependencies = ["huggingface-hub", "httpx"]
 
 [project.optional-dependencies]
 onnx = ["onnxruntime", "tokenizers"]

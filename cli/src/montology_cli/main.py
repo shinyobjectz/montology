@@ -87,17 +87,47 @@ def onto_check(name: str) -> None:
 
 @zoo_app.command("list")
 def zoo_list() -> None:
-    """The registered embedding models."""
-    from montology_zoo import MODELS
+    """The curated models, from the zoo database."""
+    from montology_zoo import DB_PATH, connect, seed
 
-    for m in MODELS:
-        typer.echo(f"{m.id:<16} {m.backend:<5} {m.dims:>5}d  {m.modality:<11} {m.role}")
-        typer.echo(f"                 {m.note}")
+    if not DB_PATH.exists():
+        seed()
+    conn = connect()
+    for m in conn.execute("SELECT * FROM model ORDER BY status, task, id"):
+        arts = conn.execute(
+            "SELECT format, quant, bytes FROM artifact WHERE model_id=?", (m["id"],)
+        ).fetchall()
+        shapes = ", ".join(
+            f"{a['format']}/{a['quant']}"
+            + (f" {a['bytes'] / 1e6:.0f}MB" if a["bytes"] else " (unsynced)")
+            for a in arts
+        ) or "—"
+        typer.echo(f"{m['status']:<9} {m['id']:<24} {m['task']:<12} {shapes}")
+        typer.echo(f"{'':<9} {m['note']}")
+
+
+@zoo_app.command("sync")
+def zoo_sync() -> None:
+    """Measure every artifact against the HuggingFace API (sizes, architecture)."""
+    from montology_zoo import seed, sync
+
+    typer.echo(seed())
+    for line in sync():
+        typer.echo(line)
+
+
+@zoo_app.command("fit")
+def zoo_fit() -> None:
+    """What runs on THIS machine — measured sizes, documented estimate math."""
+    from montology_zoo import fit_report
+
+    for line in fit_report():
+        typer.echo(line)
 
 
 @zoo_app.command("pull")
 def zoo_pull(model_id: str) -> None:
-    """Download a model's weights from HuggingFace."""
+    """Download a model's weights (the smallest synced artifact)."""
     from montology_zoo.pull import pull
 
     typer.echo(pull(model_id))

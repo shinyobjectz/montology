@@ -1166,6 +1166,7 @@ name = "montology-zoo"
 version = "0.1.0"
 source = { editable = "zoo" }
 dependencies = [
+    { name = "httpx" },
     { name = "huggingface-hub" },
 ]
 
@@ -1180,6 +1181,7 @@ onnx = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx" },
     { name = "huggingface-hub" },
     { name = "llama-cpp-python", marker = "extra == 'gguf'" },
     { name = "onnxruntime", marker = "extra == 'onnx'" },

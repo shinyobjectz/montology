@@ -1,8 +1,12 @@
 """The DataForSEO surface, deliberately small to start.
 
-v3 API, https://api.dataforseo.com. Two tools cover the questions marketers
-ask first; the rest of the catalogue is added by decision, not by mirroring
-107 routes into a prompt (a lesson paid for elsewhere).
+v3 API, https://api.dataforseo.com, HTTP Basic auth (login/password — the
+same scheme the official Python client uses). Both endpoint paths and their
+request fields verified against https://docs.dataforseo.com on 2026-08-10.
+Two tools cover the questions marketers ask first; the rest of the catalogue
+is added by decision, not by mirroring 107 routes into a prompt (a lesson
+paid for elsewhere). Method lives in skills/dataforseo/, the official
+vendor skill folded in.
 """
 
 from __future__ import annotations
@@ -40,8 +44,11 @@ def _post(path: str, payload: list[dict]) -> str:
 def serp_search(keyword: str, location: str = "United States", language: str = "en") -> str:
     """Live Google organic results for a keyword — who ranks, with what.
 
+    Billed per request (one SERP of up to 10 results at the default depth),
+    so batch questions before calling.
+
     Args:
-        keyword: The search query, exactly as a user would type it.
+        keyword: The search query, exactly as a user would type it (max 700 chars).
         location: Location name, e.g. "United States" or "London,England,United Kingdom".
         language: Two-letter language code.
     """
@@ -54,9 +61,15 @@ def serp_search(keyword: str, location: str = "United States", language: str = "
 def keyword_ideas(seed_keywords: str, location: str = "United States") -> str:
     """Keyword suggestions with search volume for one or more seed terms.
 
+    Returns search_volume, cpc, competition and monthly_searches per keyword.
+    The endpoint takes up to 20 seeds per call and the docs cap Google Ads
+    live endpoints at 12 requests/minute — one call with many seeds, never a
+    loop of single-seed calls.
+
     Args:
         seed_keywords: Comma-separated seed keywords, e.g. "ceramic pan, nonstick".
-        location: Location name for volume data.
+            Up to 20 are used; the rest are dropped.
+        location: Location name for volume data (worldwide if the API gets none).
     """
     seeds = [k.strip() for k in seed_keywords.split(",") if k.strip()][:20]
     return _post(
