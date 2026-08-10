@@ -141,6 +141,13 @@ MODELS = [
 
     # ── tabular (CRM, campaign tables) ──────────────────────────────────────
 
+    ("gen-supra2-100m", "SupraLabs/Supra2-100M-Instruct", "generate", "text-gen",
+     None, "apache-2.0", "drafting", "skip",
+     "A tiny-model enthusiast lab's week-old 100M chat-tune (self-tagged sota, "
+     "no measured evals). Below even the atomic-stub floor the carried tiny "
+     "shelf sets at ~270M. The door is a benchmark row: measured wins on OUR "
+     "law pass-rate reopen it."),
+
     # ── generative: the API-only ones, ruled on ─────────────────────────────
     ("gen-muse-image", "meta/muse-image", "generate", "image-text", None,
      "proprietary", "drafting", "skip",
@@ -166,7 +173,9 @@ MODELS = [
      "adapter functions, and a second model family was not worth 900 MB."),
     ("gen-qwen2.5-0.5b", "Qwen/Qwen2.5-0.5B-Instruct", "generate", "text-gen", None,
      "apache-2.0", "drafting", "carried",
-     "Offline extraction and normalisation on any laptop; served via Ollama/llama.cpp."),
+     "Offline extraction and normalisation, and the gen system's ATOMIC tier "
+     "(one-line stubs via MONTOLOGY_MODEL_TINY) — never body drafting, which "
+     "sits above this class's capability floor. Served via Ollama/llama.cpp."),
     ("gen-smollm2-360m", "HuggingFaceTB/SmolLM2-360M-Instruct", "generate", "text-gen",
      None, "apache-2.0", "drafting", "carried",
      "Smaller still — structured extraction where 360M suffices."),

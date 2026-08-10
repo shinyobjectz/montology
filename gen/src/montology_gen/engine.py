@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from ._session import gen_session
+from ._session import gen_session, tiny_session
 from .instruments import (
     ROOT,
     SKILL_PACKAGES,
@@ -139,7 +139,10 @@ def gen_word(name: str, context: str = "") -> str:
     """Propose one ontology word, law-checked; appending stays a human act."""
     from montology_ontology import check as onto_check, connect
 
-    session = gen_session()
+    # THE TINY TIER: a one-line definition is atomic-stub work, exactly what
+    # a 270M-500M model can hold — the combination-of-tiny-SLMs idea, scoped
+    # to where the capability floor allows it. Bodies never route here.
+    session = tiny_session() or gen_session()
     if isinstance(session, str):
         return session
 

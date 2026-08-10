@@ -29,6 +29,24 @@ NO_BACKEND = (
 OLLAMA_URL = "http://localhost:11434"
 
 
+def tiny_session():
+    """The atomic tier: a tiny model for one-line stubs (define_word, field
+    revisions) — never for body drafting, which sits above the capability
+    floor of this class. MONTOLOGY_MODEL_TINY names an Ollama model; the
+    zoo's own shelf (gemma3:270m, qwen2.5:0.5b) is the intended supply.
+    None when unset or unreachable — callers fall through to the full tier."""
+    tiny = os.environ.get("MONTOLOGY_MODEL_TINY", "").strip()
+    if not tiny:
+        return None
+    try:
+        urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3)
+    except Exception:  # noqa: BLE001
+        return None
+    from mellea import start_session
+
+    return start_session("ollama", model_id=tiny)
+
+
 def gen_session():
     """A fresh MelleaSession, or a string carrying the repair."""
     from mellea import MelleaSession
