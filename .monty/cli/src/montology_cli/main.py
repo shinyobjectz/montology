@@ -33,7 +33,9 @@ app = typer.Typer(
 )
 
 onto_app = typer.Typer(help="The vocabulary: check, add, rule, list.", no_args_is_help=True)
+design_app = typer.Typer(help="Design values as vocabulary: tokens, drift, candidates.", no_args_is_help=True)
 app.add_typer(onto_app, name="onto")
+app.add_typer(design_app, name="design")
 
 
 @app.command()
@@ -208,11 +210,11 @@ def scan(candidates: int = typer.Option(0, "--candidates", help="List the top N 
 
 @app.command()
 def lint() -> None:
-    """The gate: collisions, code resolution, drift. Exit 1 on FAIL — put it in CI."""
+    """The gate: collisions, code resolution, design drift, prose drift. Exit 1 on FAIL."""
     from montology_gen import lint as gen_lint
-    from montology_scan import lint as scan_lint
+    from montology_scan import design_lint, lint as scan_lint
 
-    lines = scan_lint() + gen_lint()
+    lines = scan_lint() + design_lint() + gen_lint()
     for line in lines:
         typer.echo(line)
     if any(line.startswith("FAIL") or line.endswith("FAILED") for line in lines):
@@ -243,6 +245,55 @@ def gen(name: str = typer.Argument(..., help="The word to draft a definition for
     from montology_gen import gen_word
 
     typer.echo(gen_word(name, context))
+
+
+@design_app.command("token")
+def design_token(name: str, category: str, value: str,
+                 note: str = typer.Option("", help="Context worth keeping.")) -> None:
+    """Name a design value: monty design token brand-primary color '#061a1c'."""
+    from montology_gen import sync as _sync
+    from montology_ontology import token_add
+
+    got = token_add(name, category, value, note or None)
+    typer.echo(got)
+    if got.startswith("REFUSED"):
+        raise typer.Exit(1)
+    typer.echo(_sync())
+
+
+@design_app.command("tokens")
+def design_tokens(category: str = typer.Argument("", help="color | space | radius | shadow | font | breakpoint.")) -> None:
+    """The design vocabulary as rows."""
+    from montology_ontology import tokens
+
+    rows = tokens(category or None)
+    if not rows:
+        typer.echo("(no tokens yet — monty design candidates shows what the code uses)")
+    for t in rows:
+        typer.echo(f"{t['category']:<11} {t['name']:<24} {t['value']}")
+
+
+@design_app.command("candidates")
+def design_candidates_cmd() -> None:
+    """The design values the code is asking to have named — adoption-ready."""
+    from montology_scan import design_candidates
+
+    typer.echo(design_candidates())
+
+
+@design_app.command("scan")
+def design_scan() -> None:
+    """The style surface: colors, spacing, classes, escapes — measured."""
+    from montology_core import workspace_root
+    from montology_scan import style_surface
+
+    s = style_surface(workspace_root())
+    typer.echo(f"{s['files']} style-bearing files")
+    typer.echo(f"  colors: {len(s['colors'])} distinct, {sum(s['colors'].values())} uses")
+    typer.echo(f"  spacing: {len(s['spacing'])} distinct values")
+    typer.echo(f"  classes: {len(s['defined_classes'])} defined, {len(s['used_classes'])} used")
+    typer.echo(f"  custom properties: {len(s['custom_props'])}")
+    typer.echo(f"  tailwind arbitrary escapes: {len(s['arbitrary'])}")
 
 
 @app.command()

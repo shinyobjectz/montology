@@ -51,6 +51,20 @@ occupies, in every covered language, with strings and comments
 structurally untouchable. `--apply` rewrites; do it on a clean git tree
 and review the diff. Montology never edits code silently.
 
+## Design values are vocabulary too
+
+A hex code is a word that means one thing. `monty design scan` measures
+the style surface (CSS/SCSS structurally, className strings, inline
+styles and `style={{…}}` objects, Tailwind arbitrary escapes);
+`monty design candidates` lists the most-used unnamed values,
+adoption-ready; `monty design token <name> <category> <value>` names one
+(one name, one value — same contract as words). With tokens defined,
+`monty lint` reports drift: rogue literals WITH their nearest token named
+(`#06191b … nearest: brand-primary #061a1c (Δ2)`), near-duplicate colors
+doing one job, classes used but defined nowhere, and every arbitrary
+value that left the scale. Advisory until `[design] enforce = true` in
+montology.toml — promote the law once the tokens are real.
+
 ## Structural search
 
 `monty grep '<pattern>' --lang <language>` runs ast-grep: patterns parse,

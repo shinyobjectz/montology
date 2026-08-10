@@ -106,6 +106,13 @@ def render_words_skill(repo_name: str) -> str:
         for o in rulings:
             lines.append(f"| {o['dont_say']} | **{o['say']}** | {o['why'] or ''} |")
         lines.append("")
+    if vocab["tokens"]:
+        lines += ["## Design tokens", "",
+                  "One name, one value — the style lint aligns the code to these.",
+                  "", "| token | category | value |", "|---|---|---|"]
+        for t in vocab["tokens"]:
+            lines.append(f"| **{t['name']}** | {t['category']} | `{t['value']}` |")
+        lines.append("")
     if vocab["collisions"]:
         lines += ["## Collisions, ruled on", "",
                   "At a framework's boundary, speak the framework's word. Where "

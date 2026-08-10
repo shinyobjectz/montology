@@ -15,6 +15,9 @@ One SQLite file inside the `.monty/` marker. The tables:
     never gets re-litigated.
   * ``renamed`` — the ledger old material is read through: was → now,
     when, why. A renamed word's old name is BLOCKED from re-use.
+  * ``token`` — DESIGN values as vocabulary: a named color, spacing step,
+    radius, shadow, font or breakpoint. A hex code is a word that means
+    one thing; the style lint aligns the code to these.
   * ``gen_runs`` — the assay: every generative attempt (word definitions),
     with outcome and failed laws. Memory, queryable.
 
@@ -79,6 +82,13 @@ CREATE TABLE IF NOT EXISTS renamed (
   now         TEXT NOT NULL,
   renamed_on  TEXT,
   why         TEXT
+);
+
+CREATE TABLE IF NOT EXISTS token (
+  name      TEXT PRIMARY KEY,        -- brand-primary, space-2
+  category  TEXT NOT NULL,           -- color | space | radius | shadow | font | breakpoint
+  value     TEXT NOT NULL,           -- the one value the name means
+  note      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS gen_runs (
@@ -203,6 +213,36 @@ def doctrines() -> list[dict]:
         return []
     conn = connect(readonly=True)
     return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
+
+
+TOKEN_CATEGORIES = ("color", "space", "radius", "shadow", "font", "breakpoint")
+
+
+def token_add(name: str, category: str, value: str, note: str | None = None) -> str:
+    """Name a design value. Same contract as words: one name, one value."""
+    if category not in TOKEN_CATEGORIES:
+        return f"REFUSED — category must be one of: {', '.join(TOKEN_CATEGORIES)}"
+    conn = connect()
+    have = conn.execute("SELECT value FROM token WHERE lower(name)=?", (name.lower(),)).fetchone()
+    if have and have[0] != value.strip():
+        return (f"REFUSED — token {name!r} already means {have[0]!r}. One name, one "
+                "value; re-value it deliberately by deleting first, or pick a new name.")
+    conn.execute("INSERT OR REPLACE INTO token VALUES (?,?,?,?)",
+                 (name.strip(), category, value.strip(), note))
+    conn.commit()
+    return f"token  {name} ({category}) = {value.strip()}"
+
+
+def tokens(category: str | None = None) -> list[dict]:
+    if not db_path().exists():
+        return []
+    conn = connect(readonly=True)
+    sql = "SELECT * FROM token"
+    args: list = []
+    if category:
+        sql += " WHERE category=?"
+        args.append(category)
+    return [dict(r) for r in conn.execute(sql + " ORDER BY category, name", args)]
 
 
 def collide(term: str, theirs: str, their_meaning: str, ruling: str) -> str:
