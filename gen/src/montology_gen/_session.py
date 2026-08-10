@@ -19,10 +19,11 @@ import os
 import urllib.request
 
 NO_BACKEND = (
-    "No model backend is reachable for generation. Repair, either one:\n"
-    "  - install Ollama (ollama.com), run `montology gen setup` (pulls granite4.1:3b, ~2GB), retry; or\n"
-    "  - set MONTOLOGY_MODEL_URL to any OpenAI-compatible endpoint "
-    "(and MONTOLOGY_MODEL / MONTOLOGY_MODEL_KEY as needed).\n"
+    "No model backend is reachable for generation. Repair, any one:\n"
+    "  - skill drafting needs NO model — it hands the grounded task to the host agent;\n"
+    "  - install Ollama (ollama.com) and run `montology gen setup` (pulls gemma3:270m, "
+    "292 MB — the atomic tier); MONTOLOGY_MODEL=granite4.1:3b adds full local autonomy (~2GB);\n"
+    "  - or set MONTOLOGY_MODEL_URL to any OpenAI-compatible endpoint.\n"
     "Deterministic commands (gen lint) never need a model."
 )
 
@@ -35,7 +36,10 @@ def tiny_session():
     floor of this class. MONTOLOGY_MODEL_TINY names an Ollama model; the
     zoo's own shelf (gemma3:270m, qwen2.5:0.5b) is the intended supply.
     None when unset or unreachable — callers fall through to the full tier."""
-    tiny = os.environ.get("MONTOLOGY_MODEL_TINY", "").strip()
+    # Default ON: gemma3:270m (292 MB, the zoo's smallest carried gen row) —
+    # the one model montology ever pulls by default. Unset the var to a
+    # different Ollama model to re-tier; the fall-through keeps absence safe.
+    tiny = os.environ.get("MONTOLOGY_MODEL_TINY", "gemma3:270m").strip()
     if not tiny:
         return None
     try:

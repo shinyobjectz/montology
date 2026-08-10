@@ -141,6 +141,13 @@ MODELS = [
 
     # ── tabular (CRM, campaign tables) ──────────────────────────────────────
 
+    ("gen-gemma4-e4b", "google/gemma-4-E4B-it-assistant", "generate", "text-gen",
+     None, "gemma", "drafting", "skip",
+     "Effective-4B (MatFormer, raw ~8B): a ~4 GB-class download — twice the "
+     "Switch 3B already ruled too big for a default, and multimodal "
+     "any-to-any is more model than gen needs. Same ruling covers E2B "
+     "(~2-3 GB): local body drafting costs ~2 GB minimum in any family, or "
+     "costs nothing via the host-agent handoff, which is the default."),
     ("gen-supra2-100m", "SupraLabs/Supra2-100M-Instruct", "generate", "text-gen",
      None, "apache-2.0", "drafting", "skip",
      "A tiny-model enthusiast lab's week-old 100M chat-tune (self-tagged sota, "
