@@ -137,6 +137,36 @@ def onto_rule(dont_say: str, say: str,
     typer.echo(_sync())
 
 
+@onto_app.command("collide")
+def onto_collide(term: str, theirs: str = typer.Argument(..., help="Whose word collides (the framework/system)."),
+                 meaning: str = typer.Argument(..., help="What the term means in THEIR system."),
+                 ruling: str = typer.Argument(..., help="Which side moved, and what to say now.")) -> None:
+    """Record a boundary collision ruling: whose word, what theirs means, who moved."""
+    from montology_gen import sync as _sync
+    from montology_ontology import collide
+
+    typer.echo(collide(term, theirs, meaning, ruling))
+    typer.echo(_sync())
+
+
+@onto_app.command("rename")
+def onto_rename(was: str, now: str,
+                why: str = typer.Argument(..., help="Required — a rename without a reason is churn.")) -> None:
+    """Rename a word and ledger it — the old name retires, old material stays readable."""
+    from montology_gen import sync as _sync
+    from montology_ontology import rename_word
+
+    got = rename_word(was, now, why)
+    typer.echo(got)
+    if got.startswith("REFUSED"):
+        raise typer.Exit(1)
+    typer.echo(_sync())
+    from montology_scan import migrate as _migrate
+
+    typer.echo("where the code still says the old name:")
+    typer.echo(_migrate(was, now))
+
+
 @onto_app.command("list")
 def onto_list(kind: str = typer.Argument("", help="Filter: core | inner | adopted | custom.")) -> None:
     """The vocabulary as rows."""
@@ -213,6 +243,15 @@ def gen(name: str = typer.Argument(..., help="The word to draft a definition for
     from montology_gen import gen_word
 
     typer.echo(gen_word(name, context))
+
+
+@app.command()
+def migrate(was: str, now: str,
+            apply: bool = typer.Option(False, "--apply", help="Rewrite in place (clean git tree first).")) -> None:
+    """Propagate a rename through the code: sweep every case variant; --apply rewrites."""
+    from montology_scan import migrate as scan_migrate
+
+    typer.echo(scan_migrate(was, now, apply))
 
 
 @app.command()

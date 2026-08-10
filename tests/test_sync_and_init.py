@@ -30,6 +30,19 @@ def test_sync_renders_and_drift_fails(ws, onto_db):
     assert lint()[-1].endswith("ok")
 
 
+def test_sync_renders_collisions_and_renames(ws, onto_db):
+    from montology_gen import render_words_skill
+
+    onto_db.collide("Artifact", "mellea", "a file out of the sandbox",
+                    "WE MOVED — ours became Dossier")
+    onto_db.add("output", "what a task produces", kind="core")
+    onto_db.rename_word("output", "dossier", "one word for the deliverable")
+    text = render_words_skill("t")
+    assert "Collisions, ruled on" in text and "WE MOVED" in text
+    assert "Renamed — what older material means" in text and "output" in text
+    assert "**dossier**" in text
+
+
 def test_empty_ontology_renders_the_method(ws):
     from montology_gen import render_words_skill
 

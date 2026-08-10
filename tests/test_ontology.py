@@ -29,3 +29,28 @@ def test_rulings_surface_in_check(onto_db):
 def test_empty_db_is_all_free(onto_db):
     assert onto_db.check("anything") == []
     assert onto_db.words() == []
+
+
+def test_collision_ruling_surfaces_in_check(onto_db):
+    onto_db.collide("Artifact", "mellea",
+                    "a file produced by code execution",
+                    "WE MOVED — ours became Dossier; Artifact now means theirs only")
+    findings = onto_db.check("artifact")
+    assert any("COLLISION (mellea)" in f and "WE MOVED" in f for f in findings)
+
+
+def test_rename_moves_the_row_and_retires_the_old_name(onto_db):
+    onto_db.add("artifact", "what a task produces", kind="core")
+    got = onto_db.rename_word("artifact", "dossier", "mellea's field name cannot be aliased")
+    assert got.startswith("renamed") and "row moved" in got
+    assert any(w["name"] == "dossier" for w in onto_db.words())
+    # the old name is blocked from re-use, with the ledger as the finding
+    refused = onto_db.add("artifact", "something new")
+    assert refused.startswith("REFUSED") and "retired" in refused
+    # renaming ONTO a taken name is refused
+    onto_db.add("plan", "a proposal")
+    assert onto_db.rename_word("plan", "dossier", "why").startswith("REFUSED")
+
+
+def test_rename_requires_its_why(onto_db):
+    assert "needs its why" in onto_db.rename_word("a", "b", "  ")

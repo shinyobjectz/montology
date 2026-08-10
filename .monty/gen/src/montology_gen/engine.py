@@ -106,6 +106,21 @@ def render_words_skill(repo_name: str) -> str:
         for o in rulings:
             lines.append(f"| {o['dont_say']} | **{o['say']}** | {o['why'] or ''} |")
         lines.append("")
+    if vocab["collisions"]:
+        lines += ["## Collisions, ruled on", "",
+                  "At a framework's boundary, speak the framework's word. Where "
+                  "names collide, the ruling below says which side moved — "
+                  "inherit the decision, not the argument.", ""]
+        for c in vocab["collisions"]:
+            lines += [f"**`{c['term']}`** ({c['theirs']}) — their meaning: "
+                      f"{c['their_meaning']}", "",
+                      f"{c['ruling']} *(decided {c['decided']})*", ""]
+    if vocab["renames"]:
+        lines += ["## Renamed — what older material means", "",
+                  "| was | is | when | why |", "|---|---|---|---|"]
+        for r in vocab["renames"]:
+            lines.append(f"| {r['was']} | **{r['now']}** | {r['renamed_on']} | {r['why'] or ''} |")
+        lines.append("")
     for d in doctrine:
         lines += [f"## {d['title']}", "", d["body"], ""]
     lines += [

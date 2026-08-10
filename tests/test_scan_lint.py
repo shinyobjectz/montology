@@ -84,3 +84,28 @@ def test_missing_astgrep_carries_repair(monkeypatch):
 
     monkeypatch.setattr(shutil, "which", lambda n: None)
     assert "brew install ast-grep" in sg("def $F($$$)", "python")
+
+
+def test_migrate_variants_cover_the_case_shapes():
+    from montology_scan.rename import _variants
+
+    got = _variants("artifact", "dossier")
+    assert ("artifact", "dossier") in got
+    assert ("Artifact", "Dossier") in got
+    assert ("ARTIFACT", "DOSSIER") in got
+
+
+def test_migrate_rewrites_every_position_a_name_occupies(repo):
+    from montology_scan import migrate
+
+    got = migrate("atlas", "chart", root=repo)
+    assert "occurrence(s)" in got and "--apply" in got
+    got = migrate("atlas", "chart", apply=True, root=repo)
+    assert "REWRITTEN" in got
+    assert "class Chart" in (repo / "a.py").read_text()          # class position
+    assert "function chart()" in (repo / "b.ts").read_text()     # ts identifier
+    # strings and comments are structurally untouchable
+    (repo / "s.py").write_text('x = "atlas"  # atlas\natlas = 1\n')
+    migrate("atlas", "chart", apply=True, root=repo)
+    text = (repo / "s.py").read_text()
+    assert 'x = "atlas"' in text and "# atlas" in text and "chart = 1" in text

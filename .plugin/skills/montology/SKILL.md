@@ -31,6 +31,26 @@ stays correct only as long as someone remembers it; this one has a gate.
 5. **Never hand-edit the words skill.** It is GENERATED; `monty sync`
    re-renders it after any change (onto add/rule do this themselves).
 
+## Rulings: how arguments end
+
+- **Overload** — `monty onto rule <dont-say> <say> "<why>"`: from now on,
+  X is said as Y; `onto check X` answers with the ruling.
+- **Collision** — `monty onto collide <term> <system> "<their meaning>"
+  "<ruling>"`: at a framework's boundary, record whose word it is and
+  which side moved, so the choice is inherited, never re-argued.
+- **Rename** — `monty onto rename <was> <now> "<why>"`: the word row
+  moves, the old name retires (blocked from re-use), the ledger keeps old
+  material readable — and the sweep immediately shows where the CODE
+  still says the old name.
+
+## Migration: the code catches up
+
+`monty migrate <was> <now>` sweeps every case variant (snake, Pascal,
+UPPER) by TOKEN through the tree-sitter parse — every position a name
+occupies, in every covered language, with strings and comments
+structurally untouchable. `--apply` rewrites; do it on a clean git tree
+and review the diff. Montology never edits code silently.
+
 ## Structural search
 
 `monty grep '<pattern>' --lang <language>` runs ast-grep: patterns parse,

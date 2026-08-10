@@ -1,6 +1,6 @@
 """The ontology: a repo's vocabulary as a database, not a doc.
 
-One SQLite file inside the `.monty/` marker. Four tables:
+One SQLite file inside the `.monty/` marker. The tables:
 
   * ``word`` — one term, one meaning: name, kind, an optional owner (the
     word it lives inside), a definition, the one-line "what is it" test,
@@ -9,6 +9,12 @@ One SQLite file inside the `.monty/` marker. Four tables:
   * ``doctrine`` — the decisions worth writing down, ordered; a decision
     that is not written down gets re-litigated.
   * ``overload`` — "do not say X, say Y": the words a repo has ruled on.
+  * ``collision`` — boundary rulings with frameworks: whose word it is,
+    what theirs means, which of us moved. At a framework's boundary you
+    speak the framework's word; the table says who yielded, so the choice
+    never gets re-litigated.
+  * ``renamed`` — the ledger old material is read through: was → now,
+    when, why. A renamed word's old name is BLOCKED from re-use.
   * ``gen_runs`` — the assay: every generative attempt (word definitions),
     with outcome and failed laws. Memory, queryable.
 
@@ -60,6 +66,21 @@ CREATE TABLE IF NOT EXISTS overload (
   why         TEXT
 );
 
+CREATE TABLE IF NOT EXISTS collision (
+  term          TEXT PRIMARY KEY,     -- the contested name
+  theirs        TEXT NOT NULL,        -- whose word collides (the framework/system)
+  their_meaning TEXT NOT NULL,
+  ruling        TEXT NOT NULL,        -- which side moved, and what to say now
+  decided       TEXT
+);
+
+CREATE TABLE IF NOT EXISTS renamed (
+  was         TEXT PRIMARY KEY,
+  now         TEXT NOT NULL,
+  renamed_on  TEXT,
+  why         TEXT
+);
+
 CREATE TABLE IF NOT EXISTS gen_runs (
   ran_at      TEXT NOT NULL,
   task        TEXT NOT NULL,
@@ -104,6 +125,15 @@ def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
     if o:
         findings.append(f"RULED  do not say {o['dont_say']!r} — say {o['say']!r}"
                         + (f" ({o['why']})" if o["why"] else ""))
+    r = conn.execute("SELECT * FROM renamed WHERE lower(was)=?", (low,)).fetchone()
+    if r:
+        findings.append(f"RENAMED  {r['was']!r} became {r['now']!r} on {r['renamed_on']}"
+                        + (f" — {r['why']}" if r["why"] else "")
+                        + ". The old name stays retired.")
+    col = conn.execute("SELECT * FROM collision WHERE lower(term)=?", (low,)).fetchone()
+    if col:
+        findings.append(f"COLLISION ({col['theirs']})  their meaning: {col['their_meaning']} "
+                        f"— ruling: {col['ruling']}")
     return findings
 
 
@@ -173,6 +203,56 @@ def doctrines() -> list[dict]:
         return []
     conn = connect(readonly=True)
     return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
+
+
+def collide(term: str, theirs: str, their_meaning: str, ruling: str) -> str:
+    """Record a boundary collision ruling. The ruling says which side moved
+    ("WE MOVED — ours became X" / "theirs; always qualify") so the next
+    reader inherits the decision, not the argument."""
+    from datetime import UTC, datetime
+
+    conn = connect()
+    conn.execute("INSERT OR REPLACE INTO collision VALUES (?,?,?,?,?)",
+                 (term.strip(), theirs.strip(), their_meaning.strip(), ruling.strip(),
+                  str(datetime.now(UTC).date())))
+    conn.commit()
+    return f"ruled  {term!r} vs {theirs}: {ruling.strip()}"
+
+
+def rename_word(was: str, now: str, why: str) -> str:
+    """Rename a word and ledger it: the row moves, the old name is blocked,
+    and material written before the date stays readable through the entry.
+    `why` is required — a rename without a reason is churn."""
+    from datetime import UTC, datetime
+
+    if not why.strip():
+        return "REFUSED — a rename needs its why; that is what the ledger is FOR."
+    conn = connect()
+    row = conn.execute("SELECT * FROM word WHERE lower(name)=?", (was.lower(),)).fetchone()
+    taken = check(now, conn)
+    if taken:
+        return "REFUSED — the new name is spoken for:\n" + "\n".join(taken)
+    if row:
+        conn.execute("UPDATE word SET name=? WHERE name=?", (now.strip(), row["name"]))
+    conn.execute("INSERT OR REPLACE INTO renamed VALUES (?,?,?,?)",
+                 (was.strip(), now.strip(), str(datetime.now(UTC).date()), why.strip()))
+    conn.commit()
+    moved = "row moved, " if row else "no existing row (history recorded), "
+    return f"renamed  {was!r} -> {now!r} ({moved}old name retired, ledgered)"
+
+
+def collisions() -> list[dict]:
+    if not db_path().exists():
+        return []
+    conn = connect(readonly=True)
+    return [dict(r) for r in conn.execute("SELECT * FROM collision ORDER BY term")]
+
+
+def renames() -> list[dict]:
+    if not db_path().exists():
+        return []
+    conn = connect(readonly=True)
+    return [dict(r) for r in conn.execute("SELECT * FROM renamed ORDER BY renamed_on, was")]
 
 
 def record_run(task: str, target: str, model: str, outcome: str,

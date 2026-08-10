@@ -16,5 +16,6 @@ build, with the repair attached.
 from .surface import declarations, languages_covered
 from .lint import lint, candidates
 from .astgrep import sg
+from .rename import migrate
 
-__all__ = ["candidates", "declarations", "languages_covered", "lint", "sg"]
+__all__ = ["candidates", "declarations", "languages_covered", "lint", "migrate", "sg"]
