@@ -37,7 +37,7 @@ TAILWIND_RE = re.compile(
     r"rounded|shadow|border|ring|tracking|leading|z|top|left|right|bottom|inset|opacity|"
     r"overflow|object|aspect|col|row|order|self|place|divide|transition|duration|scale|"
     r"translate|rotate|cursor|select|whitespace|break|underline|uppercase|lowercase|italic)"
-    r"(?:-[a-z0-9./\[\]%#]+)?$"
+    r"(?:-[a-z0-9./\[\]%#-]+)?$"
 )
 
 SECTION_TYPE_HINTS = (
