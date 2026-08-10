@@ -51,11 +51,12 @@ def init(path: str = typer.Argument(".", help="Where the workspace goes (default
          brand: str = typer.Option("", "--brand", help="A first brand URL to crawl into projects/."),
          yes: bool = typer.Option(False, "--yes", help="Non-interactive: no prompts, env-only secrets."),
          json_out: bool = typer.Option(False, "--json", help="Machine summary (implies --yes)."),
-         no_install: bool = typer.Option(False, "--no-install", help="Scaffold only; skip downloads.")) -> None:
+         no_install: bool = typer.Option(False, "--no-install", help="Scaffold only; skip downloads."),
+         agents: str = typer.Option("", "--agents", help="Harnesses to wire: claude,cursor,codex (default: detected).")) -> None:
     """Create a workspace here: scaffold, install everything, onboard."""
     from .init import init_command
 
-    init_command(path, name, brand, yes or json_out, json_out, no_install)
+    init_command(path, name, brand, yes or json_out, json_out, no_install, agents)
 
 
 def _gen_backend_ok() -> bool:

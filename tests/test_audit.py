@@ -42,3 +42,25 @@ def test_inventory_types_and_cross_page_dedup():
 def test_buttons_signature():
     got = _buttons('<a class="btn bg-ink rounded-full">go</a>' * 3)
     assert got and got[0]["count"] == 3
+
+
+def test_key_links_prefer_one_page_per_kind_and_skip_noise():
+    from montology_crawl.audit import _key_links
+
+    html = "".join(f'<a href="{h}">x</a>' for h in (
+        "/products/gift-cards",          # noise: gift
+        "/products/boot-one",            # detail
+        "/products/boot-two",            # detail again — repeats rank last
+        "/product-care",                 # detail bucket, same kind
+        "/collections/womens-boots",     # listing
+        "/pages/about-us",               # about
+        "/cart", "/account/login", "/legal/terms",   # noise
+        "https://other.com/products/x",  # off-domain
+    ))
+    got = _key_links("https://tecovas.com", html)
+    # one per kind first: a listing, a detail, an about — before any repeat
+    assert got[0] == "https://tecovas.com/products/boot-one"
+    assert "https://tecovas.com/collections/womens-boots" in got[:3]
+    assert "https://tecovas.com/pages/about-us" in got[:3]
+    assert all("gift" not in u and "cart" not in u and "legal" not in u for u in got)
+    assert all(u.startswith("https://tecovas.com") for u in got)

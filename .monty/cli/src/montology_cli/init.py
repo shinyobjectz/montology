@@ -8,8 +8,9 @@ The flow, decided deliberately:
      software, it reports ``{missing, repair}`` and degrades;
   3. every install that can start STARTS, in the background — the gemma
      weights are coming down while the questions are being answered;
-  4. three prompts, under a minute: workspace name, vendor keys now or
-     later, an optional first brand to crawl;
+  4. four prompts, under a minute: workspace name, vendor keys now or
+     later, which agent harnesses to wire (claude/cursor/codex, detected
+     ones as the default), an optional first brand to crawl;
   5. one progress screen for whatever is still running;
   6. the finale: crawl + scaffold the brand, so init ends with a real
      project — which is also the end-to-end smoke test.
@@ -33,7 +34,7 @@ from pathlib import Path
 
 import typer
 
-from ._scaffold import materialize
+from ._scaffold import materialize, wire_agents
 
 OLLAMA_URL = "http://localhost:11434"
 TINY_MODEL = "gemma3:270m"
@@ -68,6 +69,21 @@ def _gemma_present() -> bool:
 def _toolchain() -> dict[str, bool]:
     return {name: shutil.which(name) is not None
             for name in ("ollama", "node", "npm", "ffmpeg", "just", "git")}
+
+
+AGENT_HARNESSES = ("claude", "cursor", "codex")
+
+
+def _detect_agents() -> list[str]:
+    """Which harnesses live on this machine — the prompt's default."""
+    found = []
+    if shutil.which("claude"):
+        found.append("claude")
+    if shutil.which("cursor") or Path("/Applications/Cursor.app").exists():
+        found.append("cursor")
+    if shutil.which("codex"):
+        found.append("codex")
+    return found
 
 
 # ── background jobs ──────────────────────────────────────────────────────
@@ -197,23 +213,70 @@ def _watch_rich(jobs: list[Job]) -> None:
             progress.update(tasks[j.key], total=j.total or 1, completed=j.total or 1)
 
 
+def _masked_prompt(label: str) -> str:
+    """A secret with feedback: echoes one bullet per keystroke instead of
+    the unnerving nothing of hide_input. POSIX TTYs only; anywhere else
+    falls back to the blank-hidden prompt."""
+    if not sys.stdin.isatty():
+        return typer.prompt(label, hide_input=True)
+    try:
+        import termios
+        import tty
+    except ImportError:
+        return typer.prompt(label, hide_input=True)
+    sys.stdout.write(f"{label}: ")
+    sys.stdout.flush()
+    fd = sys.stdin.fileno()
+    old_attrs = termios.tcgetattr(fd)
+    chars: list[str] = []
+    try:
+        tty.setraw(fd)
+        while True:
+            ch = sys.stdin.read(1)
+            if ch in ("\r", "\n"):
+                break
+            if ch == "\x03":
+                raise KeyboardInterrupt
+            if ch in ("\x7f", "\x08"):
+                if chars:
+                    chars.pop()
+                    sys.stdout.write("\b \b")
+            elif ch.isprintable():
+                chars.append(ch)
+                sys.stdout.write("•")
+            sys.stdout.flush()
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    return "".join(chars)
+
+
 def _prompts(default_name: str, echo) -> tuple[str, dict[str, str], str]:
-    """The three onboarding questions. Under a minute, on purpose."""
+    """The onboarding questions. Under a minute, on purpose."""
     name = typer.prompt("Workspace name", default=default_name)
 
     keys: dict[str, str] = {}
     echo("\nVendor keys unlock live data (both optional — skills say what needs what).")
     if typer.confirm("  Add DataForSEO credentials now?", default=False):
         keys["DATAFORSEO_LOGIN"] = typer.prompt("    DATAFORSEO_LOGIN")
-        keys["DATAFORSEO_PASSWORD"] = typer.prompt("    DATAFORSEO_PASSWORD", hide_input=True)
+        keys["DATAFORSEO_PASSWORD"] = _masked_prompt("    DATAFORSEO_PASSWORD")
     if typer.confirm("  Add a ScrapeCreators key now?", default=False):
-        keys["SCRAPECREATORS_API_KEY"] = typer.prompt("    SCRAPECREATORS_API_KEY", hide_input=True)
+        keys["SCRAPECREATORS_API_KEY"] = _masked_prompt("    SCRAPECREATORS_API_KEY")
+
+    detected = _detect_agents()
+    default_agents = ",".join(detected) if detected else ",".join(AGENT_HARNESSES)
+    raw = typer.prompt(
+        f"\nWire this workspace for which agent harnesses? ({', '.join(AGENT_HARNESSES)})",
+        default=default_agents,
+    )
+    agents = tuple(a.strip() for a in raw.split(",") if a.strip() in AGENT_HARNESSES)
 
     brand = typer.prompt(
         "\nFirst brand to crawl (a URL — builds your first project; Enter to skip)",
         default="", show_default=False,
     ).strip()
-    return name, keys, brand
+    return name, keys, brand, agents or tuple(AGENT_HARNESSES)
 
 
 def _write_env(ws: Path, keys: dict[str, str]) -> bool:
@@ -251,7 +314,7 @@ def _demo(ws: Path, url: str, echo) -> str | None:
 
 def init_command(path: str = ".", name: str = "", brand: str = "",
                  yes: bool = False, as_json: bool = False,
-                 no_install: bool = False) -> None:
+                 no_install: bool = False, agents: str = "") -> None:
     ws = Path(path).expanduser().resolve()
     interactive = sys.stdin.isatty() and sys.stdout.isatty() and not yes
     echo = (lambda *_: None) if as_json else typer.echo
@@ -283,16 +346,26 @@ def init_command(path: str = ".", name: str = "", brand: str = "",
         jobs = _start_jobs(ws, tools)
 
     if interactive:
-        ws_name2, keys, brand_answer = _prompts(ws_name, echo)
+        ws_name2, keys, brand_answer, chosen = _prompts(ws_name, echo)
         if ws_name2 != ws_name:
             meta = ws / ".monty" / "workspace.toml"
             meta.write_text(meta.read_text().replace(f'name = "{ws_name}"',
                                                      f'name = "{ws_name2}"'))
+            ws_name = ws_name2
         brand = brand or brand_answer
     else:
         keys = {k: os.environ[k] for k in
                 ("DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD", "SCRAPECREATORS_API_KEY")
                 if os.environ.get(k)}
+        wanted = [a.strip() for a in agents.split(",") if a.strip()]
+        chosen = tuple(a for a in wanted if a in AGENT_HARNESSES) \
+            or tuple(_detect_agents()) or AGENT_HARNESSES
+    wired = wire_agents(ws, ws_name, chosen)
+    summary["created"].extend(wired["made"])
+    summary["agents"] = list(chosen)
+    for note in wired["notes"]:
+        summary.setdefault("notes", []).append(note)
+        echo(f"  {note}")
     if _write_env(ws, keys):
         summary["created"].append(".env")
 

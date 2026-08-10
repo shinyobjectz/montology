@@ -97,20 +97,45 @@ def _images(pages: dict[str, str]) -> list[str]:
     return out[:40]
 
 
+# One page per KIND beats three of the same shape: a listing, a product
+# detail, an about page and a pricing page exercise different templates,
+# which is what a design-system audit is measuring. Buckets rank by how
+# much surface they typically reveal; noise pages never qualify.
+_LINK_BUCKETS = (
+    ("listing", ("collections", "category", "shop", "store", "catalog", "all-")),
+    ("detail", ("/products/", "/product/", "/item/", "/p/")),
+    ("about", ("about", "story", "our-", "brand", "mission")),
+    ("pricing", ("pricing", "plans")),
+    ("content", ("features", "solutions", "blog", "journal", "guide", "lookbook")),
+)
+_LINK_NOISE = ("cart", "checkout", "login", "account", "legal", "terms",
+               "privacy", "gift", "policy", "faq", "help", "support")
+
+
 def _key_links(base: str, html: str) -> list[str]:
     host = urlparse(base).netloc
     hrefs = re.findall(r'<a[^>]+href=["\']([^"\'#?]+)["\']', html, re.I)
-    seen, out = set(), []
+    candidates: list[tuple[str, str]] = []  # (bucket, url) in DOM order
+    seen = set()
     for h in hrefs:
         full = urljoin(base, h)
         p = urlparse(full)
-        if p.netloc != host or full.rstrip("/") == base.rstrip("/"):
+        path = p.path.lower()
+        if p.netloc != host or full.rstrip("/") == base.rstrip("/") or full in seen:
             continue
-        # the pages that define a design system
-        if any(k in p.path.lower() for k in ("pricing", "product", "about", "features", "solutions")):
-            if full not in seen:
+        if any(k in path for k in _LINK_NOISE):
+            continue
+        for bucket, keys in _LINK_BUCKETS:
+            if any(k in path for k in keys):
                 seen.add(full)
-                out.append(full)
+                candidates.append((bucket, full))
+                break
+    out, taken = [], set()
+    for bucket, url in candidates:      # first pass: one per bucket, ranked
+        if bucket not in taken:
+            taken.add(bucket)
+            out.append(url)
+    out.extend(u for b, u in candidates if u not in out)  # then the rest
     return out
 
 

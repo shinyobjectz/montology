@@ -43,24 +43,42 @@ def test_load_env_never_overrides_the_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("B_KEY")
 
 
-def test_materialize_lays_down_the_whole_shape(tmp_path):
-    from montology_cli._scaffold import materialize
+def test_materialize_and_wiring_lay_down_the_whole_shape(tmp_path):
+    from montology_cli._scaffold import materialize, wire_agents
 
     result = materialize(tmp_path / "ws", "acme")
     ws = tmp_path / "ws"
     for expected in (".monty/workspace.toml", ".monty/cache/models",
                      ".plugin/plugin.json", ".plugin/skills/montology/SKILL.md",
                      "data/ontology.db", "data/zoo.db", "design/package.json",
-                     "projects/README.md", ".justfile", "CLAUDE.md",
-                     ".gitignore", ".env.example", ".mcp.json"):
+                     "projects/README.md", ".justfile", ".gitignore", ".env.example"):
+        assert (ws / expected).exists(), expected
+    assert "acme" in (ws / ".justfile").read_text()
+    assert result["made"]
+
+    # every harness gets ITS discovery files; codex's global MCP config is
+    # a printed note, never an edit outside the workspace
+    wired = wire_agents(ws, "acme", ("claude", "cursor", "codex"))
+    for expected in (".mcp.json", "CLAUDE.md", ".cursor/mcp.json", "AGENTS.md"):
         assert (ws / expected).exists(), expected
     assert (ws / ".claude" / "skills").is_symlink()
     assert (ws / ".claude" / "skills" / "montology" / "SKILL.md").exists()
-    assert "acme" in (ws / ".justfile").read_text()
-    # the scaffolded MCP door pins the same engine the shim runs
     mcp = json.loads((ws / ".mcp.json").read_text())
     assert "--from" in mcp["mcpServers"]["montology"]["args"]
-    assert result["made"]
+    assert json.loads((ws / ".cursor" / "mcp.json").read_text()) == mcp
+    assert any("config.toml" in n for n in wired["notes"])
+
+
+def test_wiring_only_the_asked_harness(tmp_path):
+    from montology_cli._scaffold import materialize, wire_agents
+
+    ws = tmp_path / "ws"
+    materialize(ws, "acme")
+    wire_agents(ws, "acme", ("cursor",))
+    assert (ws / ".cursor" / "mcp.json").exists()
+    assert (ws / "AGENTS.md").exists()
+    assert not (ws / ".mcp.json").exists()
+    assert not (ws / "CLAUDE.md").exists()
 
 
 def test_rerun_repairs_and_never_clobbers_user_data(tmp_path):
@@ -71,11 +89,11 @@ def test_rerun_repairs_and_never_clobbers_user_data(tmp_path):
     # the user's ontology grew; a re-run must keep it
     (ws / "data" / "ontology.db").write_bytes(b"the user's own words")
     (ws / ".justfile").write_text("# user-edited\n")
-    (ws / "CLAUDE.md").unlink()  # …and repair what is missing
+    (ws / ".env.example").unlink()  # …and repair what is missing
     materialize(ws, "acme")
     assert (ws / "data" / "ontology.db").read_bytes() == b"the user's own words"
     assert (ws / ".justfile").read_text() == "# user-edited\n"
-    assert (ws / "CLAUDE.md").exists()
+    assert (ws / ".env.example").exists()
 
 
 def test_init_yes_json_is_the_agent_contract(tmp_path, monkeypatch, capsys):
@@ -89,6 +107,7 @@ def test_init_yes_json_is_the_agent_contract(tmp_path, monkeypatch, capsys):
     assert out["ok"] is True
     assert out["workspace"].endswith("ws")
     assert "ontology.db" in out["created"]
+    assert set(out["agents"]) <= {"claude", "cursor", "codex"}
     for m in out["missing"]:
         assert m["repair"], "a gap without a repair is a loop"
     # env-only secrets landed in .env, mode 600

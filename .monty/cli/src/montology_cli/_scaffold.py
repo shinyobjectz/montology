@@ -74,6 +74,26 @@ up (`monty onto check`, taxonomy search), not guessed. When a tool answers
 with a repair, relay it — do not improvise workarounds.
 """
 
+AGENTS_MD = """# {name} — a montology workspace
+
+Marketing work happens here through `monty` (the montology CLI). The
+METHOD lives in `.plugin/skills/` — one SKILL.md per capability; read the
+relevant one before improvising. Run `just` alone to see the action
+surface: what tools are live, which projects exist, what data is loaded.
+
+- **`projects/`** — engagements: one folder per brand (tokens, components,
+  deliverables, rendered output).
+- **`data/`** — the registries (vocabulary, taxonomies, model shelf) and
+  the DuckDB warehouse. Query with `monty sql "..."`.
+- **`design/`** — the shared react render harness and mediums; components
+  import `@brand/*`, bound per project at render time.
+- **`.monty/cache/`** — refetchable weights and browsers, never committed.
+
+Ground rules: numbers come from tools, never memory. Categories are looked
+up (`monty onto check`, taxonomy search), not guessed. When a tool answers
+with a repair, relay it — do not improvise workarounds.
+"""
+
 ENV_EXAMPLE = """# Copy to .env (gitignored) — or export these in your shell.
 # Vendor keys are optional; every montology tool says what it needs.
 DATAFORSEO_LOGIN=
@@ -178,24 +198,45 @@ def materialize(ws: Path, name: str) -> dict:
     (ws / "projects").mkdir(exist_ok=True)
     _write_if_absent(ws / "projects" / "README.md", PROJECTS_README, made)
     _write_if_absent(ws / ".justfile", JUSTFILE.format(name=name), made)
-    _write_if_absent(ws / "CLAUDE.md", CLAUDE_MD.format(name=name), made)
     _write_if_absent(ws / ".gitignore", GITIGNORE, made)
     _write_if_absent(ws / ".env.example", ENV_EXAMPLE, made)
 
-    # Claude Code auto-discovery: the MCP door and the skills, zero ceremony
-    mcp = ws / ".mcp.json"
-    if not mcp.exists():
-        mcp.write_text(json.dumps({
-            "mcpServers": {"montology": {
-                "command": "uvx",
-                "args": ["--from", engine_spec(), "montology-mcp"],
-            }}
-        }, indent=2) + "\n")
-        made.append(".mcp.json")
-    skills_link = ws / ".claude" / "skills"
-    if not skills_link.exists():
-        skills_link.parent.mkdir(exist_ok=True)
-        skills_link.symlink_to(Path("..") / ".plugin" / "skills")
-        made.append(".claude/skills -> .plugin/skills")
-
     return {"root": str(ws), "made": made}
+
+
+CODEX_MCP_NOTE = (
+    "codex keeps MCP config globally — add this to ~/.codex/config.toml "
+    "(init never edits files outside the workspace):\n"
+    "  [mcp_servers.montology]\n"
+    '  command = "uvx"\n'
+    '  args = ["--from", "{spec}", "montology-mcp"]'
+)
+
+
+def wire_agents(ws: Path, name: str, agents: tuple[str, ...]) -> dict:
+    """Per-harness discovery files, chosen at onboarding. Project files
+    only — a harness's global config is the user's, and stays theirs."""
+    made: list[str] = []
+    notes: list[str] = []
+    mcp_config = json.dumps({
+        "mcpServers": {"montology": {
+            "command": "uvx",
+            "args": ["--from", engine_spec(), "montology-mcp"],
+        }}
+    }, indent=2) + "\n"
+
+    if "claude" in agents:
+        _write_if_absent(ws / ".mcp.json", mcp_config, made)
+        _write_if_absent(ws / "CLAUDE.md", CLAUDE_MD.format(name=name), made)
+        skills_link = ws / ".claude" / "skills"
+        if not skills_link.exists():
+            skills_link.parent.mkdir(exist_ok=True)
+            skills_link.symlink_to(Path("..") / ".plugin" / "skills")
+            made.append(".claude/skills -> .plugin/skills")
+    if "cursor" in agents:
+        _write_if_absent(ws / ".cursor" / "mcp.json", mcp_config, made)
+    if "cursor" in agents or "codex" in agents:
+        _write_if_absent(ws / "AGENTS.md", AGENTS_MD.format(name=name), made)
+    if "codex" in agents:
+        notes.append(CODEX_MCP_NOTE.format(spec=engine_spec()))
+    return {"made": made, "notes": notes}
