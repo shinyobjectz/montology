@@ -287,6 +287,15 @@ def crawl_page(url: str) -> None:
     typer.echo(fetch_page(url))
 
 
+@crawl_app.command("audit")
+def crawl_audit(url: str, max_pages: int = typer.Option(4, "--pages")) -> None:
+    """The COMPLETE brand surface, multi-page: colors, fonts, tailwind, spacing,
+    breakpoints, buttons, and a typed component inventory with source HTML."""
+    from montology_crawl import brand_audit
+
+    typer.echo(brand_audit(url, max_pages=max_pages))
+
+
 @crawl_app.command("brand")
 def crawl_brand(url: str) -> None:
     """A brand kit measured from a homepage: colors, fonts, logo, voice."""

@@ -1,6 +1,6 @@
 ---
 name: brand-crawl
-description: Crawl a brand's site into usable assets — LLM-ready page markdown, a measured brand kit (colors, fonts, logo, voice), and a React component library in the brand's own tokens. Use when the marketer asks to analyze a brand's site, build on-brand components or pages, audit a competitor's positioning, or pull site content for research.
+description: Crawl a brand's site into usable assets — LLM-ready markdown, a measured brand kit, a FULL multi-page audit (colors, fonts, Tailwind config, spacing/radii, a typed component inventory with source HTML), and a React component library in the brand's own tokens, up to complete landing pages. Use when the marketer asks to analyze a brand's site, build on-brand components or pages, audit a competitor's positioning, or pull site content for research.
 ---
 
 # Brand crawling and the component library
@@ -19,6 +19,41 @@ colors are counted from the CSS, never guessed from the logo.
   nav, section, footer) as cleaned HTML. This is component raw material.
 
 First use needs the browser: `montology crawl setup` (one download).
+
+## The complete library (audit → candidates → convert → compose)
+
+For the FULL system, audit instead of kit — it measures multiple pages,
+every stylesheet, Tailwind usage (the site's own utility frequency IS its
+config), spacing/radius/shadow tokens, the button recipe, and a typed
+component INVENTORY with each candidate's source HTML saved to
+`sources/`:
+
+```sh
+montology crawl audit https://brand.com > audit.json
+montology brand scaffold brandname audit.json    # tokens + 10-20 candidates
+montology brand lint brandname                   # "0 built, N candidates awaiting conversion"
+```
+
+Then convert candidates one by one: read `sources/<candidate>.html`, write
+the component in `components/` (tokens only — if the audit detected
+Tailwind, mirror the site's own utilities listed in tokens.ts), register
+with the candidate's type, lint. The lint line tracks built vs candidates
+until the library is complete.
+
+## Landing pages are compositions
+
+A landing page is a `page`-type entry in `pages/` that imports ONLY library
+components and tokens — `<Nav/><Hero/><Features/><Pricing/><CTA/><Footer/>`
+with props for the copy. Register it like any component
+(`montology brand register brandname Landing page pages/Landing.tsx`); the
+same lint gates it. One design system: the page, the email, and the video
+ad all shop the same manifest.
+
+## Video ads
+
+The remotion-ads skill (folded, with voiceover/captions/formats) consumes
+this library: its brand config is FILLED from tokens.ts and manifest.json —
+never re-asked — and `video-*` components drop into its compositions.
 
 ## The component-library pipeline (scaffold → components → lint → ship)
 

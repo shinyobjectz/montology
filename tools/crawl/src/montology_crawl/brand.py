@@ -28,6 +28,7 @@ COMPONENT_TYPES = (
     "feature", "banner", "logo-row",
     "email-header", "email-body", "email-footer",
     "video-title", "video-lower-third", "video-endcard",
+    "page",  # a COMPOSITION of library components — landing pages live here
 )
 
 
@@ -50,8 +51,15 @@ def scaffold(brand: str, kit_json: str) -> str:
     root = BRANDS_DIR / brand
     (root / "components").mkdir(parents=True, exist_ok=True)
 
+    # an AUDIT (brand_audit) carries the full system; a KIT just the basics.
+    is_audit = "components" in kit and "tailwind" in kit
     colors = kit.get("colors", [])
+    if is_audit:  # audit colors are {"value": ...}; normalise to kit shape
+        colors = [{"hex": c["value"], "count": c["count"]} for c in colors
+                  if str(c.get("value", "")).startswith("#")]
     fonts = kit.get("fonts", [])
+    if isinstance(fonts, dict):
+        fonts = fonts.get("families", [])
     tokens = ["// GENERATED scaffold from a measured brand kit — montology brand scaffold",
               f"// source: {kit.get('url', '?')}  derived: {datetime.now(UTC).date()}",
               "// Counts are the evidence. NAME THE ROLES (primary/surface/accent/ink)",
@@ -61,14 +69,42 @@ def scaffold(brand: str, kit_json: str) -> str:
     tokens += ["} as const;", "", "export const fonts = {"]
     tokens += [f"  f{i}: \"{f['family']}\", // seen {f['count']}x" for i, f in enumerate(fonts[:6])]
     tokens += ["} as const;", ""]
+    if is_audit:
+        for name, key, field in (("spacing", "spacing", "value"), ("radii", "radii", "value"),
+                                 ("shadows", "shadows", "value")):
+            vals = kit.get(key, [])[:8]
+            tokens += [f"export const {name} = {{"]
+            tokens += [f"  v{i}: \"{v[field]}\", // seen {v['count']}x" for i, v in enumerate(vals)]
+            tokens += ["} as const;", ""]
+        bps = [b["value"] for b in kit.get("breakpoints", [])[:6]]
+        tokens += [f"export const breakpoints = {json.dumps(bps)} as const;", ""]
+        tw = kit.get("tailwind", {})
+        if tw.get("detected"):
+            tokens += [f"// TAILWIND DETECTED (utility density {tw.get('utility_density')}) —",
+                       "// the site's own top utilities, i.e. its de-facto config:",
+                       "// " + ", ".join(u["class"] for u in tw.get("top_utilities", [])[:14]), ""]
     (root / "tokens.ts").write_text("\n".join(tokens))
+
+    # the inventory becomes CANDIDATES: source HTML on disk, manifest rows
+    # with status=candidate — the agent converts, registers, lint gates.
+    candidates = []
+    if is_audit:
+        (root / "sources").mkdir(exist_ok=True)
+        for comp in kit.get("components", []):
+            fname = f"sources/{comp['candidate']}.html"
+            (root / fname).write_text(comp.get("source_html", ""))
+            candidates.append({
+                "name": comp["candidate"], "type": comp["type"], "status": "candidate",
+                "file": fname, "seen_on": comp.get("seen_on", []),
+            })
 
     manifest = {
         "brand": brand,
         "source": kit.get("url", ""),
         "derived": str(datetime.now(UTC).date()),
         "logo": kit.get("logo", ""),
-        "components": [],
+        "pages_measured": kit.get("pages_measured", []),
+        "components": candidates,
     }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=1))
     (root / "README.md").write_text(
@@ -78,8 +114,9 @@ def scaffold(brand: str, kit_json: str) -> str:
         "Emails: react-email consumes `email-*`. Video: Remotion consumes "
         "`video-*`. Run `montology brand lint " + brand + "` before shipping.\n"
     )
+    extra = f", {len(candidates)} component candidates in sources/" if candidates else ""
     return (f"scaffolded brands/{brand}/ — tokens.ts ({len(colors[:12])} colors, "
-            f"{len(fonts[:6])} fonts, roles unnamed on purpose), manifest.json, README.md")
+            f"{len(fonts[:6])} fonts, roles unnamed on purpose){extra}")
 
 
 def register(brand: str, name: str, ctype: str, file: str, source_url: str = "") -> str:
@@ -117,11 +154,18 @@ def lint(brand: str) -> list[str]:
     if not (root / "tokens.ts").exists():
         report.append(f"FAIL brands/{brand}: no tokens.ts — components have nothing to import")
 
+    built = candidates = 0
     for comp in manifest.get("components", []):
         f = root / comp.get("file", "")
         tag = f"brands/{brand}/{comp.get('file', '?')}"
         if comp.get("type") not in COMPONENT_TYPES:
             report.append(f"FAIL {tag}: type {comp.get('type')!r} not in the taxonomy")
+        if comp.get("status") == "candidate":
+            candidates += 1
+            if not f.exists():
+                report.append(f"FAIL {tag}: candidate source missing on disk")
+            continue
+        built += 1
         if not f.exists():
             report.append(f"FAIL {tag}: listed in the manifest but missing on disk")
             continue
@@ -134,7 +178,7 @@ def lint(brand: str) -> list[str]:
         if re.search(r"#[0-9a-fA-F]{3,6}\b", re.sub(r"//[^\n]*", "", text)):
             report.append(f"FAIL {tag}: literal hex color in JSX — use the palette from tokens.ts")
 
-    n = len(manifest.get("components", []))
     report.append(("FAIL" if any(r.startswith("FAIL") for r in report) else "ok")
-                  + f" — {n} component(s), tokens {'present' if (root / 'tokens.ts').exists() else 'MISSING'}")
+                  + f" — {built} built, {candidates} candidate(s) awaiting conversion, "
+                  f"tokens {'present' if (root / 'tokens.ts').exists() else 'MISSING'}")
     return report
