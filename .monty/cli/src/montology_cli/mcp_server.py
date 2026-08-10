@@ -93,11 +93,12 @@ def query_warehouse(sql: str) -> str:
 # Crawl tools register softly: montology-crawl brings Playwright, and a
 # server missing it should serve everything else rather than die.
 try:
-    from montology_crawl import (brand_audit, brand_kit, fetch_page, logo_fetch,
+    from montology_crawl import (brand_audit, brand_index, brand_kit,
+                                 discover_socials, fetch_page, logo_fetch,
                                  logo_search, page_sections)
 
     for fn in (fetch_page, brand_kit, page_sections, brand_audit,
-               logo_search, logo_fetch):
+               logo_search, logo_fetch, discover_socials, brand_index):
         mcp.tool(fn)
 except ImportError:
     pass

@@ -57,12 +57,6 @@ packages = ["src/montology_cli"]
 "../../design/package.json" = "montology_cli/_scaffold/design/package.json"
 "../../design/package-lock.json" = "montology_cli/_scaffold/design/package-lock.json"
 "../../design/render.mjs" = "montology_cli/_scaffold/design/render.mjs"
-"../../design/components" = "montology_cli/_scaffold/design/components"
-"../../design/email" = "montology_cli/_scaffold/design/email"
-"../../design/image" = "montology_cli/_scaffold/design/image"
-"../../design/presentation" = "montology_cli/_scaffold/design/presentation"
-"../../design/video" = "montology_cli/_scaffold/design/video"
-"../../design/web" = "montology_cli/_scaffold/design/web"
 
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"

@@ -51,10 +51,10 @@ def test_render_harness_contract(tmp_path, monkeypatch):
     assert 'jsx: "automatic"' in rmod.RENDER_MJS
     assert "renderToStaticMarkup" in rmod.RENDER_MJS
     assert {"react", "react-dom", "esbuild"} <= set(rmod.PACKAGE_JSON["dependencies"])
-    # a render against a missing component carries the projects/ repair
+    # a render against a missing component carries the brands/ repair
     (tmp_path / "design" / "node_modules").mkdir(parents=True)
     (tmp_path / "projects" / "acme").mkdir(parents=True)
-    assert "no such component: projects/acme" in rmod.render("acme", "nope.tsx")
+    assert "no such component: brands/acme" in rmod.render("acme", "nope.tsx")
 
 
 @pytest.mark.integration

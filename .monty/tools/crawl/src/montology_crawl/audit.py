@@ -62,9 +62,21 @@ def brand_audit(url: str, max_pages: int = 4) -> str:
     css = "\n".join(_linked_css(u, h) for u, h in pages.items())
     corpus = "\n".join(pages.values()) + "\n" + css
 
+    sheet_urls = [urljoin(url, h) for h in
+                  re.findall(r'<link[^>]+rel=["\']stylesheet["\'][^>]*href=["\']([^"\']+)',
+                             home_html, re.I)
+                  + re.findall(r'<link[^>]+href=["\']([^"\']+)["\'][^>]*rel=["\']stylesheet["\']',
+                               home_html, re.I)][:8]
+
+    inline_css = "\n".join(
+        re.findall(r"<style[^>]*>(.*?)</style>", home_html, re.S | re.I))[:200_000]
+
     audit = {
         "url": url,
         "pages_measured": list(pages),
+        "stylesheets": sheet_urls,
+        "inline_css_chars": len(inline_css),
+        "inline_css": inline_css,
         "colors": _colors(corpus),
         "fonts": _fonts(corpus, css),
         "tailwind": _tailwind(pages.values()),

@@ -143,7 +143,7 @@ def logo_fetch(project: str, query: str, variant: str = "", theme: str = "light"
             return f"could not read the icon module at {url} — logo_search for alternatives."
         content = m.group(1).encode()
 
-    dest_dir = brands_dir() / project / "assets" / "logos"
+    dest_dir = brands_dir() / project / "design" / "logos"
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{_slug(query)}-{hit['source']}-{key}.svg"
     dest.write_bytes(content)

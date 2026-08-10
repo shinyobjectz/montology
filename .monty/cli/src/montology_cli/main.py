@@ -6,6 +6,7 @@ happened, and when something is missing, say exactly what to do about it.
 
 from __future__ import annotations
 
+import json
 import os
 
 import typer
@@ -503,6 +504,25 @@ def convert_inline_cmd(src: str) -> None:
     from montology_media import data_uri
 
     typer.echo(data_uri(src))
+
+
+@brand_app.command("index")
+def brand_index_cmd(brand: str,
+                    platforms: str = typer.Option("tiktok,instagram,youtube", "--platforms"),
+                    media_cap: int = typer.Option(12, "--media", help="Max images per platform.")) -> None:
+    """The FULL pull: socials discovered from the site, posts + media into the
+    book, zoo embeddings into the warehouse's brand_index table."""
+    from montology_crawl import brand_index
+
+    typer.echo(brand_index(brand, platforms, media_cap))
+
+
+@brand_app.command("socials")
+def brand_socials_cmd(url: str) -> None:
+    """The social handles a site links to — the brand's own registry."""
+    from montology_crawl import discover_socials
+
+    typer.echo(json.dumps(discover_socials(url), indent=1))
 
 
 @brand_app.command("logo")

@@ -73,7 +73,7 @@ official assets page; theSVG carries 6,500+ full-color marks with the brand
 hex; Simple Icons carries tintable monochrome glyphs; LobeHub carries
 AI-product marks). `monty brand logo <project> stripe
 --variant wordmark --theme dark` writes the SVG into
-`projects/<project>/assets/logos/` with provenance beside it. A miss
+`brands/<brand>/design/logos/` with provenance beside it. A miss
 answers with browse fallbacks (theSVG, SVG Repo) — check the per-asset
 license there before shipping. Logos are trademarks: use them for work
 about or for that brand, and keep the provenance file.
@@ -83,8 +83,8 @@ about or for that brand, and keep the provenance file.
 An ad, its landing page, and the follow-up email are ONE argument: the
 banner's five words reappear in the hero's headline; the email continues
 the same claim. Numbers in any of them obey marketing-science (a tool
-printed them this session). Assets come from `assets/` (local, in the
-ledger) — never hotlinked.
+printed them this session). Assets come from the brand book
+(`brands/<brand>/design/image/`, in the ledger) — never hotlinked.
 
 ## Rules
 

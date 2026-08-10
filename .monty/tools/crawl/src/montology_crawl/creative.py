@@ -62,7 +62,7 @@ def assets(brand: str, audit_json: str, cap: int = 16) -> str:
     except (json.JSONDecodeError, OSError) as e:
         return f"could not read the audit ({e}); pass brand_audit output or a path to it"
 
-    root = brands_dir() / brand / "assets"
+    root = brands_dir() / brand / "design" / "image"
     root.mkdir(parents=True, exist_ok=True)
     base = audit.get("url", "")
     urls: list[str] = []
@@ -83,12 +83,12 @@ def assets(brand: str, audit_json: str, cap: int = 16) -> str:
             if r.status_code != 200 or len(r.content) > 3_000_000:
                 continue
             (root / name).write_bytes(r.content)
-            ledger.append({"file": f"assets/{name}", "source": full, "bytes": len(r.content)})
+            ledger.append({"file": f"design/image/{name}", "source": full, "bytes": len(r.content)})
             n += 1
         except httpx.HTTPError:
             continue
     (root / "assets.json").write_text(json.dumps(ledger, indent=1))
-    return f"pulled {n} asset(s) into projects/{brand}/assets/ (ledger: assets.json)"
+    return f"pulled {n} asset(s) into brands/{brand}/design/image/ (ledger: assets.json)"
 
 
 def brief(brand: str, deliverable: str, goal: str) -> str:
@@ -101,13 +101,14 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
         return f"deliverable must be one of: {', '.join(FORMATS)} (got {deliverable!r})"
     root = brands_dir() / brand
     if not (root / "manifest.json").exists():
-        return (f"no library at projects/{brand} — run the pipeline first: "
+        return (f"no library at brands/{brand} — run the pipeline first: "
                 f"monty crawl audit <url> && monty brand scaffold {brand} audit.json")
     manifest = json.loads((root / "manifest.json").read_text())
-    tokens = (root / "tokens.ts").read_text() if (root / "tokens.ts").exists() else ""
+    tk = root / "design" / "tokens.ts"
+    tokens = tk.read_text() if tk.exists() else ""
     ledger = []
-    if (root / "assets/assets.json").exists():
-        ledger = json.loads((root / "assets/assets.json").read_text())
+    if (root / "design" / "image" / "assets.json").exists():
+        ledger = json.loads((root / "design" / "image" / "assets.json").read_text())
 
     ctype = DELIVERABLE_TYPES[deliverable]
     spec = {
@@ -122,7 +123,9 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
         "formats": [{"name": n, "width": w, "height": h, "use": u}
                     for n, w, h, u in FORMATS[deliverable]],
         "output_contract": (
-            f"One React component per chosen format in deliverables/, file named "
+            f"One React component per chosen format in design/<medium>/ (banner, "
+            f"landing -> web/; social statics -> image/; email -> email/; video -> "
+            f"video/), file named "
             f"<name>-<width>x<height>.tsx for fixed-frame formats, registered as "
             f"type {ctype} via `monty brand register`, passing "
             f"`monty brand lint {brand}`. Fixed-frame components declare their "

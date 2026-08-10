@@ -68,7 +68,7 @@ def test_fetch_extracts_thesvg_module_and_writes_provenance(tmp_path, monkeypatc
     }))
     out = logos.logo_fetch("acme", "stripe")
     assert "thesvg" in out
-    written = tmp_path / "projects" / "acme" / "assets" / "logos" / "stripe-thesvg-logo.svg"
+    written = tmp_path / "projects" / "acme" / "design" / "logos" / "stripe-thesvg-logo.svg"
     assert written.read_text() == '<svg fill="#635BFF">mark</svg>'
     prov = json.loads((written.parent / "provenance.json").read_text())
     assert prov[0]["source"] == "thesvg" and prov[0]["file"] == written.name

@@ -50,7 +50,8 @@ def test_materialize_and_wiring_lay_down_the_whole_shape(tmp_path):
     ws = tmp_path / "ws"
     for expected in (".monty/workspace.toml", ".monty/cache/models",
                      ".plugin/plugin.json", ".plugin/skills/montology/SKILL.md",
-                     "data/ontology.db", "data/zoo.db", "design/package.json",
+                     "data/ontology.db", "data/zoo.db", ".monty/design/package.json",
+                     ".monty/design/render.mjs", "brands/README.md",
                      "projects/README.md", ".justfile", ".gitignore", ".env.example"):
         assert (ws / expected).exists(), expected
     assert "acme" in (ws / ".justfile").read_text()

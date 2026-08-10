@@ -7,23 +7,26 @@ TWO RULINGS, MADE ONCE:
     proxies) built for production scrapers; crawl4ai's whole design goal is
     LLM-READY OUTPUT — clean markdown per page — which is what an agent
     consumes. We are feeding an agent, not running a scraping farm.
-  * **The agent writes the React, not a converter.** html-to-react-components
-    (roman01la) mechanically splits annotated HTML into component files — it
-    is years dormant, JS-side, and mechanical conversion preserves markup
-    while losing meaning. The valuable pipeline is: `page_sections` hands
-    the agent clean section HTML + the brand kit, and the agent writes
-    idiomatic, tokenised React into the brand's component library. The
-    brand-crawl skill is that method.
+  * **Two component tiers, one registry (capture.py refined the old
+    "agent writes the React" ruling).** CAPTURED components are mechanical
+    HTML→JSX conversions — faithful evidence, renderable immediately,
+    filling the shadcn-shaped registry at scaffold time. BUILT components
+    are the agent's idiomatic, tokenised rebuilds — the only tier the
+    design laws (tokens import, no literal hex) gate, and the only tier
+    deliverables come from. Conversion lost meaning as DESIGN; as EVIDENCE
+    it is exactly right.
 
 Playwright's browser is a one-time explicit download: `monty crawl
 setup`. Every tool answers a missing browser with that repair.
 """
 
 from .audit import brand_audit
+from .capture import capture_component, html_to_jsx
 from .logos import logo_fetch, logo_search
+from .socials import brand_index, discover_socials
 from .render import render as brand_render, render_setup as brand_render_setup
 from .creative import FORMATS, assets as brand_assets, brief as brand_brief
 from .brand import COMPONENT_TYPES, lint as brand_lint, register as brand_register, scaffold as brand_scaffold
 from .tools import brand_kit, fetch_page, mellea_tools, page_sections
 
-__all__ = ["COMPONENT_TYPES", "FORMATS", "brand_assets", "brand_audit", "brand_brief", "brand_render", "brand_render_setup", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "logo_fetch", "logo_search", "mellea_tools", "page_sections"]
+__all__ = ["COMPONENT_TYPES", "FORMATS", "brand_assets", "brand_audit", "brand_brief", "brand_render", "brand_render_setup", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "brand_index", "capture_component", "discover_socials", "fetch_page", "html_to_jsx", "logo_fetch", "logo_search", "mellea_tools", "page_sections"]

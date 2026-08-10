@@ -7,8 +7,10 @@ the exact frame the filename declares. No puppeteer, no second browser, no
 Remotion required for statics. (Video renders stay with the remotion-ads
 skill — that is Remotion's own toolchain, invoked on the consumer's side.)
 
-`render_setup` writes a per-brand harness (package.json + render.mjs);
-first render runs `npm install` once. Absent node answers with the repair.
+The harness is ENGINE PLUMBING and lives at `.monty/design/` — one npm
+install for every brand (a node_modules per brand is the sidecar we
+already deleted once). `@brand` binds to `brands/<name>/design/` at render
+time. Absent node answers with the repair.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ DESIGN_DIR: Path | None = None
 def design_dir() -> Path:
     if DESIGN_DIR is not None:
         return DESIGN_DIR
-    return _workspace_root() / "design"
+    return _workspace_root() / ".monty" / "design"
 
 _NO_NODE = ("node is not installed. Repair: install Node.js (nodejs.org or "
             "`brew install node`), then rerun `monty brand render-setup <brand>`.")
@@ -93,10 +95,10 @@ PACKAGE_JSON = {
 
 
 def render_setup(brand: str = "") -> str:
-    """ONE shared harness at design/ — npm install once for every project."""
+    """ONE shared harness at .monty/design/ — npm install once, every brand."""
     if shutil.which("node") is None or shutil.which("npm") is None:
         return _NO_NODE
-    design_dir().mkdir(exist_ok=True)
+    design_dir().mkdir(parents=True, exist_ok=True)
     pkg = design_dir() / "package.json"
     if not pkg.exists():
         pkg.write_text(json.dumps(PACKAGE_JSON, indent=1))
@@ -105,7 +107,7 @@ def render_setup(brand: str = "") -> str:
                        cwd=design_dir(), capture_output=True, text=True, timeout=600)
     if r.returncode != 0:
         return f"npm install failed: {r.stderr[-300:]}"
-    return "render harness ready at design/ (react, react-dom, esbuild — shared by every project)"
+    return "render harness ready at .monty/design/ (react, react-dom, esbuild — shared by every brand)"
 
 
 def render(brand: str, component_file: str, props_json: str = "{}",
@@ -120,37 +122,66 @@ def render(brand: str, component_file: str, props_json: str = "{}",
             return got
     src = root / component_file
     if not src.exists():
-        return f"no such component: projects/{brand}/{component_file}"
-    out_dir = root / "out"
-    out_dir.mkdir(exist_ok=True)
+        return f"no such component: brands/{brand}/{component_file}"
+    out_dir = root / "design" / "out"
+    out_dir.mkdir(parents=True, exist_ok=True)
     out_html = out_dir / (src.stem + ".html")
 
     r = subprocess.run(
         ["node", str(rd / "render.mjs"), str(src.resolve()), props_json,
-         str(out_html.resolve()), str(root.resolve())],
+         str(out_html.resolve()), str((root / "design").resolve())],
         cwd=rd, capture_output=True, text=True, timeout=300,
     )
     if r.returncode != 0:
         return f"render failed: {(r.stderr or r.stdout)[-400:]}"
     report = [r.stdout.strip()]
 
-    m = re.search(r"-(\d{2,4})x(\d{2,4})$", src.stem)
-    if m:  # fixed frame -> pixels, with the crawler's own Chromium
-        w, h = int(m.group(1)), int(m.group(2))
-        out_png = out_dir / (src.stem + ".png")
-        try:
-            from playwright.sync_api import sync_playwright
+    # CAPTURED components carry the site's classNames; faithfulness needs
+    # the site's own CSS. The manifest recorded the stylesheet URLs at
+    # audit time — inject them for the preview (evidence tier only; built
+    # components style from tokens and get nothing injected).
+    if "captured" in component_file:
+        mf = root / "manifest.json"
+        sheets = json.loads(mf.read_text()).get("stylesheets", []) if mf.exists() else []
+        inline = root / "data" / "site-inline.css"
+        head = "".join(f'<link rel="stylesheet" href="{u}">' for u in sheets)
+        if inline.exists():
+            head += f"<style>{inline.read_text()}</style>"
+        # the preview reset: the site's JS (stripped) would have revealed
+        # lazy content — previews reveal it with CSS instead
+        head += ("<style>img,video{opacity:1!important;visibility:visible!important}"
+                 "[data-aos],.lazyload,.lazyloaded{opacity:1!important;transform:none!important}</style>")
+        out_html.write_text(out_html.read_text().replace(
+            '<meta charset="utf-8">', '<meta charset="utf-8">' + head, 1))
+        report.append(f"injected {len(sheets)} stylesheet(s) + inline css (captured tier renders faithfully)")
 
-            with sync_playwright() as pw:
-                browser = pw.chromium.launch()
+    # EVERYTHING gets pixels: fixed-frame files at their declared WxH,
+    # everything else full-page at desktop width — the book is visual.
+    m = re.search(r"-(\d{2,4})x(\d{2,4})$", src.stem)
+    out_png = out_dir / (src.stem + ".png")
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            if m:
+                w, h = int(m.group(1)), int(m.group(2))
                 page = browser.new_page(viewport={"width": w, "height": h},
                                         device_scale_factor=scale)
                 page.goto(out_html.resolve().as_uri())
-                page.screenshot(path=str(out_png), clip={"x": 0, "y": 0, "width": w, "height": h})
-                browser.close()
-            report.append(f"screenshot {out_png.name} ({w}x{h} @{scale}x, "
-                          f"{out_png.stat().st_size // 1024} KB)")
-        except Exception as e:  # noqa: BLE001
-            report.append(f"screenshot failed ({type(e).__name__}: {e}) — the HTML is still good; "
-                          "run `monty crawl setup` if Chromium is missing")
+                page.screenshot(path=str(out_png),
+                                clip={"x": 0, "y": 0, "width": w, "height": h})
+                shape = f"{w}x{h} @{scale}x"
+            else:
+                page = browser.new_page(viewport={"width": 1280, "height": 800},
+                                        device_scale_factor=scale)
+                page.goto(out_html.resolve().as_uri())
+                page.screenshot(path=str(out_png), full_page=True)
+                shape = f"full page at 1280 @{scale}x"
+            browser.close()
+        report.append(f"screenshot {out_png.name} ({shape}, "
+                      f"{out_png.stat().st_size // 1024} KB)")
+    except Exception as e:  # noqa: BLE001
+        report.append(f"screenshot failed ({type(e).__name__}: {e}) — the HTML is still good; "
+                      "run `monty crawl setup` if Chromium is missing")
     return "\n".join(report)

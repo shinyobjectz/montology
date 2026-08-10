@@ -30,8 +30,11 @@ default:
     @echo "── {name} ─────────────────────────────────────────────"
     @monty doctor
     @echo ""
+    @echo "── brands (the book) ──────────────────────────────────"
+    @ls -1 brands 2>/dev/null | grep -v README || echo "  none yet — monty crawl audit <url> && monty brand scaffold <name> audit.json"
+    @echo ""
     @echo "── projects (engagements) ─────────────────────────────"
-    @ls -1 projects 2>/dev/null | grep -v -e node_modules -e README || echo "  none yet — monty crawl audit <url> && monty brand scaffold <name> audit.json"
+    @ls -1 projects 2>/dev/null | grep -v -e node_modules -e README || echo "  none yet"
     @echo ""
     @echo "── skills the agent carries ───────────────────────────"
     @ls -1 .plugin/skills | grep -v README
@@ -61,12 +64,13 @@ skills under `.plugin/skills/` — they are the method; read them before
 improvising. Run `just` alone to see the action surface: what tools are
 live, which projects exist, what data is loaded.
 
-- **`projects/`** — engagements: one folder per brand, holding its measured
-  tokens, components, deliverables and rendered output.
+- **`brands/`** — the brand book: one folder per brand — measured tokens,
+  the component registry (captured + built), media by medium, social pulls.
+- **`projects/`** — engagements: the work made for someone, consuming the book.
 - **`data/`** — the registries (vocabulary, taxonomies, model shelf) and
   your DuckDB warehouse. Query with `monty sql "..."`.
-- **`design/`** — the shared react render harness and mediums. Components
-  import `@brand/*`, bound per project at render time.
+- Rendering: components import `@brand/*`, bound to `brands/<name>/design`
+  at render time; the shared harness lives inside `.monty/`.
 - **`.monty/cache/`** — refetchable weights and browsers, never committed.
 
 Ground rules: numbers come from tools, never memory. Categories are looked
@@ -81,12 +85,13 @@ METHOD lives in `.plugin/skills/` — one SKILL.md per capability; read the
 relevant one before improvising. Run `just` alone to see the action
 surface: what tools are live, which projects exist, what data is loaded.
 
-- **`projects/`** — engagements: one folder per brand (tokens, components,
-  deliverables, rendered output).
+- **`brands/`** — the brand book: one folder per brand — measured tokens,
+  the component registry (captured + built), media by medium, social pulls.
+- **`projects/`** — engagements: the work made for someone, consuming the book.
 - **`data/`** — the registries (vocabulary, taxonomies, model shelf) and
   the DuckDB warehouse. Query with `monty sql "..."`.
-- **`design/`** — the shared react render harness and mediums; components
-  import `@brand/*`, bound per project at render time.
+- Rendering: components import `@brand/*`, bound to `brands/<name>/design`
+  at render time; the shared harness lives inside `.monty/`.
 - **`.monty/cache/`** — refetchable weights and browsers, never committed.
 
 Ground rules: numbers come from tools, never memory. Categories are looked
@@ -120,18 +125,34 @@ GITIGNORE = """__pycache__/
 # your analytical scratch and stays local
 data/warehouse.duckdb
 
-# node
-design/node_modules/
+# node (the render harness is engine plumbing)
+.monty/design/node_modules/
+
+# pulled media that re-pulls: track images (LFS when heavy), not videos
+brands/*/design/video/*.mp4
+"""
+
+BRANDS_README = """# brands/ — the brand book
+
+One folder per brand: everything montology knows about them, indexed.
+
+    monty crawl audit https://thebrand.com > audit.json
+    monty brand scaffold thebrand audit.json   # tokens + captured component registry
+    monty brand logo thebrand thebrand         # quality vector, with provenance
+    monty brand index thebrand                 # socials -> media -> embeddings
+
+`<brand>/design/components/` is the registry (shadcn-shaped): `captured/`
+holds the site's own sections as React, `built` components are idiomatic
+rebuilds on the measured tokens. `<brand>/design/image|video|email|web|
+presentation/` is the book by medium; `<brand>/data/` holds the audit,
+source HTML and social pulls.
 """
 
 PROJECTS_README = """# projects/
 
-One folder per engagement: a brand's measured tokens (`tokens.ts`), its
-component library (`components/`), deliverables, assets and rendered
-output. Start one:
-
-    monty crawl audit https://thebrand.com > audit.json
-    monty brand scaffold thebrand audit.json
+One folder per ENGAGEMENT — the work made for someone: campaigns,
+reports, deliverable sets. The knowledge about a brand lives in
+`brands/<name>/` (the brand book); an engagement consumes it.
 """
 
 
@@ -173,19 +194,17 @@ def materialize(ws: Path, name: str) -> dict:
         )
         made.append("workspace.toml")
 
-    # engine-owned: refreshes on every init; user additions survive
+    # engine-owned: refreshes on every init; user additions survive. The
+    # render harness is plumbing and lives INSIDE .monty — mediums live in
+    # each brand's book (brands/<name>/design), not at the root.
     shutil.copytree(src / ".plugin", ws / ".plugin", dirs_exist_ok=True)
-    for sub in ("package.json", "package-lock.json", "render.mjs",
-                "components", "email", "image", "presentation", "video", "web"):
+    harness = ws / ".monty" / "design"
+    harness.mkdir(parents=True, exist_ok=True)
+    for sub in ("package.json", "package-lock.json", "render.mjs"):
         s = src / "design" / sub
-        if not s.exists():
-            continue
-        if s.is_dir():
-            shutil.copytree(s, ws / "design" / sub, dirs_exist_ok=True)
-        else:
-            (ws / "design").mkdir(parents=True, exist_ok=True)
-            shutil.copy2(s, ws / "design" / sub)
-    made.append(".plugin + design refreshed")
+        if s.exists():
+            shutil.copy2(s, harness / sub)
+    made.append(".plugin + render harness refreshed")
 
     # user-owned once present: the registries are a starting point, and a
     # workspace's ontology grows — never clobber it
@@ -195,6 +214,8 @@ def materialize(ws: Path, name: str) -> dict:
             shutil.copy2(src / "data" / db, ws / "data" / db)
             made.append(db)
 
+    (ws / "brands").mkdir(exist_ok=True)
+    _write_if_absent(ws / "brands" / "README.md", BRANDS_README, made)
     (ws / "projects").mkdir(exist_ok=True)
     _write_if_absent(ws / "projects" / "README.md", PROJECTS_README, made)
     _write_if_absent(ws / ".justfile", JUSTFILE.format(name=name), made)

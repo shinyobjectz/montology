@@ -22,30 +22,35 @@ First use needs the browser: `monty crawl setup` (one download).
 
 ## The complete library (audit → candidates → convert → compose)
 
-For the FULL system, audit instead of kit — it measures multiple pages,
-every stylesheet, Tailwind usage (the site's own utility frequency IS its
+For the FULL system, audit instead of kit — it measures multiple pages
+(one per KIND: a listing, a product detail, an about page), every
+stylesheet, Tailwind usage (the site's own utility frequency IS its
 config), spacing/radius/shadow tokens, the button recipe, and a typed
-component INVENTORY with each candidate's source HTML saved to
-`sources/`:
+component INVENTORY. Scaffold turns that into the BRAND BOOK at
+`brands/<name>/` — and the registry fills IMMEDIATELY:
 
 ```sh
 monty crawl audit https://brand.com > audit.json
-monty brand scaffold brandname audit.json    # tokens + 10-20 candidates
-monty brand lint brandname                   # "0 built, N candidates awaiting conversion"
+monty brand scaffold brandname audit.json
+# -> design/tokens.ts + a shadcn-shaped registry: design/components/
+#    captured/Hero.tsx, Nav.tsx, Footer.tsx… (the site's own sections,
+#    converted to React on the spot), source HTML in data/sources/
+monty brand lint brandname     # "0 built, N captured awaiting idiomatic rebuild"
 ```
 
-Then convert candidates one by one: read `sources/<candidate>.html`, write
-the component in `components/` (tokens only — if the audit detected
-Tailwind, mirror the site's own utilities listed in tokens.ts), register
-with the candidate's type, lint. The lint line tracks built vs candidates
-until the library is complete.
+CAPTURED components are evidence: faithful, renderable, exempt from the
+design laws. To ship a component in a deliverable, REBUILD it
+idiomatically — tokens only, no literal hex (if the audit detected
+Tailwind, mirror the site's own utilities listed in tokens.ts) — into
+`design/components/`, register it (status becomes built), lint. The lint
+line tracks built vs captured until the registry is idiomatic.
 
 ## Landing pages are compositions
 
-A landing page is a `page`-type entry in `pages/` that imports ONLY library
-components and tokens — `<Nav/><Hero/><Features/><Pricing/><CTA/><Footer/>`
-with props for the copy. Register it like any component
-(`monty brand register brandname Landing page pages/Landing.tsx`); the
+A landing page is a `page`-type entry in `design/web/` that imports ONLY
+library components and tokens — `<Nav/><Hero/><Features/><Pricing/><CTA/>
+<Footer/>` with props for the copy. Register it like any component
+(`monty brand register brandname Landing page design/web/Landing.tsx`); the
 same lint gates it. One design system: the page, the email, and the video
 ad all shop the same manifest.
 
@@ -59,9 +64,9 @@ never re-asked — and `video-*` components drop into its compositions.
 
 ```sh
 monty crawl brand https://brand.com > kit.json      # measure
-monty brand scaffold brandname kit.json             # tokens.ts + manifest
-# …you write components/ (below)…
-monty brand register brandname Hero hero components/Hero.tsx --source https://brand.com
+monty brand scaffold brandname kit.json             # tokens + registry
+# …you rebuild captured components idiomatically (below)…
+monty brand register brandname Hero hero design/components/Hero.tsx --source https://brand.com
 monty brand lint brandname                          # the gate
 ```
 
@@ -77,25 +82,33 @@ frameworks shop the library:
 - **Graphics / pages** — hero, card, pricing, banner render anywhere React
   renders; static-export for graphic design crops.
 
-The gate (`brand lint`) is what keeps the library real: every component
-must import `../tokens` (no scraped hex — tokens are the contract), carry a
-type from the taxonomy, and exist where the manifest says.
+The gate (`brand lint`) is what keeps the library real: every BUILT
+component must import the brand tokens (no scraped hex — tokens are the
+contract), carry a type from the taxonomy, and exist where the manifest
+says. Captured components need only exist — they are evidence.
 
 ## Writing the components
 
-YOU write the React — that is the ruling, not an accident. (The mechanical
-converter considered for this, html-to-react-components, is years dormant
-and preserves markup while losing meaning; a section converted by hand
-into idiomatic JSX with the brand's tokens is the entire value.)
+Two tiers, one ruling refined. CAPTURED components arrive mechanically at
+scaffold time — faithful evidence, good for rendering and reference,
+never for shipping. BUILT components YOU write — converted meaning, not
+markup: idiomatic JSX in the brand's own tokens. Rebuilding is the work:
 
-1. `brand_kit(url)` → write `brands/<brand>/tokens.json` from it: the top
-   counted colors become the palette (name them by role — primary, surface,
-   accent — from how the site uses them), fonts become the type scale.
-2. `page_sections(url)` on the pages that matter (home, product, pricing).
-3. For each section worth keeping, write a React component into
-   `brands/<brand>/components/` — idiomatic JSX, styled from tokens.json,
-   never inline hex codes copied from the scrape. Name components by ROLE
+1. Open the captured component (`design/components/captured/Hero.tsx`) and
+   its source (`data/sources/`), beside `design/tokens.ts` — name the
+   palette roles (primary, surface, accent) from how the site uses them.
+2. Write the rebuild into `design/components/Hero.tsx` — tokens only,
+   never inline hex copied from the scrape. Name components by ROLE
    (Hero, LogoRow, PricingTier), not by page.
+3. Register (status becomes built), lint, and render — every render lands
+   pixels in `design/out/`, fixed-frame files at their declared size,
+   everything else full-page.
+
+Then fill the rest of the book: `monty brand logo <brand> <name>` (quality
+vectors with provenance) and `monty brand index <brand>` — socials
+discovered from the site, posts and media pulled into `design/image|video`,
+zoo embeddings into the warehouse's `brand_index` table so the whole book
+is searchable.
 4. `brands/<brand>/index.ts` exports the library; a README lists each
    component with the URL and date it was derived from — provenance, so a
    redesign of their site is detectable.

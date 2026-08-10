@@ -173,9 +173,9 @@ def _start_jobs(ws: Path, tools: dict[str, bool]) -> list[Job]:
     jobs.append(Subprocess("chromium", "Chromium (crawling + rendering)",
                            [sys.executable, "-m", "playwright", "install", "chromium"]))
     if tools.get("npm"):
-        jobs.append(Subprocess("design", "design harness deps (react, esbuild)",
+        jobs.append(Subprocess("design", "render harness deps (react, esbuild)",
                                ["npm", "install", "--no-fund", "--no-audit"],
-                               cwd=ws / "design"))
+                               cwd=ws / ".monty" / "design"))
     for j in jobs:
         j.start()
     return jobs
@@ -298,9 +298,14 @@ def _write_env(ws: Path, keys: dict[str, str]) -> bool:
 
 
 def _demo(ws: Path, url: str, echo) -> str | None:
-    """The finale: audit the brand, scaffold its project. Also the smoke test."""
+    """The finale: audit → scaffold (captured registry) → logo → a real
+    render. Init ends with React on disk AND pixels of it."""
+    import json as _json
+
     from montology_crawl.audit import brand_audit
     from montology_crawl.brand import scaffold
+    from montology_crawl.logos import logo_fetch
+    from montology_crawl.render import render as brand_render
 
     slug = url.split("//")[-1].split("/")[0].removeprefix("www.").split(".")[0]
     echo(f"\n▸ crawling {url} (up to 4 pages) — this is the whole pipeline once…")
@@ -309,7 +314,19 @@ def _demo(ws: Path, url: str, echo) -> str | None:
         echo(f"  crawl did not produce an audit: {audit[:200]}")
         return None
     echo(scaffold(slug, audit))
-    return f"projects/{slug}"
+    echo("  " + logo_fetch(slug, slug).splitlines()[0])
+
+    mf = ws / "brands" / slug / "manifest.json"
+    comps = _json.loads(mf.read_text()).get("components", []) if mf.exists() else []
+    if comps:
+        ws_brand = ws / "brands" / slug
+        pick = max(comps, key=lambda c: (ws_brand / c["file"]).stat().st_size
+                   if (ws_brand / c["file"]).exists() else 0)
+        echo(f"▸ rendering the richest captured component ({pick['name']})…")
+        for line in brand_render(slug, pick["file"]).splitlines():
+            echo(f"  {line}")
+    echo(f"  the book: brands/{slug}/ — fill it fully with `monty brand index {slug}`")
+    return f"brands/{slug}"
 
 
 def init_command(path: str = ".", name: str = "", brand: str = "",

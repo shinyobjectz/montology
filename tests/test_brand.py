@@ -17,13 +17,16 @@ KIT = json.dumps({"url": "https://x.test", "colors": [{"hex": "#061a1c", "count"
 
 
 def test_scaffold_register_lint_roundtrip(brands):
-    assert brands.scaffold("acme", KIT).startswith("scaffolded")
+    assert brands.scaffold("acme", KIT).startswith("scaffolded brands/")
     root = brands.BRANDS_DIR / "acme"
-    assert 'c0: "#061a1c", // seen 38x' in (root / "tokens.ts").read_text()
-    (root / "components").mkdir(exist_ok=True)
-    (root / "components/Hero.tsx").write_text(
+    assert 'c0: "#061a1c", // seen 38x' in (root / "design" / "tokens.ts").read_text()
+    # the brand book: mediums + data land at scaffold
+    for d in ("design/components/captured", "design/image", "design/video",
+              "design/logos", "data"):
+        assert (root / d).is_dir(), d
+    (root / "design/components/Hero.tsx").write_text(
         'import { palette } from "../tokens";\nexport const Hero = () => <div style={{color: palette.c0}}/>;')
-    assert brands.register("acme", "Hero", "hero", "components/Hero.tsx").startswith("registered")
+    assert brands.register("acme", "Hero", "hero", "design/components/Hero.tsx").startswith("registered")
     lines = brands.lint("acme")
     assert lines[-1].startswith("ok")
 
@@ -31,10 +34,10 @@ def test_scaffold_register_lint_roundtrip(brands):
 def test_gate_failure_modes(brands):
     brands.scaffold("acme", KIT)
     root = brands.BRANDS_DIR / "acme"
-    assert "not in the taxonomy" in brands.register("acme", "X", "sidebar", "components/X.tsx")
-    brands.register("acme", "Ghost", "hero", "components/Ghost.tsx")
-    (root / "components/Hex.tsx").write_text('export const Hex = () => <div style={{color: "#fff"}}/>;')
-    brands.register("acme", "Hex", "banner", "components/Hex.tsx")
+    assert "not in the taxonomy" in brands.register("acme", "X", "sidebar", "design/components/X.tsx")
+    brands.register("acme", "Ghost", "hero", "design/components/Ghost.tsx")
+    (root / "design/components/Hex.tsx").write_text('export const Hex = () => <div style={{color: "#fff"}}/>;')
+    brands.register("acme", "Hex", "banner", "design/components/Hex.tsx")
     report = "\n".join(brands.lint("acme"))
     assert "missing on disk" in report
     assert "does not import the brand tokens" in report
