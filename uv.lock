@@ -17,7 +17,6 @@ members = [
     "montology-media",
     "montology-ontology",
     "montology-scrapecreators",
-    "montology-server",
     "montology-warehouse",
     "montology-workspace",
     "montology-zoo",
@@ -1917,11 +1916,14 @@ wheels = [
 [[package]]
 name = "montology"
 version = "0.1.0"
-source = { editable = "cli" }
+source = { editable = ".monty/cli" }
 dependencies = [
+    { name = "fastmcp" },
+    { name = "mcp-ui-server" },
+    { name = "montology-crawl" },
     { name = "montology-gen" },
+    { name = "montology-media" },
     { name = "montology-ontology" },
-    { name = "montology-server" },
     { name = "montology-warehouse" },
     { name = "montology-zoo" },
     { name = "typer" },
@@ -1929,18 +1931,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "montology-gen", editable = "gen" },
-    { name = "montology-ontology", editable = "ontology" },
-    { name = "montology-server", editable = "server" },
-    { name = "montology-warehouse", editable = "warehouse" },
-    { name = "montology-zoo", editable = "zoo" },
+    { name = "fastmcp" },
+    { name = "mcp-ui-server" },
+    { name = "montology-crawl", editable = ".monty/tools/crawl" },
+    { name = "montology-gen", editable = ".monty/gen" },
+    { name = "montology-media", editable = ".monty/media" },
+    { name = "montology-ontology", editable = ".monty/onto" },
+    { name = "montology-warehouse", editable = ".monty/warehouse" },
+    { name = "montology-zoo", editable = ".monty/zoo" },
     { name = "typer" },
 ]
 
 [[package]]
 name = "montology-crawl"
 version = "0.1.0"
-source = { editable = "tools/crawl" }
+source = { editable = ".monty/tools/crawl" }
 dependencies = [
     { name = "crawl4ai" },
     { name = "httpx" },
@@ -1957,7 +1962,7 @@ requires-dist = [
 [[package]]
 name = "montology-dataforseo"
 version = "0.1.0"
-source = { editable = "tools/dataforseo" }
+source = { editable = ".monty/tools/dataforseo" }
 dependencies = [
     { name = "httpx" },
     { name = "mellea" },
@@ -1972,7 +1977,7 @@ requires-dist = [
 [[package]]
 name = "montology-gen"
 version = "0.1.0"
-source = { editable = "gen" }
+source = { editable = ".monty/gen" }
 dependencies = [
     { name = "mellea" },
     { name = "montology-ontology" },
@@ -1983,15 +1988,15 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "mellea", git = "https://github.com/generative-computing/mellea.git?rev=72488902af314c290392c689e90e0395eca49b44" },
-    { name = "montology-ontology", editable = "ontology" },
-    { name = "montology-warehouse", editable = "warehouse" },
+    { name = "montology-ontology", editable = ".monty/onto" },
+    { name = "montology-warehouse", editable = ".monty/warehouse" },
     { name = "pyyaml" },
 ]
 
 [[package]]
 name = "montology-media"
 version = "0.1.0"
-source = { editable = "media" }
+source = { editable = ".monty/media" }
 dependencies = [
     { name = "pillow" },
 ]
@@ -2002,7 +2007,7 @@ requires-dist = [{ name = "pillow" }]
 [[package]]
 name = "montology-ontology"
 version = "0.1.0"
-source = { editable = "ontology" }
+source = { editable = ".monty/onto" }
 dependencies = [
     { name = "httpx" },
 ]
@@ -2013,7 +2018,7 @@ requires-dist = [{ name = "httpx" }]
 [[package]]
 name = "montology-scrapecreators"
 version = "0.1.0"
-source = { editable = "tools/scrapecreators" }
+source = { editable = ".monty/tools/scrapecreators" }
 dependencies = [
     { name = "httpx" },
     { name = "mellea" },
@@ -2026,32 +2031,9 @@ requires-dist = [
 ]
 
 [[package]]
-name = "montology-server"
-version = "0.1.0"
-source = { editable = "server" }
-dependencies = [
-    { name = "fastmcp" },
-    { name = "mcp-ui-server" },
-    { name = "montology-dataforseo" },
-    { name = "montology-ontology" },
-    { name = "montology-scrapecreators" },
-    { name = "montology-warehouse" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp" },
-    { name = "mcp-ui-server" },
-    { name = "montology-dataforseo", editable = "tools/dataforseo" },
-    { name = "montology-ontology", editable = "ontology" },
-    { name = "montology-scrapecreators", editable = "tools/scrapecreators" },
-    { name = "montology-warehouse", editable = "warehouse" },
-]
-
-[[package]]
 name = "montology-warehouse"
 version = "0.1.0"
-source = { editable = "warehouse" }
+source = { editable = ".monty/warehouse" }
 dependencies = [
     { name = "duckdb" },
 ]
@@ -2088,7 +2070,6 @@ dependencies = [
     { name = "montology-media" },
     { name = "montology-ontology" },
     { name = "montology-scrapecreators" },
-    { name = "montology-server" },
     { name = "montology-warehouse" },
     { name = "montology-zoo" },
 ]
@@ -2114,30 +2095,29 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "montology", editable = "cli" },
-    { name = "montology-crawl", editable = "tools/crawl" },
-    { name = "montology-dataforseo", editable = "tools/dataforseo" },
-    { name = "montology-gen", editable = "gen" },
-    { name = "montology-media", editable = "media" },
-    { name = "montology-ontology", editable = "ontology" },
-    { name = "montology-scrapecreators", editable = "tools/scrapecreators" },
-    { name = "montology-server", editable = "server" },
-    { name = "montology-warehouse", editable = "warehouse" },
-    { name = "montology-warehouse", extras = ["science"], marker = "extra == 'science'", editable = "warehouse" },
-    { name = "montology-zoo", editable = "zoo" },
-    { name = "montology-zoo", extras = ["audio"], marker = "extra == 'audio'", editable = "zoo" },
-    { name = "montology-zoo", extras = ["gguf"], marker = "extra == 'gguf'", editable = "zoo" },
-    { name = "montology-zoo", extras = ["topics"], marker = "extra == 'topics'", editable = "zoo" },
+    { name = "montology", editable = ".monty/cli" },
+    { name = "montology-crawl", editable = ".monty/tools/crawl" },
+    { name = "montology-dataforseo", editable = ".monty/tools/dataforseo" },
+    { name = "montology-gen", editable = ".monty/gen" },
+    { name = "montology-media", editable = ".monty/media" },
+    { name = "montology-ontology", editable = ".monty/onto" },
+    { name = "montology-scrapecreators", editable = ".monty/tools/scrapecreators" },
+    { name = "montology-warehouse", editable = ".monty/warehouse" },
+    { name = "montology-warehouse", extras = ["science"], marker = "extra == 'science'", editable = ".monty/warehouse" },
+    { name = "montology-zoo", editable = ".monty/zoo" },
+    { name = "montology-zoo", extras = ["audio"], marker = "extra == 'audio'", editable = ".monty/zoo" },
+    { name = "montology-zoo", extras = ["gguf"], marker = "extra == 'gguf'", editable = ".monty/zoo" },
+    { name = "montology-zoo", extras = ["topics"], marker = "extra == 'topics'", editable = ".monty/zoo" },
 ]
-provides-extras = ["topics", "audio", "science", "gguf"]
+provides-extras = ["topics", "audio", "gguf", "science"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+dev = [{ name = "pytest" }]
 
 [[package]]
 name = "montology-zoo"
 version = "0.1.0"
-source = { editable = "zoo" }
+source = { editable = ".monty/zoo" }
 dependencies = [
     { name = "httpx" },
     { name = "huggingface-hub" },

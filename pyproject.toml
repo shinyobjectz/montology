@@ -1,13 +1,12 @@
 [project]
 name = "montology-workspace"
 version = "0.1.0"
-description = "Marketing + monorepo + ontology — the workspace root. Install the CLI: `uvx montology`."
+description = "Marketing + monorepo + ontology — the workspace root. The CLI verb is `monty`."
 requires-python = ">=3.12"
 dependencies = [
     "montology",
     "montology-ontology",
     "montology-zoo",
-    "montology-server",
     "montology-dataforseo",
     "montology-scrapecreators",
     "montology-crawl",
@@ -17,31 +16,29 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# passthrough to the zoo's lanes so `uv sync --extra …` works at the root
 topics = ["montology-zoo[topics]"]
 audio = ["montology-zoo[audio]"]
-science = ["montology-warehouse[science]"]
 gguf = ["montology-zoo[gguf]"]
+science = ["montology-warehouse[science]"]
 
 [tool.uv.workspace]
 members = [
-    "cli",
-    "ontology",
-    "zoo",
-    "server",
-    "tools/dataforseo",
-    "tools/scrapecreators",
-    "tools/crawl",
-    "warehouse",
-    "gen",
-    "media",
+    ".monty/cli",
+    ".monty/onto",
+    ".monty/zoo",
+    ".monty/warehouse",
+    ".monty/gen",
+    ".monty/media",
+    ".monty/tools/dataforseo",
+    ".monty/tools/scrapecreators",
+    ".monty/tools/crawl",
 ]
+# projects/ are the USERS' uv workspaces — engagements, never members here
 
 [tool.uv.sources]
 montology = { workspace = true }
 montology-ontology = { workspace = true }
 montology-zoo = { workspace = true }
-montology-server = { workspace = true }
 montology-dataforseo = { workspace = true }
 montology-scrapecreators = { workspace = true }
 montology-crawl = { workspace = true }
@@ -49,15 +46,12 @@ montology-warehouse = { workspace = true }
 montology-gen = { workspace = true }
 montology-media = { workspace = true }
 
+[dependency-groups]
+dev = ["pytest"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[dependency-groups]
-dev = [
-    "pytest>=9.1.1",
-]
-
 [tool.hatch.build.targets.wheel]
-# The root is a virtual aggregator; the packages are the products.
 bypass-selection = true

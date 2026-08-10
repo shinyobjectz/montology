@@ -1,0 +1,10 @@
+{
+ "name": "montology-design",
+ "private": true,
+ "type": "module",
+ "dependencies": {
+  "react": "^19",
+  "react-dom": "^19",
+  "esbuild": "^0.24"
+ }
+}

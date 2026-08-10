@@ -30,7 +30,7 @@ def test_assay_is_the_skip_caches_memory(warehouse, monkeypatch):
 def test_handoff_carries_instruments_spec_and_laws():
     from montology_gen.engine import _handoff
 
-    got = _handoff("dataforseo", "tools/dataforseo/src/montology_dataforseo")
+    got = _handoff("dataforseo", ".monty/tools/dataforseo/src/montology_dataforseo")
     assert "HOST AGENT" in got
     spec = json.loads(got[got.find("{"):])
     assert "serp_search" in json.dumps(spec["package_surface"])

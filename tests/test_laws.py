@@ -90,7 +90,7 @@ def test_grounding_env_and_provenance():
 
 
 def test_real_package_surface_reads_ast():
-    surface = package_surface("tools/dataforseo/src/montology_dataforseo")
+    surface = package_surface(".monty/tools/dataforseo/src/montology_dataforseo")
     names = {f["name"] for f in surface["functions"]}
     assert {"serp_search", "keyword_ideas"} <= names
     assert any(f["infra"] for f in surface["functions"] if f["name"] == "mellea_tools")

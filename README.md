@@ -43,20 +43,24 @@ just                        # list everything else
 uvx montology               # the CLI anywhere, no clone
 ```
 
-## The map
+## The shape
 
-| package | import | what it is |
-|---|---|---|
-| `cli/` | `montology_cli` | The montology CLI: install data, check the vocabulary, pull models, serve MCP. |
-| `ontology/` | `montology_ontology` | The marketing vocabulary as a SQLite database: house words, IAB and friends ingested relationally. |
-| `zoo/` | `montology_zoo` | Small models for marketing work, run on YOUR laptop: registry, downloader, embed(), transcribe(), topics. |
-| `server/` | `montology_server` | The montology MCP server: FastMCP (stateless HTTP-ready), artifacts via MCP Apps / mcp-ui. |
-| `warehouse/` | `montology_warehouse` | The analytical lane: DuckDB over the user's marketing data, with the registries attached. |
-| `tools/dataforseo/` | `montology_dataforseo` | DataForSEO wrapped as Mellea tools: SERPs, keywords, backlinks — answered with data. |
-| `tools/scrapecreators/` | `montology_scrapecreators` | ScrapeCreators wrapped as Mellea tools: public creator and post data across platforms. |
-| `tools/crawl/` | `montology_crawl` | Local AI crawling: brand sites into LLM-ready markdown, brand kits, and component-ready sections. |
-| `gen/` | `montology_gen` | The generative system: skills, docs and words produced by Mellea from instruments — never from hand-written prompts. |
-| `skills/` | — | Agent Skills: how to use all of the above, in the agent's language. |
+```
+.justfile      the ACTION SURFACE — `just` answers: what is live, what exists, what to do
+.plugin/       the Agent Plugins face (plugin.json · mcp.json · skills/) — install THIS folder
+.monty/        the engine: python packages (onto, zoo, warehouse, gen, media, cli, tools/)
+               and .monty/cache/ — weights, browsers, embeddings; refetchable, never tracked
+data/          the TRACKED central store: ontology.db, zoo.db (the registries ship with the repo)
+design/        the node workspace — brand-AGNOSTIC mediums (components · email · image ·
+               presentation · video · web) + the one shared render harness; imports `@brand/*`,
+               bound to a project at render time
+projects/      ENGAGEMENTS — each carries a brand instantiation (tokens, manifest, assets,
+               sources) and its deliverables; user data, gitignored
+```
+
+Two workspaces, one orchestrator: uv owns `.monty/*`, npm owns `design/`,
+`just` sees both. Projects are neither — each is the user's own uv/react
+ground, consuming montology.
 
 ## Alignment decisions (why it is shaped this way)
 

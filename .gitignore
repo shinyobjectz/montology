@@ -3,21 +3,24 @@ __pycache__/
 .venv/
 dist/
 .DS_Store
+.pytest_cache/
 
 # keys — never commit
 .env
 .env.*
 !.env.example
 
-# fetched, never vendored
-ontology/data/*.tsv
-zoo/models/
-zoo/data/zoo.db
-warehouse/data/
-brands/
+# THE CACHE: everything under .monty/cache is refetchable — weights,
+# embeddings, browsers. Never tracked; big artifacts would be LFS anyway.
+.monty/cache/
 
-# the database is generated from seed.py + pulled taxonomies; regenerate with
-# `montology data pull`. Committed snapshots are a release decision, not a
-# default — flip this deliberately if we start shipping the db.
-ontology/data/ontology.db
-dist/
+# data/ IS tracked (the central store: ontology.db, zoo.db — the registries
+# ship). The warehouse is the user's analytical scratch and stays local.
+data/warehouse.duckdb
+
+# projects are ENGAGEMENTS — user data, except the checked-in example
+projects/*
+!projects/00_example/
+
+# node
+design/node_modules/

@@ -14,23 +14,20 @@ compliance.
 
 ## The shape
 
-- **uv workspaces monorepo.** Root `pyproject.toml` lists members; one
-  `uv.lock`. Run everything through `just` (no recipe = list them).
-- **The repo root is an Agent Plugins 1.0.0 folder** — `plugin.json`,
-  `skills/`, `mcp.json`. Keep it conforming: those three names are the
-  standard's, not ours to rename.
-- **The ontology is a database, not a doc.** `ontology/data/ontology.db`,
-  authored ONLY in `ontology/src/montology_ontology/seed.py`. IAB taxonomies
-  ingest into the same database (`monty data pull`), namespaced so a
-  house term and an IAB category can never collide.
-- **The zoo downloads, it does not bundle.** Model weights come from
-  HuggingFace at pull time onto the user's disk. Never commit weights.
-- **Tools are Mellea-wrapped** (`@tool` from mellea) so any Mellea program
-  can hand them to a model, and thin enough that the MCP server exposes the
-  same functions.
-- **Keys live in the environment**, read at call time: `DATAFORSEO_LOGIN`,
-  `DATAFORSEO_PASSWORD`, `SCRAPECREATORS_API_KEY`. Never in code, never in
-  the plugin.
+- **`.justfile` is the action surface** — `just` alone shows what is live
+  (tools, backend, data), which projects exist, and what the agent carries.
+- **`.plugin/` is the plugin root** (plugin.json, mcp.json, skills/) — the
+  Agent Plugins standard fixes those names INSIDE the folder; clients
+  install `montology/.plugin`.
+- **`.monty/` is the engine**: the uv workspace members live under it, and
+  `.monty/cache/` holds everything refetchable (model weights, browsers) —
+  never tracked.
+- **`data/` is tracked** — the registries (ontology.db, zoo.db) ship;
+  only the user's warehouse.duckdb stays local.
+- **`design/` is brand-agnostic react** (one npm install, the shared render
+  harness); mediums import `@brand/*`, bound per project at render time.
+- **`projects/` are engagements** — a brand instantiation plus its
+  deliverables; user data, never workspace members.
 
 ## Everything prose is generated
 

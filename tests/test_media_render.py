@@ -41,13 +41,19 @@ def test_ffmpeg_absent_carries_repair(tmp_path, monkeypatch):
 
 
 def test_render_harness_contract(tmp_path, monkeypatch):
-    monkeypatch.setattr(rmod, "BRANDS_DIR", tmp_path)
-    assert "scaffold first" in rmod.render_setup("ghost")
-    # the harness template: node-resolvable react, automatic JSX, props seam
-    assert 'nodePaths' in rmod.RENDER_MJS
+    monkeypatch.setattr(rmod, "BRANDS_DIR", tmp_path / "projects")
+    monkeypatch.setattr(rmod, "DESIGN_DIR", tmp_path / "design")
+    # the harness template: node-resolvable react, automatic JSX, props seam,
+    # and THE BRAND BINDING — design imports @brand/*, bound per render
+    assert "nodePaths" in rmod.RENDER_MJS
+    assert '"@brand"' in rmod.RENDER_MJS
     assert 'jsx: "automatic"' in rmod.RENDER_MJS
     assert "renderToStaticMarkup" in rmod.RENDER_MJS
     assert {"react", "react-dom", "esbuild"} <= set(rmod.PACKAGE_JSON["dependencies"])
+    # a render against a missing component carries the projects/ repair
+    (tmp_path / "design" / "node_modules").mkdir(parents=True)
+    (tmp_path / "projects" / "acme").mkdir(parents=True)
+    assert "no such component: projects/acme" in rmod.render("acme", "nope.tsx")
 
 
 @pytest.mark.integration

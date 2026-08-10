@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-for pkg in ("ontology", "zoo", "warehouse", "gen", "cli", "tools/dataforseo",
-            "tools/scrapecreators", "tools/crawl", "server"):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / pkg / "src"))
+for pkg in ("onto", "zoo", "warehouse", "gen", "cli", "media", "tools/dataforseo",
+            "tools/scrapecreators", "tools/crawl"):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / ".monty" / pkg / "src"))
 
 
 @pytest.fixture()
