@@ -222,8 +222,7 @@ def gen_setup_cmd() -> None:
                    "OpenAI-compatible endpoint instead — no Ollama needed.)")
         raise typer.Exit(1)
     r = subprocess.run(["ollama", "pull", "gemma3:270m"], capture_output=True, text=True)
-    typer.echo("atomic tier ready (gemma3:270m, 292 MB); bodies use the host agent — "
-               "for full local autonomy: ollama pull granite4.1:3b" if r.returncode == 0
+    typer.echo("atomic tier ready (gemma3:270m, 292 MB); bodies use the host agent" if r.returncode == 0
                else f"pull failed: {r.stderr[-300:]}")
     raise typer.Exit(r.returncode)
 

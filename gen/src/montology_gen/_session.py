@@ -22,7 +22,7 @@ NO_BACKEND = (
     "No model backend is reachable for generation. Repair, any one:\n"
     "  - skill drafting needs NO model — it hands the grounded task to the host agent;\n"
     "  - install Ollama (ollama.com) and run `montology gen setup` (pulls gemma3:270m, "
-    "292 MB — the atomic tier); MONTOLOGY_MODEL=granite4.1:3b adds full local autonomy (~2GB);\n"
+    "292 MB — the atomic tier); MONTOLOGY_MODEL=<an Ollama model you chose> adds full local autonomy;\n"
     "  - or set MONTOLOGY_MODEL_URL to any OpenAI-compatible endpoint.\n"
     "Deterministic commands (gen lint) never need a model."
 )
@@ -69,6 +69,14 @@ def gen_session():
             ctx=SimpleContext(),
         )
 
+    # NO IMPLICIT FULL-TIER MODEL. gemma3:270m (the atomic tier) is the only
+    # model montology names; body-sized generation without a served endpoint
+    # means the host agent drafts (the handoff), unless the user EXPLICITLY
+    # names a local model via MONTOLOGY_MODEL.
+    explicit = os.environ.get("MONTOLOGY_MODEL", "").strip()
+    if not explicit:
+        return NO_BACKEND
+
     try:
         urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3)
     except Exception:  # noqa: BLE001 — unreachable backend answers with the repair
@@ -76,8 +84,4 @@ def gen_session():
 
     from mellea import start_session
 
-    # granite4.1:3b — mellea's native default, and the house family. The
-    # RULED drafter is gen-granite-switch-3b (see its zoo row): it takes over
-    # as the local default the day a Switch quant is published; served over
-    # MONTOLOGY_MODEL_URL it additionally brings the adapter functions.
-    return start_session("ollama", model_id=os.environ.get("MONTOLOGY_MODEL", "granite4.1:3b"))
+    return start_session("ollama", model_id=explicit)

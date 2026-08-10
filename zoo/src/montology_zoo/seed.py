@@ -172,34 +172,24 @@ MODELS = [
      "inventory. They belong in a tools package if creative generation lands."),
 
     # ── tiny generative (the optional GGUF shelf) ───────────────────────────
-    ("gen-granite-switch-3b", "ibm-granite/granite-switch-4.1-3b-preview", "generate",
-     "text-gen", None, "apache-2.0", "drafting", "carried",
-     "THE RULED DRAFTER for montology gen — the Switch family: same "
-     "twelve-adapter-function checkpoint line the wider system standardizes "
-     "on, so a properly served instance (an OpenAI-compatible endpoint via "
-     "MONTOLOGY_MODEL_URL) offers requirement-check as a CALIBRATED law, not "
-     "a judge. Honest state: llama.cpp arch support merged 2026-08-10 (PR "
-     "25107) and only a bf16 GGUF exists (8.4 GB) — small laptops read 'no' "
-     "in fit until a Q4/Q8 quant is published, at which point the artifact "
-     "repoints and this becomes the local default. Until then the running "
-     "Ollama default is granite4.1:3b (same family, no adapters)."),
     ("gen-qwen3-1.7b", "Qwen/Qwen3-1.7B", "generate", "text-gen", None,
      "apache-2.0", "drafting", "skip",
-     "Was briefly the drafter pick for size; FAMILY ALIGNMENT WON — Granite "
-     "is the house line across the system, the Switch checkpoint brings the "
-     "adapter functions, and a second model family was not worth 900 MB."),
+     "Was briefly the drafter pick; the drafter question settled without any "
+     "1-2 GB local model — bodies are the host agent's (or a served "
+     "endpoint's), and the atomic tier needs only gemma3:270m."),
     ("gen-qwen2.5-0.5b", "Qwen/Qwen2.5-0.5B-Instruct", "generate", "text-gen", None,
      "apache-2.0", "drafting", "carried",
-     "Offline extraction and normalisation, and the gen system's ATOMIC tier "
-     "(one-line stubs via MONTOLOGY_MODEL_TINY) — never body drafting, which "
-     "sits above this class's capability floor. Served via Ollama/llama.cpp."),
+     "Offline extraction and normalisation on any laptop; served via Ollama/llama.cpp."),
     ("gen-smollm2-360m", "HuggingFaceTB/SmolLM2-360M-Instruct", "generate", "text-gen",
      None, "apache-2.0", "drafting", "carried",
      "Smaller still — structured extraction where 360M suffices."),
     ("gen-gemma3-270m", "unsloth/gemma-3-270m-it", "generate", "text-gen", None,
      "gemma", "drafting", "carried",
-     "The smallest useful instruct model; fine-tunable on-device later. Repo is the "
-     "ungated mirror of google/gemma-3-270m-it, whose gate blocks anonymous config reads."),
+     "THE ONE MODEL MONTOLOGY NAMES: the gen system's atomic tier "
+     "(MONTOLOGY_MODEL_TINY defaults to gemma3:270m — one-line stubs, never "
+     "bodies, which are the host agent's). Also offline extraction; "
+     "fine-tunable on-device later. Repo is the ungated mirror of "
+     "google/gemma-3-270m-it, whose gate blocks anonymous config reads."),
 ]
 
 # (model_id, format, quant, repo, path) — carried models only.
@@ -236,9 +226,6 @@ ARTIFACTS = [
     ("audio-clap", "onnx", "q8", "Xenova/larger_clap_general", "onnx/model_quantized.onnx"),
     ("asr-whisper-base", "ggml", "f16", "ggerganov/whisper.cpp", "ggml-base.bin"),
     ("asr-whisper-small", "ggml", "f16", "ggerganov/whisper.cpp", "ggml-small.bin"),
-    ("gen-granite-switch-3b", "gguf", "bf16",
-     "barha/granite-switch-4.1-3b-preview-GGUF-pr25107",
-     "granite-switch-4.1-3b-preview-bf16.gguf"),
     ("gen-qwen2.5-0.5b", "gguf", "q4_k_m", "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
      "qwen2.5-0.5b-instruct-q4_k_m.gguf"),
     ("gen-smollm2-360m", "gguf", "q8_0", "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",
