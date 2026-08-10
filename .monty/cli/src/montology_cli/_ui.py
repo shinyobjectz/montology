@@ -60,13 +60,26 @@ def _swatched(text: str, base_style: str = "") -> Text:
     return out
 
 
+# prefixes whose ENTIRE line (including wrapped continuations) reads dim —
+# secondary information should never shout in white
+_DIM_WHOLE = ("note", "  [", "  command", "  args", "recipes:", "(")
+
+
 def emit(line: str) -> None:
-    """One engine line, styled by its severity prefix, swatches inline."""
+    """One engine line, styled by its severity prefix, swatches inline.
+    Prefixes match past indentation, so nested output stays designed."""
+    indent = line[:len(line) - len(line.lstrip())]
+    body = line.lstrip()
     for prefix, style in _PREFIX_STYLES:
-        if line.startswith(prefix):
-            styled = Text(prefix, style=style)
-            styled.append_text(_swatched(line[len(prefix):]))
+        if body.startswith(prefix):
+            rest_style = "dim" if prefix in ("note",) else ""
+            styled = Text(indent) + Text(prefix, style=style)
+            styled.append_text(_swatched(body[len(prefix):], rest_style))
             console.print(styled)
+            return
+    for prefix in _DIM_WHOLE:
+        if line.startswith(prefix):
+            console.print(_swatched(line, "dim"))
             return
     console.print(_swatched(line))
 

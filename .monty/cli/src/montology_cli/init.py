@@ -101,7 +101,11 @@ def _merge_mcp(path: Path, made: list[str]) -> None:
         data = {"mcpServers": {"montology": entry}}
         path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n")
-    made.append(str(path))
+    try:
+        made.append(str(path.relative_to(Path.cwd())))
+    except ValueError:
+        made.append(path.name if path.parent.name == "" else
+                    f"{path.parent.name}/{path.name}")
 
 
 def _append_section(path: Path, made: list[str]) -> None:
@@ -217,11 +221,12 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
     echo("")
     echo(f"✔ montology linked into {target.name}/")
     for c in summary["created"]:
-        echo(f"  {c}")
+        echo(f"  ✔ {c}")
     for n in summary["notes"]:
-        echo(f"  note: {n}")
+        for i, part in enumerate(str(n).splitlines()):
+            echo(("  note: " if i == 0 else "  note  ") + part)
     for m in missing:
-        echo(f"  missing: {m['bin']} — {m['repair']}")
-    echo("\n  next: `monty scan --candidates` (what the code is asking for)"
-         "\n        `monty onto add <name> \"<definition>\"` (check-first)"
-         "\n        `monty lint` in CI (the gate)")
+        echo(f"  warn missing: {m['bin']} — {m['repair']}")
+    echo("")
+    echo("  next: `monty lint` (the gate) · `monty design candidates` · "
+         "`monty scan --candidates`")

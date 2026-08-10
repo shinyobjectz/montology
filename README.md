@@ -48,6 +48,8 @@ an optional dotted code — rendered into a generated agent skill and
 enforced against every declaration tree-sitter can parse (python,
 ts/tsx, js, go, rust, elixir, ruby, java, c, c++):
 
+![candidates → check-first → advisory collisions](docs/words.gif)
+
 ```sh
 monty onto check thread        # FREE / TAKEN / RULED — before naming ANYTHING
 monty scan --candidates        # the words your codebase is asking for
@@ -67,6 +69,8 @@ losslessly round-trippable — proven on eight real repos).
 
 The org's vocabulary is authored once — any montology workspace's
 `.monty/ontology.db` *is* the artifact — and inherited everywhere:
+
+![inherit the org ontology, renames cross the fleet](docs/org.gif)
 
 ```sh
 monty init --from git@github.com:acme/ontology.git    # or a path, or a .db URL

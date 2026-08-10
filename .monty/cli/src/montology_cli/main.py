@@ -122,14 +122,16 @@ def onto_add(
     """Author a word — check-first; a taken name is refused with findings."""
     from montology_ontology import add
 
+    from ._ui import emit
+
     got = add(name, definition, test=test or None, note=note or None, kind=kind,
               owner=owner or None, code=code or None)
-    typer.echo(got)
+    emit(got)
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
     from montology_gen import sync as _sync
 
-    typer.echo(_sync())
+    emit(_sync())
 
 
 @onto_app.command("rule")
@@ -139,8 +141,10 @@ def onto_rule(dont_say: str, say: str,
     from montology_gen import sync as _sync
     from montology_ontology import rule
 
-    typer.echo(rule(dont_say, say, why or None))
-    typer.echo(_sync())
+    from ._ui import emit
+
+    emit(rule(dont_say, say, why or None))
+    emit(_sync())
 
 
 @onto_app.command("collide")
@@ -151,8 +155,10 @@ def onto_collide(term: str, theirs: str = typer.Argument(..., help="Whose word c
     from montology_gen import sync as _sync
     from montology_ontology import collide
 
-    typer.echo(collide(term, theirs, meaning, ruling))
-    typer.echo(_sync())
+    from ._ui import emit
+
+    emit(collide(term, theirs, meaning, ruling))
+    emit(_sync())
 
 
 @onto_app.command("rename")
@@ -162,11 +168,13 @@ def onto_rename(was: str, now: str,
     from montology_gen import sync as _sync
     from montology_ontology import rename_word
 
+    from ._ui import emit
+
     got = rename_word(was, now, why)
-    typer.echo(got)
+    emit(got)
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
-    typer.echo(_sync())
+    emit(_sync())
     from montology_scan import migrate as _migrate
 
     typer.echo("where the code still says the old name:")
@@ -179,11 +187,13 @@ def onto_pull(source: str = typer.Argument("", help="Git URL, workspace path, or
     from montology_gen import sync as _sync
     from montology_ontology import pull
 
+    from ._ui import emit, emit_all
+
     got = pull(source or None)
-    typer.echo(got)
+    emit_all(got.splitlines())
     if got.startswith(("REFUSED", "no upstream")):
         raise typer.Exit(1)
-    typer.echo(_sync())
+    emit(_sync())
 
 
 @onto_app.command("list")
@@ -280,11 +290,13 @@ def design_token(name: str, category: str, value: str,
     from montology_gen import sync as _sync
     from montology_ontology import token_add
 
+    from ._ui import emit
+
     got = token_add(name, category, value, note or None)
-    typer.echo(got)
+    emit(got)
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
-    typer.echo(_sync())
+    emit(_sync())
 
 
 @design_app.command("tokens")
