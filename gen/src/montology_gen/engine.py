@@ -75,12 +75,13 @@ def _provenance(stub: str, session, print_hash: str) -> str:
 def gen_skill(skill_name: str, write: bool = False) -> str:
     """Generate (or regenerate) one package's skill from its instruments.
 
-    TWO DRAFTERS, ONE CONTRACT. With a model backend (Ollama, or a served
-    endpoint via MONTOLOGY_MODEL_URL) the stubs draft autonomously. Without
-    one, the HOST AGENT is the drafter — the marketer is already working
+    TWO DRAFTERS, ONE CONTRACT. With a served endpoint (MONTOLOGY_MODEL_URL)
+    the stubs draft autonomously — on a server, never on this machine.
+    Otherwise the HOST AGENT is the drafter: the marketer is already working
     through a frontier model, so gen emits the grounded task (instruments,
     spec, laws) for it to fulfill, and `gen lint` in `just check` enforces
-    the result either way. No local SLM required, none downloaded.
+    the result either way. Locally, the 292 MB atomic tier is the only
+    inference montology ever runs.
     """
     pkg = SKILL_PACKAGES.get(skill_name)
     if pkg is None:

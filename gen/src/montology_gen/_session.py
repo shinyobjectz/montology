@@ -19,11 +19,12 @@ import os
 import urllib.request
 
 NO_BACKEND = (
-    "No model backend is reachable for generation. Repair, any one:\n"
+    "No model backend is reachable for generation. This is usually fine:\n"
     "  - skill drafting needs NO model — it hands the grounded task to the host agent;\n"
-    "  - install Ollama (ollama.com) and run `montology gen setup` (pulls gemma3:270m, "
-    "292 MB — the atomic tier); MONTOLOGY_MODEL=<an Ollama model you chose> adds full local autonomy;\n"
-    "  - or set MONTOLOGY_MODEL_URL to any OpenAI-compatible endpoint.\n"
+    "  - one-line stubs (gen word) need only the 292 MB atomic tier: install Ollama "
+    "(ollama.com) and run `montology gen setup`;\n"
+    "  - a served endpoint (MONTOLOGY_MODEL_URL, any OpenAI-compatible) is the sole "
+    "heavier lane, and it lives on a server, never on this machine.\n"
     "Deterministic commands (gen lint) never need a model."
 )
 
@@ -69,19 +70,8 @@ def gen_session():
             ctx=SimpleContext(),
         )
 
-    # NO IMPLICIT FULL-TIER MODEL. gemma3:270m (the atomic tier) is the only
-    # model montology names; body-sized generation without a served endpoint
-    # means the host agent drafts (the handoff), unless the user EXPLICITLY
-    # names a local model via MONTOLOGY_MODEL.
-    explicit = os.environ.get("MONTOLOGY_MODEL", "").strip()
-    if not explicit:
-        return NO_BACKEND
-
-    try:
-        urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=3)
-    except Exception:  # noqa: BLE001 — unreachable backend answers with the repair
-        return NO_BACKEND
-
-    from mellea import start_session
-
-    return start_session("ollama", model_id=explicit)
+    # THERE IS NO LOCAL FULL TIER, BY DESIGN. Body-sized generation is either
+    # a served endpoint (above) or the host agent via handoff — montology
+    # never runs, names, or wants a body-sized model on the user's machine.
+    # The 292 MB atomic tier (tiny_session) is the only local inference.
+    return NO_BACKEND

@@ -51,8 +51,10 @@ laws) for you to fulfill; treat it as work, write the file, run `gen
 lint`. A lint FAIL after a surface change means regenerate that skill —
 the failing build is the hook that forces it. A served model
 (MONTOLOGY_MODEL_URL, any OpenAI-compatible endpoint) is the autonomous
-lane, not a prerequisite — the only model this repo itself names is
-gemma3:270m, the atomic tier.
+lane, not a prerequisite — and it lives on a server. Locally there is
+exactly one model, ever: gemma3:270m (292 MB), the atomic tier. There is
+no local body-model lane to configure; that is a design decision, not a
+gap.
 
 ## Ground rules
 
