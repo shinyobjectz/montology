@@ -504,6 +504,24 @@ def convert_inline_cmd(src: str) -> None:
     typer.echo(data_uri(src))
 
 
+@brand_app.command("logo")
+def brand_logo(project: str, query: str,
+               variant: str = typer.Option("", "--variant", help="'' (plain), wordmark, glyph."),
+               theme: str = typer.Option("light", "--theme", help="light | dark, for themed variants.")) -> None:
+    """Fetch a quality vector logo into the project (svgl, Simple Icons, LobeHub)."""
+    from montology_crawl import logo_fetch
+
+    typer.echo(logo_fetch(project, query, variant, theme))
+
+
+@brand_app.command("logo-search")
+def brand_logo_search(query: str) -> None:
+    """Every logo variant the sources know for a brand name, with provenance."""
+    from montology_crawl import logo_search
+
+    typer.echo(logo_search(query))
+
+
 @brand_app.command("render-setup")
 def brand_render_setup_cmd() -> None:
     """One-time: the SHARED node render harness at design/ (react + esbuild)."""

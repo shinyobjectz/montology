@@ -64,6 +64,20 @@ pages render to HTML. Then convert as the channel demands:
 
 Video ads render through the remotion-ads skill's own toolchain.
 
+## Logos: look up, don't trace
+
+A crawled site yields raster logos at header size; the real vector is one
+lookup away. `monty brand logo-search stripe` lists every variant the
+sources know (svgl carries wordmarks with light/dark themes and the brand's
+official assets page; theSVG carries 6,500+ full-color marks with the brand
+hex; Simple Icons carries tintable monochrome glyphs; LobeHub carries
+AI-product marks). `monty brand logo <project> stripe
+--variant wordmark --theme dark` writes the SVG into
+`projects/<project>/assets/logos/` with provenance beside it. A miss
+answers with browse fallbacks (theSVG, SVG Repo) — check the per-asset
+license there before shipping. Logos are trademarks: use them for work
+about or for that brand, and keep the provenance file.
+
 ## Campaign coherence
 
 An ad, its landing page, and the follow-up email are ONE argument: the
