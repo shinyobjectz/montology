@@ -1,0 +1,13 @@
+[project]
+name = "montology-scrapecreators"
+version = "0.1.0"
+description = "ScrapeCreators wrapped as Mellea tools: public creator and post data across platforms."
+requires-python = ">=3.12"
+dependencies = ["httpx", "mellea"]
+
+[tool.uv.sources]
+mellea = { git = "https://github.com/generative-computing/mellea.git", rev = "72488902af314c290392c689e90e0395eca49b44" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

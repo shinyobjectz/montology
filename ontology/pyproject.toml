@@ -1,0 +1,10 @@
+[project]
+name = "montology-ontology"
+version = "0.1.0"
+description = "The marketing vocabulary as a SQLite database: house words, IAB and friends ingested relationally."
+requires-python = ">=3.12"
+dependencies = ["httpx"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

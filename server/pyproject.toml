@@ -1,0 +1,24 @@
+[project]
+name = "montology-server"
+version = "0.1.0"
+description = "The montology MCP server: FastMCP (stateless HTTP-ready), artifacts via MCP Apps / mcp-ui."
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp",
+    "mcp-ui-server",
+    "montology-ontology",
+    "montology-dataforseo",
+    "montology-scrapecreators",
+]
+
+[project.scripts]
+montology-mcp = "montology_server.app:main"
+
+[tool.uv.sources]
+montology-ontology = { workspace = true }
+montology-dataforseo = { workspace = true }
+montology-scrapecreators = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

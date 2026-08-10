@@ -1,0 +1,1 @@
+"""montology: the CLI."""
