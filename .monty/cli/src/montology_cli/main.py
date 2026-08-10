@@ -413,6 +413,28 @@ def migrate(was: str, now: str,
 
 
 @app.command()
+def explain(no_draft: bool = typer.Option(False, "--no-draft", help="Skip atomic-tier definition drafts.")) -> None:
+    """The one-shot conceptual X-ray: vocabulary, clusters, design, contradictions
+    — terminal summary + a rendered report at .monty/explain.html."""
+    from ._ui import emit_all
+    from montology_scan import explain as scan_explain
+
+    emit_all(scan_explain(draft=not no_draft))
+
+
+@app.command()
+def guard() -> None:
+    """The firewall (hook entry): reads a proposed edit as JSON on stdin,
+    allows silently or DENIES with the repair — drift cannot enter."""
+    import sys as _sys
+
+    from ._ui import emit, emit_err
+    from montology_scan import guard_hook
+
+    raise typer.Exit(guard_hook(_sys.stdin.read(), err=emit_err, out=emit))
+
+
+@app.command()
 def serve(http: bool = typer.Option(False, help="Streamable HTTP instead of stdio.")) -> None:
     """Run the montology MCP server."""
     import sys

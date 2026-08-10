@@ -220,14 +220,20 @@ def overloads() -> list[dict]:
     if not db_path().exists():
         return []
     conn = connect(readonly=True)
-    return [dict(r) for r in conn.execute("SELECT * FROM overload ORDER BY dont_say")]
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM overload ORDER BY dont_say")]
+    except sqlite3.OperationalError:
+        return []
 
 
 def doctrines() -> list[dict]:
     if not db_path().exists():
         return []
     conn = connect(readonly=True)
-    return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
+    except sqlite3.OperationalError:
+        return []
 
 
 TOKEN_CATEGORIES = ("color", "space", "radius", "shadow", "font", "breakpoint", "recipe")
@@ -252,6 +258,10 @@ def tokens(category: str | None = None) -> list[dict]:
     if not db_path().exists():
         return []
     conn = connect(readonly=True)
+    try:
+        conn.execute("SELECT 1 FROM token LIMIT 1")
+    except sqlite3.OperationalError:
+        return []
     sql = "SELECT * FROM token"
     args: list = []
     if category:
@@ -300,14 +310,20 @@ def collisions() -> list[dict]:
     if not db_path().exists():
         return []
     conn = connect(readonly=True)
-    return [dict(r) for r in conn.execute("SELECT * FROM collision ORDER BY term")]
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM collision ORDER BY term")]
+    except sqlite3.OperationalError:
+        return []
 
 
 def renames() -> list[dict]:
     if not db_path().exists():
         return []
     conn = connect(readonly=True)
-    return [dict(r) for r in conn.execute("SELECT * FROM renamed ORDER BY renamed_on, was")]
+    try:
+        return [dict(r) for r in conn.execute("SELECT * FROM renamed ORDER BY renamed_on, was")]
+    except sqlite3.OperationalError:
+        return []
 
 
 def record_run(task: str, target: str, model: str, outcome: str,

@@ -16,6 +16,7 @@ from rich.console import Console
 from rich.text import Text
 
 console = Console(highlight=False, soft_wrap=True)
+console_err = Console(stderr=True, highlight=False, soft_wrap=True)
 
 _HEX = re.compile(r"#[0-9a-fA-F]{6}\b")
 
@@ -45,6 +46,8 @@ _PREFIX_STYLES = (
     ("semantics:", "bold cyan"),
     ("gen lint:", "bold cyan"),
     ("✔", "bold green"),
+    ("montology guard:", "bold red"),
+    ("•", "bold yellow"),
 )
 
 
@@ -118,3 +121,16 @@ def next_steps(steps: list[tuple[str, str]]) -> None:
         row.append(f"{cmd:<28}", style="bold cyan")
         row.append(why, style="dim")
         console.print(row)
+
+
+def emit_err(line: str) -> None:
+    """emit, but to stderr — styled for a human, stripped for a pipe."""
+    indent = line[:len(line) - len(line.lstrip())]
+    body = line.lstrip()
+    for prefix, style in _PREFIX_STYLES:
+        if body.startswith(prefix):
+            styled = Text(indent) + Text(prefix, style=style)
+            styled.append_text(_swatched(body[len(prefix):]))
+            console_err.print(styled)
+            return
+    console_err.print(_swatched(line))

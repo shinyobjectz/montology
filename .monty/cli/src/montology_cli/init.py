@@ -57,6 +57,11 @@ TOML_TEMPLATE = """name = "{name}"
 created = "{created}"
 engine = "{spec}"
 
+[guard]
+# the firewall (agent pre-write hook): block | warn | off
+names  = "block"   # retired words ALWAYS block; collisions follow [scan]
+design = "block"   # rogue values vs tokens — only fires when tokens exist
+
 [scan]
 # which word kinds a code declaration may NOT be named after
 enforced_kinds = ["core", "inner"]
@@ -118,12 +123,36 @@ def _append_section(path: Path, made: list[str]) -> None:
     made.append(str(path.name) + (" (section appended)" if text else ""))
 
 
+def _merge_guard_hook(root: Path, made: list[str]) -> None:
+    """The firewall into .claude/settings.json — merge-safe: existing hooks
+    survive; ours appends once."""
+    settings = root / ".claude" / "settings.json"
+    data: dict = {}
+    if settings.exists():
+        try:
+            data = json.loads(settings.read_text())
+        except json.JSONDecodeError:
+            made.append("SKIPPED .claude/settings.json: does not parse — add the guard hook yourself")
+            return
+    cmd = "monty guard" if shutil.which("monty") else \
+        f"uvx --from '{engine_spec()}' monty guard"
+    hooks = data.setdefault("hooks", {}).setdefault("PreToolUse", [])
+    if any("monty guard" in json.dumps(h) for h in hooks):
+        return
+    hooks.append({"matcher": "Write|Edit|MultiEdit",
+                  "hooks": [{"type": "command", "command": cmd}]})
+    settings.parent.mkdir(exist_ok=True)
+    settings.write_text(json.dumps(data, indent=2) + "\n")
+    made.append(".claude/settings.json (guard hook: agents cannot write drift)")
+
+
 def wire_agents(root: Path, agents: tuple[str, ...]) -> dict:
     made: list[str] = []
     notes: list[str] = []
     if "claude" in agents:
         _merge_mcp(root / ".mcp.json", made)
         _append_section(root / "CLAUDE.md", made)
+        _merge_guard_hook(root, made)
     if "cursor" in agents:
         _merge_mcp(root / ".cursor" / "mcp.json", made)
     if "cursor" in agents or "codex" in agents:

@@ -59,6 +59,9 @@ def test_init_is_minimal_and_merge_safe(tmp_path, onto_db, monkeypatch, capsys):
     (tmp_path / "CLAUDE.md").write_text("# Their instructions\n\nTheir rules.\n")
     (tmp_path / ".mcp.json").write_text(json.dumps(
         {"mcpServers": {"theirs": {"command": "x"}}}))
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "settings.json").write_text(json.dumps(
+        {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "theirs"}]}]}}))
     monkeypatch.setattr("montology_ontology.db.DB_PATH", tmp_path / ".monty" / "ontology.db")
 
     init_command(str(tmp_path), yes=True, as_json=True, agents="claude,codex")
@@ -75,6 +78,12 @@ def test_init_is_minimal_and_merge_safe(tmp_path, onto_db, monkeypatch, capsys):
     assert (tmp_path / "AGENTS.md").exists()                  # codex asked
     assert any("config.toml" in n for n in out["notes"])      # never edits global
     assert (tmp_path / ".claude" / "skills" / "words" / "SKILL.md").exists()
+
+    # the guard hook merged into settings.json, preserving what was there
+    settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
+    hooks = settings["hooks"]["PreToolUse"]
+    assert any("monty guard" in json.dumps(h) for h in hooks)   # ours arrived
+    assert any("theirs" in json.dumps(h) for h in hooks)        # theirs survived
 
     # idempotent: a second run appends nothing twice
     init_command(str(tmp_path), yes=True, as_json=True, agents="claude")

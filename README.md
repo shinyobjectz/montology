@@ -40,6 +40,38 @@ compositions surface too: `monty design recipes` mines the class strings
 your markup repeats (`flex flex-wrap gap-2 items-center` ×102 — on
 shadcn/ui's own repo) so they can become *named* things.
 
+## The firewall: your agent cannot write drift
+
+![the guard denies the edit before it lands, with the tokens to use](docs/guard.gif)
+
+Everything above is post-hoc. The guard runs **before the write**:
+`monty init` installs a PreToolUse hook (merge-safe, into
+`.claude/settings.json`) that lints every proposed Write/Edit against the
+ontology in milliseconds — a declaration named after a **retired** word
+(renames are rulings; always blocks), a collision with an enforced word,
+a rogue hex when tokens exist. Deny is exit 2 with the repair on stderr:
+the harness feeds it straight back to the model, which corrects and
+retries. The agent *physically cannot* introduce a second gray or resurrect
+a renamed concept — it gets the token or the current word handed to it
+mid-edit. The guard **fails open** (malformed payload, no workspace, any
+internal error → allow silently) so it can never break an editor; humans
+in vim never meet it. Config: `[guard] names/design = block | warn | off`.
+
+## `monty explain` — the one-shot conceptual X-ray
+
+![point it at a repo it has never seen](docs/explain.gif)
+
+Point montology at any repo cold: one command composes the declared
+surface, the vocabulary it has, the vocabulary it is *asking for* (with
+definitions drafted on the atomic tier when one serves — law-checked,
+refused over wrong), **where meanings actually gather** (semantic
+clusters vs the directory tree's claimed architecture: cross-cutting
+concepts, grab-bag directories), the design system as measured, and
+every place the repo contradicts itself — as a terminal summary plus a
+rendered dark report at `.monty/explain.html`:
+
+![the rendered X-ray artifact](docs/explain-artifact.png)
+
 ## The part that keeps you: words
 
 A repo's concepts drift exactly like its colors. montology's vocabulary

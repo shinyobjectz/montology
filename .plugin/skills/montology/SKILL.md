@@ -40,6 +40,23 @@ words always survive; conflicts are loud and local wins. When upstream
 renames a word, the pull prints the exact `monty migrate` command — run
 it on a clean tree.
 
+## The firewall (the guard)
+
+`monty init` installs a PreToolUse hook: every proposed Write/Edit is
+linted in milliseconds BEFORE the file lands. Retired words always
+block; enforced collisions block; rogue colors block with the nearest
+token as the repair. If your edit is denied, READ THE REPAIR AND APPLY
+IT — use the named token/word and retry; do not work around the hook.
+It fails open outside montology workspaces. `monty guard` is the entry
+(JSON on stdin, exit 2 = deny).
+
+## The X-ray
+
+`monty explain` — the one-shot anatomy of any repo: surface, vocabulary
+had and asked-for, semantic clusters vs directory structure, design
+system, contradictions. Renders .monty/explain.html. Run it FIRST on an
+unfamiliar codebase — it is the fastest orientation montology offers.
+
 ## Rulings: how arguments end
 
 - **Overload** — `monty onto rule <dont-say> <say> "<why>"`: from now on,

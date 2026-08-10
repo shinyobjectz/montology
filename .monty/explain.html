@@ -1,0 +1,64 @@
+<!doctype html><meta charset="utf-8">
+<title>montology — montology X-ray</title>
+<style>
+ body{background:#0d0d14;color:#cdd6f4;font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+      max-width:960px;margin:2rem auto;padding:0 1.2rem}
+ h1{font-size:1.3rem} h2{font-size:1.02rem;color:#8aadf4;margin-top:2.2rem;
+     border-bottom:1px solid #24273a;padding-bottom:.35rem}
+ .stat{display:inline-block;background:#181825;border:1px solid #24273a;border-radius:8px;
+       padding:.45rem .8rem;margin:.2rem .3rem .2rem 0}
+ .stat b{color:#a6da95}
+ table{border-collapse:collapse;width:100%} td,th{text-align:left;padding:.28rem .6rem;
+       border-bottom:1px solid #1e1e2c;vertical-align:top} th{color:#8aadf4}
+ .chip{display:inline-flex;align-items:center;gap:.45rem;background:#181825;
+       border:1px solid #24273a;border-radius:999px;padding:.25rem .7rem;margin:.18rem}
+ .chip i{width:1rem;height:1rem;border-radius:4px;display:inline-block;
+         border:1px solid #363a4f}
+ .cluster{background:#141420;border:1px solid #24273a;border-radius:10px;
+          padding:.7rem 1rem;margin:.5rem 0}
+ .k-word{color:#a6da95} .k-candidate{color:#eed49f}
+ .warn{color:#eed49f} .dim{color:#6c7086}
+ .draft{color:#94e2d5}
+</style>
+<h1>montology <span class="dim">— the conceptual X-ray</span></h1>
+<div>
+ <span class="stat"><b>217</b> declarations</span>
+ <span class="stat"><b>38</b> files</span>
+ <span class="stat"><b>14</b> words</span>
+ <span class="stat"><b>0</b> tokens</span>
+ <span class="stat"><b>20</b> unclaimed concepts</span>
+</div>
+<h2>The vocabulary it has</h2><table><tr><th>word</th><th>code</th><th>is</th></tr>
+<tr><td class=k-word>candidate</td><td class=dim>scan.candidate</td><td>a recurring declared name with no word — vocabulary the codebase is asking for</td></tr>
+<tr><td class=k-word>code</td><td class=dim>onto.code</td><td>a word&#x27;s dotted address (har, har.cell) — prefixes must resolve to words, so the namespace stays a tree</td></tr>
+<tr><td class=k-word>collision</td><td class=dim>scan.collision</td><td>a declaration named after a word that means something else — the failure scan exists to catch</td></tr>
+<tr><td class=k-word>doctrine</td><td class=dim>onto.doctrine</td><td>a decision written down in the database — because a decision that is not written down gets re-litigated</td></tr>
+<tr><td class=k-word>drift</td><td class=dim>scan.drift</td><td>a value or prose that moved away from the vocabulary it claims: a rogue literal, a near-duplicate, a stale render</td></tr>
+<tr><td class=k-word>migration</td><td class=dim>scan.migration</td><td>a renamed word propagated through the code by token — sweep reports, apply rewrites, the diff is the review</td></tr>
+<tr><td class=k-word>ontology</td><td class=dim>onto</td><td>a repo&#x27;s vocabulary as a database: words, doctrine, rulings — enforced by scan, rendered to prose, never authored in prose</td></tr>
+<tr><td class=k-word>recipe</td><td class=dim>onto.recipe</td><td>a named composition of utility classes — the unit a utility-first design vocabulary trades in above single tokens</td></tr>
+<tr><td class=k-word>ruling</td><td class=dim>onto.ruling</td><td>a recorded boundary decision: an overload (say Y not X), a collision (whose word it is, who moved), or a rename (was, now, why)</td></tr>
+<tr><td class=k-word>scan</td><td class=dim>scan</td><td>the tree-sitter sweep of a codebase: every declaration measured, checked against the vocabulary</td></tr>
+<tr><td class=k-word>sync</td><td class=dim>onto.sync</td><td>rendering the database to the generated words skill — prose is output, never source</td></tr>
+<tr><td class=k-word>token</td><td class=dim>onto.token</td><td>a named design value — color, space, radius, shadow, font, breakpoint — the vocabulary a visual system trades in</td></tr>
+<tr><td class=k-word>word</td><td class=dim>onto.word</td><td>one term with one meaning: definition, the one-line test, an optional owner and dotted code</td></tr>
+<tr><td class=k-word>workspace</td><td class=dim>ws</td><td>any repo montology is initialized into — found by walking up for .monty, the way git finds .git</td></tr>
+</table>
+<h2>The vocabulary it is asking for</h2><table><tr><th>uses</th><th>name</th><th>drafted definition</th></tr>
+<tr><td>3×</td><td class=k-candidate>lint</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>3×</td><td class=k-candidate>migrate</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>2×</td><td class=k-candidate>explain</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>2×</td><td class=k-candidate>embed</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>2×</td><td class=k-candidate>repo</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>find</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>chip</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>clusters</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>candidates</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>variants</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>hits</td><td class=draft><span class=dim>—</span></td></tr>
+<tr><td>1×</td><td class=k-candidate>pascal</td><td class=draft><span class=dim>—</span></td></tr>
+</table>
+<h2>Where meanings actually gather</h2>
+<div class=cluster><span class='k-word'>candidate</span> <span class='k-word'>code</span> <span class='k-word'>collision</span> <span class='k-word'>doctrine</span> <span class='k-word'>migration</span> <span class='k-word'>ontology</span> <span class='k-word'>ruling</span> <span class='k-word'>scan</span> <span class='k-word'>sync</span> <span class='k-word'>word</span> <span class='k-candidate'>words</span> <span class='k-candidate'>overloads</span> <span class='k-candidate'>doctrines</span><div class=dim>spans: .monty</div></div>
+<div class=cluster><span class='k-word'>recipe</span> <span class='k-word'>token</span> <span class='k-candidate'>tokens</span><div class=dim>spans: .monty</div></div>
+<p class=dim>rendered by <b>monty explain</b> — montology, the ontology layer. Prose is rendered, never authored.</p>

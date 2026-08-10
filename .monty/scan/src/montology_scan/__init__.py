@@ -16,9 +16,11 @@ build, with the repair attached.
 from .surface import declarations, languages_covered
 from .lint import lint, candidates
 from .astgrep import sg
+from .explain import explain
+from .guard import run_hook as guard_hook
 from .rename import migrate
 from .styles import (design_candidates, design_lint, ingest_theme,
                      recipe_candidates, style_surface, tailwind_theme)
 
-__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "ingest_theme", "lint", "migrate",
+__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "explain", "guard_hook", "ingest_theme", "lint", "migrate",
            "recipe_candidates", "sg", "style_surface", "tailwind_theme"]
