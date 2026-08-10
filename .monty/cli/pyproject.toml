@@ -20,6 +20,9 @@ dependencies = [
     "fastmcp",
 ]
 
+[project.optional-dependencies]
+semantics = ["montology-ontology[semantics]"]
+
 [project.scripts]
 monty = "montology_cli.main:run"
 montology = "montology_cli.main:run"  # long-form alias; `monty` is the verb

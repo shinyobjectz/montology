@@ -42,6 +42,7 @@ _PREFIX_STYLES = (
     ("ruled", "green"),
     ("mapped", "green"),
     ("design:", "bold cyan"),
+    ("semantics:", "bold cyan"),
     ("gen lint:", "bold cyan"),
     ("✔", "bold green"),
 )

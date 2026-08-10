@@ -17,8 +17,10 @@ def org(tmp_path):
                  "VALUES ('thread','core',NULL,'a stateful session','what a session is',NULL,'atl.thread')")
     conn.execute("INSERT INTO word (name, kind, owner, definition, test, note, code) "
                  "VALUES ('atlas','core',NULL,'what a tenant holds',NULL,NULL,'atl')")
-    conn.execute("INSERT INTO token VALUES ('brand-primary','color','#061a1c',NULL)")
-    conn.execute("INSERT INTO renamed VALUES ('artifact','dossier','2026-08-10','one word')")
+    conn.execute("INSERT INTO token (name, category, value, note) "
+                 "VALUES ('brand-primary','color','#061a1c',NULL)")
+    conn.execute("INSERT INTO renamed (was, now, renamed_on, why) "
+                 "VALUES ('artifact','dossier','2026-08-10','one word')")
     conn.commit()
     return tmp_path / "org"
 

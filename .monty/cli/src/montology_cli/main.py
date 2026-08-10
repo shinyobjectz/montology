@@ -196,6 +196,31 @@ def onto_pull(source: str = typer.Argument("", help="Git URL, workspace path, or
     emit(_sync())
 
 
+@onto_app.command("similar")
+def onto_similar(query: str,
+                 top: int = typer.Option(8, "--top", help="How many neighbors.")) -> None:
+    """The words nearest a name or definition — the meaning may already have a word."""
+    from ._ui import emit_all
+    from montology_ontology import semantic_similar
+
+    emit_all(semantic_similar(query, top).splitlines())
+
+
+@onto_app.command("audit")
+def onto_audit(threshold: float = typer.Option(0.70, "--threshold", help="Cosine above which meanings collide.")) -> None:
+    """The semantic audit (advisory, always): two-words-one-meaning, org/local
+    doubles, misfiled owners, candidates that already exist."""
+    from ._ui import emit_all
+    from montology_ontology import semantic_audit
+    from montology_scan import candidates as scan_candidates
+
+    try:
+        cands = scan_candidates(top=10)
+    except Exception:  # noqa: BLE001 — the audit stands without the scan
+        cands = []
+    emit_all(semantic_audit(threshold, cands).splitlines())
+
+
 @onto_app.command("list")
 def onto_list(kind: str = typer.Argument("", help="Filter: core | inner | adopted | custom.")) -> None:
     """The vocabulary as rows."""

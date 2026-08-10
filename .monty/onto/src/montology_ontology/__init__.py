@@ -4,8 +4,10 @@ from .db import (add, check, collide, collisions, connect, db_path, doctrines,
                  overloads, record_run, rename_word, renames, rule, token_add,
                  tokens, words)
 from .seed import seed
+from .semantics import audit as semantic_audit
+from .semantics import similar as semantic_similar
 from .upstream import pinned_upstream, pull
 
 __all__ = ["add", "check", "collide", "collisions", "connect", "db_path",
            "doctrines", "overloads", "record_run", "rename_word", "renames",
-           "pinned_upstream", "pull", "rule", "seed", "token_add", "tokens", "words"]
+           "pinned_upstream", "pull", "rule", "seed", "semantic_audit", "semantic_similar", "token_add", "tokens", "words"]

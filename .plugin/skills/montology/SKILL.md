@@ -74,6 +74,22 @@ doing one job, classes used but defined nowhere, and every arbitrary
 value that left the scale. Advisory until `[design] enforce = true` in
 montology.toml — promote the law once the tokens are real.
 
+## Semantic hearing (the [semantics] extra)
+
+String laws enforce one-word-one-meaning; the semantic audit hears the
+DUAL — one meaning, one word — which no string check can. POTION static
+embeddings (~30 MB, numpy-only) power it:
+
+- `monty onto similar "<name or definition>"` — run BEFORE authoring:
+  the meaning may already have a word.
+- `monty onto audit` — advisory always: two words defined into one
+  meaning, a local word doubling an inherited org word, candidates that
+  are secretly existing words, owner groupings that do not match where
+  meanings actually cluster. Threshold 0.70, calibrated live (distinct
+  words score ≤0.49 pairwise; a real duplicate scored 0.74).
+- A cosine score is an instrument's hint — only a ruling (merge, rename,
+  re-own) makes it vocabulary.
+
 ## Structural search
 
 `monty grep '<pattern>' --lang <language>` runs ast-grep: patterns parse,

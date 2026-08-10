@@ -78,6 +78,6 @@ def seed() -> str:
             (name, kind, owner, definition, test, code),
         )
     for title, ord_, body in DOCTRINE:
-        conn.execute("INSERT OR REPLACE INTO doctrine VALUES (?,?,?)", (title, ord_, body))
+        conn.execute("INSERT OR REPLACE INTO doctrine (title, ord, body) VALUES (?,?,?)", (title, ord_, body))
     conn.commit()
     return f"seeded {len(WORDS)} words, {len(DOCTRINE)} doctrine blocks"

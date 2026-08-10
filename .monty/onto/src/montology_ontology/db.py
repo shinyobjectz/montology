@@ -54,19 +54,22 @@ CREATE TABLE IF NOT EXISTS word (
   definition  TEXT NOT NULL,
   test        TEXT,                   -- the one-line "what is it" test
   note        TEXT,
-  code        TEXT UNIQUE             -- dotted, socialite-style: har, har.cell
+  code        TEXT UNIQUE,            -- dotted, socialite-style: har, har.cell
+  origin      TEXT                    -- NULL = this repo's own; else the upstream source
 );
 
 CREATE TABLE IF NOT EXISTS doctrine (
   title       TEXT PRIMARY KEY,
   ord         INTEGER NOT NULL,
-  body        TEXT NOT NULL
+  body        TEXT NOT NULL,
+  origin      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS overload (
   dont_say    TEXT PRIMARY KEY,
   say         TEXT NOT NULL,
-  why         TEXT
+  why         TEXT,
+  origin      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS collision (
@@ -74,21 +77,24 @@ CREATE TABLE IF NOT EXISTS collision (
   theirs        TEXT NOT NULL,        -- whose word collides (the framework/system)
   their_meaning TEXT NOT NULL,
   ruling        TEXT NOT NULL,        -- which side moved, and what to say now
-  decided       TEXT
+  decided       TEXT,
+  origin        TEXT
 );
 
 CREATE TABLE IF NOT EXISTS renamed (
   was         TEXT PRIMARY KEY,
   now         TEXT NOT NULL,
   renamed_on  TEXT,
-  why         TEXT
+  why         TEXT,
+  origin      TEXT
 );
 
 CREATE TABLE IF NOT EXISTS token (
   name      TEXT PRIMARY KEY,        -- brand-primary, space-2
   category  TEXT NOT NULL,           -- color | space | radius | shadow | font | breakpoint
   value     TEXT NOT NULL,           -- the one value the name means
-  note      TEXT
+  note      TEXT,
+  origin    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS gen_runs (
@@ -110,8 +116,17 @@ def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Conn
         target.parent.mkdir(parents=True, exist_ok=True)
         c = sqlite3.connect(target)
         c.executescript(SCHEMA)
+        _migrate(c)
     c.row_factory = sqlite3.Row
     return c
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Additive only — the db is user data the moment a word lands."""
+    for table in ("word", "token", "doctrine", "overload", "collision", "renamed"):
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if cols and "origin" not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN origin TEXT")
 
 
 def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
@@ -184,7 +199,7 @@ def add(name: str, definition: str, *, test: str | None = None,
 def rule(dont_say: str, say: str, why: str | None = None) -> str:
     """Record an overload ruling: from now on, X is said as Y."""
     conn = connect()
-    conn.execute("INSERT OR REPLACE INTO overload VALUES (?,?,?)", (dont_say, say, why))
+    conn.execute("INSERT OR REPLACE INTO overload (dont_say, say, why) VALUES (?,?,?)", (dont_say, say, why))
     conn.commit()
     return f"ruled  do not say {dont_say!r} — say {say!r}"
 
@@ -227,7 +242,7 @@ def token_add(name: str, category: str, value: str, note: str | None = None) -> 
     if have and have[0] != value.strip():
         return (f"REFUSED — token {name!r} already means {have[0]!r}. One name, one "
                 "value; re-value it deliberately by deleting first, or pick a new name.")
-    conn.execute("INSERT OR REPLACE INTO token VALUES (?,?,?,?)",
+    conn.execute("INSERT OR REPLACE INTO token (name, category, value, note) VALUES (?,?,?,?)",
                  (name.strip(), category, value.strip(), note))
     conn.commit()
     return f"token  {name} ({category}) = {value.strip()}"
@@ -252,7 +267,7 @@ def collide(term: str, theirs: str, their_meaning: str, ruling: str) -> str:
     from datetime import UTC, datetime
 
     conn = connect()
-    conn.execute("INSERT OR REPLACE INTO collision VALUES (?,?,?,?,?)",
+    conn.execute("INSERT OR REPLACE INTO collision (term, theirs, their_meaning, ruling, decided) VALUES (?,?,?,?,?)",
                  (term.strip(), theirs.strip(), their_meaning.strip(), ruling.strip(),
                   str(datetime.now(UTC).date())))
     conn.commit()
@@ -274,7 +289,7 @@ def rename_word(was: str, now: str, why: str) -> str:
         return "REFUSED — the new name is spoken for:\n" + "\n".join(taken)
     if row:
         conn.execute("UPDATE word SET name=? WHERE name=?", (now.strip(), row["name"]))
-    conn.execute("INSERT OR REPLACE INTO renamed VALUES (?,?,?,?)",
+    conn.execute("INSERT OR REPLACE INTO renamed (was, now, renamed_on, why) VALUES (?,?,?,?)",
                  (was.strip(), now.strip(), str(datetime.now(UTC).date()), why.strip()))
     conn.commit()
     moved = "row moved, " if row else "no existing row (history recorded), "

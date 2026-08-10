@@ -65,6 +65,16 @@ and **renames** — the old name retires, old material stays readable, and
 by *token* (tree-sitter positions, strings and comments untouched,
 losslessly round-trippable — proven on eight real repos).
 
+## Semantic hearing
+
+The string laws enforce *one word, one meaning*. The `[semantics]` extra
+hears the dual — *one meaning, one word* — with POTION static embeddings
+(~30 MB, numpy-only; no torch, no runtime): `monty onto audit` flags two
+words defined into the same idea, local words that duplicate inherited
+org words under different names, candidates that are secretly existing
+words, and owner groupings that don't match where meanings cluster.
+Advisory permanently — a cosine score proposes, only a ruling decides.
+
 ## One ontology, every repo
 
 The org's vocabulary is authored once — any montology workspace's

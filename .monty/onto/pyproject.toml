@@ -12,6 +12,11 @@ classifiers = [
 ]
 dependencies = ["montology-core"]
 
+[project.optional-dependencies]
+# POTION static embeddings: numpy-only, ~30 MB — the one embedding tech
+# light enough for a context layer
+semantics = ["model2vec"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

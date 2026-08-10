@@ -11,6 +11,9 @@ dependencies = [
     "montology-gen",
 ]
 
+[project.optional-dependencies]
+semantics = ["montology-ontology[semantics]"]
+
 [tool.uv.workspace]
 members = [
     ".monty/core",
