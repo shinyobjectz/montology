@@ -139,12 +139,21 @@ def word_laws(taken: Callable[[str], list[str]]) -> tuple[Law, ...]:
             return "a definition is ONE sentence; more means the word means two things"
         return None
 
+    def _has_definition(text: str) -> str | None:
+        _, sep, definition = text.partition(":")
+        if not sep or len(definition.split()) < 4:
+            return ("the shape is 'name: definition' with a real definition — "
+                    "a bare word (observed from a 270M draft) is not one")
+        return None
+
     def _no_vendors(text: str) -> str | None:
         low = text.lower()
         hits = [v for v in VENDOR_WORDS if v in low]
         return f"vendors are not vocabulary: {hits}" if hits else None
 
     return (
+        Law("word.has_definition", "The output is 'name: definition', definition non-trivial.",
+            _has_definition),
         Law("word.free", "The word is not already taken by us or a taxonomy.", _free),
         Law("word.one_meaning", "The definition is one sentence, one meaning.", _one_meaning),
         Law("word.no_vendors", "No vendor appears in the definition.", _no_vendors),
