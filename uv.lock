@@ -14,6 +14,7 @@ members = [
     "montology-crawl",
     "montology-dataforseo",
     "montology-gen",
+    "montology-media",
     "montology-ontology",
     "montology-scrapecreators",
     "montology-server",
@@ -1988,6 +1989,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "montology-media"
+version = "0.1.0"
+source = { editable = "media" }
+dependencies = [
+    { name = "pillow" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pillow" }]
+
+[[package]]
 name = "montology-ontology"
 version = "0.1.0"
 source = { editable = "ontology" }
@@ -2073,6 +2085,7 @@ dependencies = [
     { name = "montology-crawl" },
     { name = "montology-dataforseo" },
     { name = "montology-gen" },
+    { name = "montology-media" },
     { name = "montology-ontology" },
     { name = "montology-scrapecreators" },
     { name = "montology-server" },
@@ -2105,6 +2118,7 @@ requires-dist = [
     { name = "montology-crawl", editable = "tools/crawl" },
     { name = "montology-dataforseo", editable = "tools/dataforseo" },
     { name = "montology-gen", editable = "gen" },
+    { name = "montology-media", editable = "media" },
     { name = "montology-ontology", editable = "ontology" },
     { name = "montology-scrapecreators", editable = "tools/scrapecreators" },
     { name = "montology-server", editable = "server" },

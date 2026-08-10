@@ -62,7 +62,7 @@ def scaffold(brand: str, kit_json: str) -> str:
     fonts = kit.get("fonts", [])
     if isinstance(fonts, dict):
         fonts = fonts.get("families", [])
-    tokens = ["// GENERATED scaffold from a measured brand kit — montology brand scaffold",
+    tokens = ["// GENERATED scaffold from a measured brand kit — monty brand scaffold",
               f"// source: {kit.get('url', '?')}  derived: {datetime.now(UTC).date()}",
               "// Counts are the evidence. NAME THE ROLES (primary/surface/accent/ink)",
               "// yourself — the measurement cannot know which color is the brand.",
@@ -114,7 +114,7 @@ def scaffold(brand: str, kit_json: str) -> str:
         f"{manifest['derived']}. Components live in `components/`, registered in "
         "`manifest.json` by TYPE (see montology_crawl.brand.COMPONENT_TYPES). "
         "Emails: react-email consumes `email-*`. Video: Remotion consumes "
-        "`video-*`. Run `montology brand lint " + brand + "` before shipping.\n"
+        "`video-*`. Run `monty brand lint " + brand + "` before shipping.\n"
     )
     extra = f", {len(candidates)} component candidates in sources/" if candidates else ""
     return (f"scaffolded brands/{brand}/ — tokens.ts ({len(colors[:12])} colors, "
@@ -126,7 +126,7 @@ def register(brand: str, name: str, ctype: str, file: str, source_url: str = "")
     root = BRANDS_DIR / brand
     mf = root / "manifest.json"
     if not mf.exists():
-        return f"no manifest at brands/{brand}/ — run `montology brand scaffold {brand} <kit>` first"
+        return f"no manifest at brands/{brand}/ — run `monty brand scaffold {brand} <kit>` first"
     if ctype not in COMPONENT_TYPES:
         return f"type {ctype!r} is not in the taxonomy: {', '.join(COMPONENT_TYPES)}"
     manifest = json.loads(mf.read_text())

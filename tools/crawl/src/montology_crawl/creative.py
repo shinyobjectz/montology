@@ -102,7 +102,7 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
     root = BRANDS_DIR / brand
     if not (root / "manifest.json").exists():
         return (f"no library at brands/{brand} — run the pipeline first: "
-                f"montology crawl audit <url> && montology brand scaffold {brand} audit.json")
+                f"monty crawl audit <url> && monty brand scaffold {brand} audit.json")
     manifest = json.loads((root / "manifest.json").read_text())
     tokens = (root / "tokens.ts").read_text() if (root / "tokens.ts").exists() else ""
     ledger = []
@@ -124,8 +124,8 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
         "output_contract": (
             f"One React component per chosen format in deliverables/, file named "
             f"<name>-<width>x<height>.tsx for fixed-frame formats, registered as "
-            f"type {ctype} via `montology brand register`, passing "
-            f"`montology brand lint {brand}`. Fixed-frame components declare their "
+            f"type {ctype} via `monty brand register`, passing "
+            f"`monty brand lint {brand}`. Fixed-frame components declare their "
             "exact width/height from the format table."
         ),
         "brand_tokens": tokens[:2400],
@@ -133,7 +133,7 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
         "assets": ledger[:12],
         "component_manifest": [{"name": c["name"], "type": c["type"], "status": c.get("status", "built")}
                                for c in manifest.get("components", [])],
-        "then": f"montology brand lint {brand} — a FAIL line is your next edit.",
+        "then": f"monty brand lint {brand} — a FAIL line is your next edit.",
     }
     return ("GROUNDED CREATIVE BRIEF — the design is yours, the measurements are montology's.\n\n"
             + json.dumps(spec, indent=1))

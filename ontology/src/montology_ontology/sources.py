@@ -3,7 +3,7 @@
 THE REGISTRY IS THE TRIAGE. Candidate taxonomies arrive faster than anyone
 can evaluate them, so each entry carries a status and the reason for it:
 
-  * ``core``     — ingested by ``montology data pull`` by default
+  * ``core``     — ingested by ``monty data pull`` by default
   * ``extra``    — ingestable on request (``data pull <id>``), pertinent but
                    not everyone's need
   * ``evaluate`` — known, looks promising, NOT ingested; the note says what

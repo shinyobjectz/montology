@@ -254,7 +254,7 @@ Load these on demand based on the task:
 - **Shop the component library first.** `video-title`, `video-lower-third`
   and `video-endcard` components in `brands/<brand>/components/` drop into
   Remotion compositions as ordinary React — tokens and all. Build missing
-  ones there (then `montology brand register` + `brand lint`), so the ad
+  ones there (then `monty brand register` + `brand lint`), so the ad
   and the landing page stay one design system.
 - **Copy obeys marketing-science**: any claim with a number in the ad comes
   from a tool this session, and rates beat raws in on-screen stats.

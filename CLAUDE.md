@@ -21,7 +21,7 @@ compliance.
   standard's, not ours to rename.
 - **The ontology is a database, not a doc.** `ontology/data/ontology.db`,
   authored ONLY in `ontology/src/montology_ontology/seed.py`. IAB taxonomies
-  ingest into the same database (`montology data pull`), namespaced so a
+  ingest into the same database (`monty data pull`), namespaced so a
   house term and an IAB category can never collide.
 - **The zoo downloads, it does not bundle.** Model weights come from
   HuggingFace at pull time onto the user's disk. Never commit weights.
@@ -34,7 +34,7 @@ compliance.
 
 ## Everything prose is generated
 
-Skills, docs and ontology words are produced by `montology gen` (the
+Skills, docs and ontology words are produced by `monty gen` (the
 montology-gen package): INSTRUMENTS measure the truth (AST surfaces,
 warehouse shape, skill inventory), Mellea `@generative` STUBS turn facts
 into prose (docstrings are specs — a prompt-shaped string fails `gen
@@ -46,7 +46,7 @@ check`, so a skill that names a tool the AST does not know is a build
 failure, not a doc bug.
 
 THE DEFAULT DRAFTER IS THE HOST AGENT — you. Without a model backend,
-`montology gen skill <name>` emits the grounded task (instruments, spec,
+`monty gen skill <name>` emits the grounded task (instruments, spec,
 laws) for you to fulfill; treat it as work, write the file, run `gen
 lint`. A lint FAIL after a surface change means regenerate that skill —
 the failing build is the hook that forces it. A served model
@@ -59,7 +59,7 @@ gap.
 ## Ground rules
 
 - A word means one thing. Before naming anything in the ontology, check it:
-  `uv run montology onto check <name>`.
+  `uv run monty onto check <name>`.
 - Vendors are not vocabulary — DataForSEO and ScrapeCreators are tools we
   call, never concepts in the ontology.
 - Skills teach METHOD (how to use a tool well for marketing work); the

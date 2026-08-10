@@ -111,7 +111,7 @@ def report(m: Machine | None = None) -> list[str]:
     so the tight/no/no-disk verdicts are TESTABLE on machines that never
     exercise them — an untested verdict is a guess wearing a table."""
     if not DB_PATH.exists():
-        return ["The zoo database is empty. Repair: run `montology zoo sync` first."]
+        return ["The zoo database is empty. Repair: run `monty zoo sync` first."]
     m = m or machine()
     conn = connect()
     lines = [
@@ -130,7 +130,7 @@ def report(m: Machine | None = None) -> list[str]:
             (model["id"],),
         ).fetchall()
         if not arts:
-            lines.append(f"  ?      {model['id']:<20} not synced — run `montology zoo sync`")
+            lines.append(f"  ?      {model['id']:<20} not synced — run `monty zoo sync`")
             continue
         best = arts[0]
         arch_row = conn.execute(
@@ -166,6 +166,6 @@ def report(m: Machine | None = None) -> list[str]:
         f"peak figures are estimates: measured weights × documented factors "
         f"(encoders ×{ACT_FACTOR} + {ONNX_RUNTIME_MB} MB; generative + KV@{KV_CTX_DEFAULT} "
         f"+ {GGUF_OVERHEAD_MB} MB; ASR + {ASR_OVERHEAD_MB} MB). Sizes are measured. "
-        f"evaluate/skip rows are not shown — `montology zoo list` has the full rulings."
+        f"evaluate/skip rows are not shown — `monty zoo list` has the full rulings."
     )
     return lines

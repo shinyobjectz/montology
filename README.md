@@ -33,7 +33,7 @@ the embeddings and the tools on your behalf.
 # TODAY (works now):
 git clone https://github.com/socialite-ml/montology && cd montology
 uv sync                     # every package, one lock
-uv run montology doctor     # what is set up, what is missing, how to fix it
+uv run monty doctor     # what is set up, what is missing, how to fix it
 just                        # list everything else
 
 # as an agent plugin: point any Agent Plugins client (or Claude Code) at
@@ -72,7 +72,7 @@ uvx montology               # the CLI anywhere, no clone
   MCP Apps UI resources from tools. Artifacts can be authored with any
   frontend framework — they travel as sandboxed HTML resources.
 - **Taxonomies are fetched, not vendored.** IAB Tech Lab licenses its
-  taxonomies for use with attribution; `montology data pull` fetches the
+  taxonomies for use with attribution; `monty data pull` fetches the
   current TSVs from the official repo into the local database.
 - **SQLite is the record, DuckDB is the engine.** Registries stay SQLite
   (tiny, transactional); analysis runs in DuckDB, which attaches them

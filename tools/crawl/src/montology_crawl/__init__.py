@@ -15,13 +15,14 @@ TWO RULINGS, MADE ONCE:
     idiomatic, tokenised React into the brand's component library. The
     brand-crawl skill is that method.
 
-Playwright's browser is a one-time explicit download: `montology crawl
+Playwright's browser is a one-time explicit download: `monty crawl
 setup`. Every tool answers a missing browser with that repair.
 """
 
 from .audit import brand_audit
+from .render import render as brand_render, render_setup as brand_render_setup
 from .creative import FORMATS, assets as brand_assets, brief as brand_brief
 from .brand import COMPONENT_TYPES, lint as brand_lint, register as brand_register, scaffold as brand_scaffold
 from .tools import brand_kit, fetch_page, mellea_tools, page_sections
 
-__all__ = ["COMPONENT_TYPES", "FORMATS", "brand_assets", "brand_audit", "brand_brief", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "mellea_tools", "page_sections"]
+__all__ = ["COMPONENT_TYPES", "FORMATS", "brand_assets", "brand_audit", "brand_brief", "brand_render", "brand_render_setup", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "mellea_tools", "page_sections"]

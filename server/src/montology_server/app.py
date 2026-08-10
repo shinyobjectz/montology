@@ -53,7 +53,7 @@ def taxonomy_search(query: str, source: str = "") -> str:
         source: Optional source id to narrow (e.g. 'iab-content', 'google-product').
     """
     if not DB_PATH.exists():
-        return "The taxonomy database has not been pulled yet. Repair: run `montology data pull`."
+        return "The taxonomy database has not been pulled yet. Repair: run `monty data pull`."
     conn = connect(readonly=True)
     sql = "SELECT source, code, name, path FROM taxonomy WHERE name LIKE ?"
     args: list = [f"%{query}%"]
@@ -62,7 +62,7 @@ def taxonomy_search(query: str, source: str = "") -> str:
         args.append(source)
     rows = conn.execute(sql + " LIMIT 40", args).fetchall()
     if not rows:
-        return f"nothing matching {query!r}. Try a broader term, or `montology data pull` more sources."
+        return f"nothing matching {query!r}. Try a broader term, or `monty data pull` more sources."
     return "\n".join(f"{r['source']}:{r['code']}  {r['path'] or r['name']}" for r in rows)
 
 
@@ -80,7 +80,7 @@ for fn in (serp_search, keyword_ideas, creator_profile, creator_posts, sc_api):
 def query_warehouse(sql: str) -> str:
     """SQL over the marketer's local data (DuckDB) plus the attached
     registries: ontology.word, ontology.taxonomy, zoo.model, zoo.artifact,
-    and any table loaded via `montology data load`.
+    and any table loaded via `monty data load`.
 
     Args:
         sql: The query. Reads files directly too: SELECT * FROM 'file.csv'.
@@ -126,7 +126,7 @@ def taxonomy_tree_artifact(source: str = "iab-content", top: str = "") -> dict:
         f"<li style='margin-left:{((r['tier'] or 1) - 1) * 16}px'>"
         f"<code>{html.escape(str(r['code']))}</code> {html.escape(r['name'])}</li>"
         for r in rows
-    ) or "<li>No data — run <code>montology data pull</code> first.</li>"
+    ) or "<li>No data — run <code>monty data pull</code> first.</li>"
 
     page = (
         "<!doctype html><meta charset='utf-8'>"
@@ -240,7 +240,7 @@ def gen_assay_artifact() -> dict:
         f"{ {'accepted': '#15803d', 'handoff': '#334155'}.get(str(r[4]), '#b91c1c') }'>"
         f"{html.escape(str(r[4]))}</td><td>{html.escape(', '.join(r[5] or []))}</td></tr>"
         for r in rows
-    ) or "<tr><td colspan='6'>no generations recorded yet — run montology gen</td></tr>"
+    ) or "<tr><td colspan='6'>no generations recorded yet — run monty gen</td></tr>"
     page = ("<!doctype html><meta charset='utf-8'>"
             "<div style='font-family:system-ui;padding:12px'><h2>gen assay</h2>"
             "<table style='border-collapse:collapse;font-size:14px' cellpadding='6'>"

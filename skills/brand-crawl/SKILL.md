@@ -18,7 +18,7 @@ colors are counted from the CSS, never guessed from the logo.
 - `page_sections(url)` — the page split into semantic sections (header,
   nav, section, footer) as cleaned HTML. This is component raw material.
 
-First use needs the browser: `montology crawl setup` (one download).
+First use needs the browser: `monty crawl setup` (one download).
 
 ## The complete library (audit → candidates → convert → compose)
 
@@ -29,9 +29,9 @@ component INVENTORY with each candidate's source HTML saved to
 `sources/`:
 
 ```sh
-montology crawl audit https://brand.com > audit.json
-montology brand scaffold brandname audit.json    # tokens + 10-20 candidates
-montology brand lint brandname                   # "0 built, N candidates awaiting conversion"
+monty crawl audit https://brand.com > audit.json
+monty brand scaffold brandname audit.json    # tokens + 10-20 candidates
+monty brand lint brandname                   # "0 built, N candidates awaiting conversion"
 ```
 
 Then convert candidates one by one: read `sources/<candidate>.html`, write
@@ -45,7 +45,7 @@ until the library is complete.
 A landing page is a `page`-type entry in `pages/` that imports ONLY library
 components and tokens — `<Nav/><Hero/><Features/><Pricing/><CTA/><Footer/>`
 with props for the copy. Register it like any component
-(`montology brand register brandname Landing page pages/Landing.tsx`); the
+(`monty brand register brandname Landing page pages/Landing.tsx`); the
 same lint gates it. One design system: the page, the email, and the video
 ad all shop the same manifest.
 
@@ -58,11 +58,11 @@ never re-asked — and `video-*` components drop into its compositions.
 ## The component-library pipeline (scaffold → components → lint → ship)
 
 ```sh
-montology crawl brand https://brand.com > kit.json      # measure
-montology brand scaffold brandname kit.json             # tokens.ts + manifest
+monty crawl brand https://brand.com > kit.json      # measure
+monty brand scaffold brandname kit.json             # tokens.ts + manifest
 # …you write components/ (below)…
-montology brand register brandname Hero hero components/Hero.tsx --source https://brand.com
-montology brand lint brandname                          # the gate
+monty brand register brandname Hero hero components/Hero.tsx --source https://brand.com
+monty brand lint brandname                          # the gate
 ```
 
 Components are stored BY BRAND AND BY TYPE (`manifest.json`) so downstream

@@ -16,7 +16,7 @@ MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 def pull(model_id: str) -> str:
     if not DB_PATH.exists():
-        return "The zoo database is empty. Repair: run `montology zoo sync` first."
+        return "The zoo database is empty. Repair: run `monty zoo sync` first."
     conn = connect()
     arts = conn.execute(
         "SELECT * FROM artifact WHERE model_id=? ORDER BY bytes ASC", (model_id,)
@@ -43,7 +43,7 @@ def pull(model_id: str) -> str:
             if f == best["path"]:
                 return (
                     f"{model_id}: could not fetch {best['repo']}/{f}. "
-                    f"Run `montology zoo sync` — if sync reports MISS, the pointer needs fixing."
+                    f"Run `monty zoo sync` — if sync reports MISS, the pointer needs fixing."
                 )
     size = (best["bytes"] or 0) / 1e6
     return f"{model_id}: {best['format']}/{best['quant']} ({size:.0f} MB) + {len(got) - 1} sidecars → {target}"

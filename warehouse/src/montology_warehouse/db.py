@@ -35,7 +35,7 @@ def connect(path: Path | None = None) -> Any:
     conn = duckdb.connect(str(target))
     for name, registry in _REGISTRIES.items():
         if not registry.exists():
-            continue  # not pulled yet — montology data pull / zoo sync
+            continue  # not pulled yet — monty data pull / zoo sync
         try:
             conn.execute(f"ATTACH '{registry}' AS {name} (TYPE sqlite, READ_ONLY)")
         except Exception as e:  # noqa: BLE001 — extension not fetchable offline

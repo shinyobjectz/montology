@@ -20,7 +20,8 @@ dependencies = [
 ]
 
 [project.scripts]
-montology = "montology_cli.main:app"
+monty = "montology_cli.main:app"
+montology = "montology_cli.main:app"  # long-form alias; `monty` is the verb
 
 [tool.uv.sources]
 montology-ontology = { workspace = true }

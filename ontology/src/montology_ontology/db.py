@@ -113,7 +113,7 @@ def map_word(word: str, source: str, taxo_code: str, note: str | None = None) ->
     conn = connect()
     _migrate(conn)
     if not conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (word.lower(),)).fetchone():
-        return f"REFUSED — no word named {word!r}. `montology onto add` it first."
+        return f"REFUSED — no word named {word!r}. `monty onto add` it first."
     row = conn.execute("SELECT name, path FROM taxonomy WHERE source=? AND code=?",
                        (source, taxo_code)).fetchone()
     if row is None:
@@ -122,7 +122,7 @@ def map_word(word: str, source: str, taxo_code: str, note: str | None = None) ->
             (source, f"%{word}%")).fetchall()
         hint = ("; near matches: " + ", ".join(f"{r['code']} ({r['name']})" for r in near)) if near else ""
         return (f"REFUSED — {source}:{taxo_code} is not an ingested taxonomy row"
-                f" (did you `montology data pull {source}`?){hint}")
+                f" (did you `monty data pull {source}`?){hint}")
     conn.execute("INSERT OR REPLACE INTO mapping VALUES (?,?,?,?)",
                  (word, source, taxo_code, note))
     conn.commit()

@@ -5,7 +5,7 @@ description: Data science that stays marketing-shaped — rates over raws, uncer
 
 # Marketing science
 
-The stack: DuckDB (`montology sql` / `query_warehouse`) is the store, polars
+The stack: DuckDB (`monty sql` / `query_warehouse`) is the store, polars
 the frame when you write Python, scipy/statsmodels the stats, scikit-learn
 the segmentation, plotly→`chart_artifact` the picture. All of it obeys the
 house rule: a number you speak is a number that a query or a script printed

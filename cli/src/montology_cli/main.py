@@ -22,12 +22,14 @@ zoo_app = typer.Typer(help="Local embedding models.", no_args_is_help=True)
 crawl_app = typer.Typer(help="Local crawling (brand sites, pages).", no_args_is_help=True)
 gen_app = typer.Typer(help="Generate skills, docs and words from instruments (Mellea).", no_args_is_help=True)
 brand_app = typer.Typer(help="Brand component libraries: scaffold, register, lint.", no_args_is_help=True)
+convert_app = typer.Typer(help="Content encoding and conversion (images, audio, video, inlining).", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(onto_app, name="onto")
 app.add_typer(zoo_app, name="zoo")
 app.add_typer(crawl_app, name="crawl")
 app.add_typer(gen_app, name="gen")
 app.add_typer(brand_app, name="brand")
+app.add_typer(convert_app, name="convert")
 
 
 def _gen_backend_ok() -> bool:
@@ -48,13 +50,13 @@ def doctor() -> None:
     from montology_ontology import DB_PATH
 
     checks = [
-        (DB_PATH.exists(), "taxonomy database", "run: montology data pull"),
+        (DB_PATH.exists(), "taxonomy database", "run: monty data pull"),
         (bool(os.environ.get("DATAFORSEO_LOGIN")), "DataForSEO login",
          "export DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD (app.dataforseo.com/api-access)"),
         (bool(os.environ.get("SCRAPECREATORS_API_KEY")), "ScrapeCreators key",
          "export SCRAPECREATORS_API_KEY (scrapecreators.com)"),
         (_gen_backend_ok(), "gen backend (optional — without one, gen hands drafts to the host agent)",
-         "for autonomous gen: montology gen setup, or set MONTOLOGY_MODEL_URL"),
+         "for autonomous gen: monty gen setup, or set MONTOLOGY_MODEL_URL"),
     ]
     for ok, name, repair in checks:
         mark = "ok " if ok else "MISSING"
@@ -126,7 +128,7 @@ def onto_add(
 @onto_app.command("map")
 def onto_map(word: str, target: str,
              note: str = typer.Option("", help="Why this mapping holds.")) -> None:
-    """Pin a word to a taxonomy row: montology onto map flight iab-content:634"""
+    """Pin a word to a taxonomy row: monty onto map flight iab-content:634"""
     from montology_ontology import map_word
 
     if ":" not in target:
@@ -145,7 +147,7 @@ def onto_mappings(word: str = typer.Argument("", help="One word, or empty for al
 
     rows = mappings(word or None)
     if not rows:
-        typer.echo("(no mappings yet — montology onto map WORD source:code)")
+        typer.echo("(no mappings yet — monty onto map WORD source:code)")
     for m in rows:
         typer.echo(f"{m['word']:<20} -> {m['source']}:{m['code']}  {m['path'] or m['name'] or '(row gone)'}")
 
@@ -332,7 +334,7 @@ def gen_setup_cmd() -> None:
 
     if not shutil.which("ollama"):
         typer.echo("Ollama is not installed. Repair: install it from ollama.com, then rerun "
-                   "`montology gen setup`. (Or set MONTOLOGY_MODEL_URL to any "
+                   "`monty gen setup`. (Or set MONTOLOGY_MODEL_URL to any "
                    "OpenAI-compatible endpoint instead — no Ollama needed.)")
         raise typer.Exit(1)
     r = subprocess.run(["ollama", "pull", "gemma3:270m"], capture_output=True, text=True)
@@ -411,3 +413,80 @@ def brand_lint_cmd(brand: str) -> None:
     for line in lines:
         typer.echo(line)
     raise typer.Exit(1 if any(l.startswith("FAIL") for l in lines) else 0)
+
+
+@convert_app.command("image")
+def convert_image_cmd(src: str, to: str = typer.Option("webp", "--to"),
+                      quality: int = typer.Option(85, "--quality")) -> None:
+    """Convert an image (png/jpg/webp), optimized."""
+    from montology_media import convert_image
+
+    typer.echo(convert_image(src, to, quality))
+
+
+@convert_app.command("resize")
+def convert_resize_cmd(src: str, width: int, height: int = typer.Argument(0),
+                       fit: bool = typer.Option(False, "--fit", help="Fit inside instead of cover-crop.")) -> None:
+    """Resize an image to a frame (cover-crops by default — the ad case)."""
+    from montology_media import resize_image
+
+    typer.echo(resize_image(src, width, height, cover=not fit))
+
+
+@convert_app.command("wav16")
+def convert_wav16_cmd(src: str) -> None:
+    """Anything with audio -> 16kHz mono wav (the transcribe contract)."""
+    from montology_media import to_wav16
+
+    typer.echo(to_wav16(src))
+
+
+@convert_app.command("av")
+def convert_av_cmd(src: str, to: str) -> None:
+    """Transcode audio/video by extension (mp4, webm, mp3, m4a…)."""
+    from montology_media import transcode
+
+    typer.echo(transcode(src, to))
+
+
+@convert_app.command("gif")
+def convert_gif_cmd(src: str, start: str = typer.Option("0"), duration: str = typer.Option("3"),
+                    width: int = typer.Option(480)) -> None:
+    """A short GIF from a video — the autoplay-anywhere preview."""
+    from montology_media import extract_gif
+
+    typer.echo(extract_gif(src, start, duration, width))
+
+
+@convert_app.command("thumb")
+def convert_thumb_cmd(src: str, at: str = typer.Option("1", help="Timestamp of the frame.")) -> None:
+    """One video frame as PNG (poster/preview)."""
+    from montology_media import thumbnail
+
+    typer.echo(thumbnail(src, at))
+
+
+@convert_app.command("inline")
+def convert_inline_cmd(src: str) -> None:
+    """A file as a data: URI for self-contained emails and artifacts."""
+    from montology_media import data_uri
+
+    typer.echo(data_uri(src))
+
+
+@brand_app.command("render-setup")
+def brand_render_setup_cmd(brand: str) -> None:
+    """One-time per brand: the node render harness (react + esbuild)."""
+    from montology_crawl import brand_render_setup
+
+    typer.echo(brand_render_setup(brand))
+
+
+@brand_app.command("render")
+def brand_render_cmd(brand: str, component: str,
+                     props: str = typer.Option("{}", "--props", help="Props as JSON."),
+                     scale: int = typer.Option(2, "--scale", help="Device pixel ratio for PNGs.")) -> None:
+    """Render a component: HTML always; fixed-frame files also -> PNG at the declared size."""
+    from montology_crawl import brand_render
+
+    typer.echo(brand_render(brand, component, props, scale))

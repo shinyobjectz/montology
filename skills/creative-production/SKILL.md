@@ -13,10 +13,10 @@ into an ad fails the spirit; literal hex fails the lint.
 ## The pipeline (once per brand)
 
 ```sh
-montology crawl audit https://brand.com > audit.json   # the measured system
-montology brand scaffold acme audit.json               # tokens + candidates
-montology brand assets acme audit.json                 # real images, on disk
-montology brand lint acme                              # know your starting state
+monty crawl audit https://brand.com > audit.json   # the measured system
+monty brand scaffold acme audit.json               # tokens + candidates
+monty brand assets acme audit.json                 # real images, on disk
+monty brand lint acme                              # know your starting state
 ```
 
 Convert the 3–5 candidates the deliverables will lean on (nav, hero,
@@ -25,7 +25,7 @@ footer at minimum) so the brand's shapes exist as reference components.
 ## Per deliverable (repeat per ask)
 
 ```sh
-montology brand brief acme banner  --goal "…"   # or social | video | email | landing
+monty brand brief acme banner  --goal "…"   # or social | video | email | landing
 ```
 
 The brief carries everything measured — treat it as the client folder.
@@ -39,9 +39,30 @@ Then design, register, lint:
 | **email** | 600px width | react-email components typed `email-header/body/footer`; inline-safe styles; one goal per email |
 | **landing** | responsive | a `page` composition in `pages/` importing ONLY library components + tokens; the ad's promise above the fold, same words as the ad |
 
-Register every artifact (`montology brand register acme Name <type> <file>`)
-and run `montology brand lint acme` — FAIL lines are the next edit, and the
+Register every artifact (`monty brand register acme Name <type> <file>`)
+and run `monty brand lint acme` — FAIL lines are the next edit, and the
 frame law checks fixed-size ads declare their true dimensions.
+
+## Rendering and conversion (from component to shippable file)
+
+```sh
+monty brand render-setup acme                       # once per brand (node harness)
+monty brand render acme deliverables/Promo-300x250.tsx --props '{"headline":"…"}'
+#  -> out/Promo-300x250.html  AND  out/Promo-300x250.png (exact frame, @2x)
+```
+
+Fixed-frame files (`-WxH.tsx`) render to pixels automatically; emails and
+pages render to HTML. Then convert as the channel demands:
+
+- `monty convert image out.png --to webp` / `convert resize img 1080 1080`
+  — ad platforms want small files; webp first.
+- `monty convert inline logo.png` — data URI for self-contained email drafts.
+- `monty convert wav16 call.mp3` → `monty zoo transcribe call.wav` — any
+  audio into the transcription lane.
+- `monty convert gif clip.mp4` / `convert thumb clip.mp4` — video previews
+  and posters; `convert av` for container changes.
+
+Video ads render through the remotion-ads skill's own toolchain.
 
 ## Campaign coherence
 

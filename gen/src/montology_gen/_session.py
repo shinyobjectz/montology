@@ -22,7 +22,7 @@ NO_BACKEND = (
     "No model backend is reachable for generation. This is usually fine:\n"
     "  - skill drafting needs NO model — it hands the grounded task to the host agent;\n"
     "  - one-line stubs (gen word) need only the 292 MB atomic tier: install Ollama "
-    "(ollama.com) and run `montology gen setup`;\n"
+    "(ollama.com) and run `monty gen setup`;\n"
     "  - a served endpoint (MONTOLOGY_MODEL_URL, any OpenAI-compatible) is the sole "
     "heavier lane, and it lives on a server, never on this machine.\n"
     "Deterministic commands (gen lint) never need a model."

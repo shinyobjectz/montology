@@ -40,7 +40,7 @@ class ZooError(RuntimeError):
 
 def _model_row(model_id: str) -> dict:
     if not DB_PATH.exists():
-        raise ZooError("the zoo database is empty. Repair: run `montology zoo sync`.")
+        raise ZooError("the zoo database is empty. Repair: run `monty zoo sync`.")
     conn = connect()
     row = conn.execute("SELECT * FROM model WHERE id=?", (model_id,)).fetchone()
     if row is None:
@@ -52,7 +52,7 @@ def _model_row(model_id: str) -> dict:
         (model_id,),
     ).fetchone()
     if art is None:
-        raise ZooError(f"{model_id} has no synced artifact. Repair: `montology zoo sync`.")
+        raise ZooError(f"{model_id} has no synced artifact. Repair: `monty zoo sync`.")
     return {**dict(row), "artifact": dict(art)}
 
 
@@ -77,7 +77,7 @@ def _text_session(model_id: str):
     onnx_path = _ensure_local(model_id, row)
     tok_path = MODELS_DIR / model_id / "tokenizer.json"
     if not tok_path.exists():
-        raise ZooError(f"{model_id} has no tokenizer.json beside its weights — re-run `montology zoo pull {model_id}`.")
+        raise ZooError(f"{model_id} has no tokenizer.json beside its weights — re-run `monty zoo pull {model_id}`.")
     tok = Tokenizer.from_file(str(tok_path))
     tok.enable_truncation(max_length=512)
     sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
@@ -105,7 +105,7 @@ def embed_text(model_id: str, texts: list[str]) -> np.ndarray:
     if row["dims"] and pooled.shape[1] != row["dims"]:
         raise ZooError(
             f"{model_id} answered {pooled.shape[1]} dims, registry says {row['dims']} — "
-            "the artifact and the registry disagree; re-run `montology zoo sync`."
+            "the artifact and the registry disagree; re-run `monty zoo sync`."
         )
     return pooled.astype(np.float32)
 

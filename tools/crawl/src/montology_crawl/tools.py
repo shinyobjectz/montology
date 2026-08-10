@@ -14,7 +14,7 @@ import re
 from collections import Counter
 
 _NO_BROWSER = (
-    "The crawler's browser is not installed. Repair: run `montology crawl setup` "
+    "The crawler's browser is not installed. Repair: run `monty crawl setup` "
     "once (downloads Chromium for Playwright), then retry."
 )
 
