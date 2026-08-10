@@ -126,7 +126,17 @@ GROUNDING: tuple[Law, ...] = (
 )
 
 
-def substance(surface: dict) -> Law:
+def echoes(prose: str, source: str, window: int = 8) -> bool:
+    """True when prose shares a contiguous `window`-word run with source —
+    the deterministic test for parroting (a 0.6B was observed returning the
+    STUB'S OWN SPEC as its method paragraph, which no docstring check sees)."""
+    a, b = " ".join(prose.lower().split()), " ".join(source.lower().split())
+    words = a.split()
+    return any(" ".join(words[i:i + window]) in b
+               for i in range(max(0, len(words) - window + 1)))
+
+
+def substance(surface: dict, spec_texts: tuple[str, ...] = ()) -> Law:
     """Prose must ADD something: a tool section whose text merely echoes the
     docstring, restates the tool's name, or runs under ten words is filler —
     observed live from a 270M draft ('keyword_ideas' as its own method) and
@@ -142,11 +152,13 @@ def substance(surface: dict) -> Law:
             name, prose = m.group(1), " ".join(m.group(2).split()).strip().lower()
             doc = docs.get(name, "")
             if (len(prose.split()) < 10 or prose == name
-                    or (doc and (prose in doc or doc in prose))):
+                    or (doc and (prose in doc or doc in prose))
+                    or any(echoes(prose, spec) for spec in spec_texts)):
                 bad.append(name)
         if bad:
             return (f"sections for {bad} are filler — under ten words, a name echo, "
-                    "or a docstring restatement; method must add what the docstring lacks")
+                    "a docstring restatement, or the generation spec parroted back; "
+                    "method must add what the docstring lacks")
         return None
 
     return Law("piece.substance", "Every tool section adds real method beyond its docstring.",

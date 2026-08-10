@@ -13,6 +13,11 @@ can evaluate them, so each entry carries a status and the reason for it:
 
 A status is a decision, and moving a source between statuses is a reviewed
 change — that is the whole point of it being code.
+
+SCOPE (widened 2026-08-10): marketing-first, business-wide. Industry,
+product, occupation and web-vocabulary systems belong here too — a user
+building their own ontology joins it to whatever classification their
+business already speaks.
 """
 
 from __future__ import annotations
@@ -86,7 +91,44 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "~620 labels Google's classifier emits — useful as a mapping TARGET, not a house vocabulary.",
     ),
 
+    # ── extra: cross-industry (business-wide, pull on request) ─────────────
+    TaxonomySource(
+        "schemaorg", "Schema.org vocabulary (types + properties)",
+        "https://schema.org/version/latest/schemaorg-current-https.jsonld",
+        "json", "extra",
+        "The universal web vocabulary every industry structures data in; also what "
+        "SEO structured-data work speaks.",
+    ),
+    TaxonomySource(
+        "naics", "NAICS (North American Industry Classification System)",
+        "https://github.com/CompileInc/naics-codes",
+        "json", "extra",
+        "Industry classification — firmographics for B2B. Machine-readable but a "
+        "per-code TOML tree: the tree-walk ingest gets written on first pull.",
+    ),
+    TaxonomySource(
+        "sic", "SIC codes",
+        "https://github.com/CompileInc/sic-codes",
+        "json", "extra",
+        "NAICS's predecessor, still what many registries file under; same TOML-tree "
+        "ingest note as naics.",
+    ),
+
     # ── evaluate: promising, question unanswered ────────────────────────────
+    TaxonomySource(
+        "cid-classifications", "Harvard Growth Lab classifications (ISIC/HS/SITC/O*NET)",
+        "https://github.com/cid-harvard/classifications",
+        "csv", "evaluate",
+        "Many systems, one cleaned repo — incl. O*NET occupations for workforce "
+        "mapping. Heavy; ingest per-system when a concrete need names one.",
+    ),
+    TaxonomySource(
+        "icb", "Industry Classification Benchmark (FTSE/Dow Jones)",
+        "https://gist.github.com/mysticmind/bf3acd436bbaddca62ca1f3e01e890c9",
+        "json", "evaluate",
+        "The open GICS-alternative investors reference — but a personal gist is "
+        "not an authority; find a durable source before ingesting.",
+    ),
     TaxonomySource(
         "iptc-media-topics", "IPTC Media Topics",
         "https://iptc.org/standards/media-topics/",
@@ -129,7 +171,35 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "oss-taxonomy", "ecosyste.ms OSS taxonomy",
         "https://github.com/ecosyste-ms/oss-taxonomy",
         "yaml", "skip",
-        "Classifies software projects; no marketing surface.",
+        "Classifies open-source projects; even business-wide, none of our users' "
+        "vocabularies join against it yet. Reopens with a concrete use.",
+    ),
+    TaxonomySource(
+        "misp", "MISP threat-intel taxonomies",
+        "https://github.com/MISP/misp-taxonomies",
+        "json", "skip",
+        "Security tagging for CERTs; no business-vocabulary surface here. Revisit "
+        "only if trust-and-safety work lands.",
+    ),
+    TaxonomySource(
+        "classifast", "classifast (UNSPSC/NAICS/ISIC/ETIM classifier)",
+        "https://github.com/DmitryMatv/classifast",
+        "json", "skip",
+        "An app that classifies against standards, not the standards themselves — "
+        "we ingest sources, and the zoo owns classification.",
+    ),
+    TaxonomySource(
+        "naics-gh", "NAICS-GH labeled-repos dataset",
+        "https://huggingface.co/datasets/aquiro1994/naics-gh",
+        "csv", "skip",
+        "An ML training dataset, not a taxonomy; naics itself is the source here.",
+    ),
+    TaxonomySource(
+        "sic-naics-finance-macros", "SIC/NAICS/GICS/Fama-French SAS crosswalk",
+        "https://gist.github.com/mgao6767/4134ce36793b9e932a219ff07d7a3c7f",
+        "csv", "skip",
+        "Finance-research tooling in SAS; the crosswalk idea returns via "
+        "cid-classifications if mapping work lands.",
     ),
     TaxonomySource(
         "instructlab-taxonomy", "InstructLab knowledge taxonomy",

@@ -64,6 +64,35 @@ def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Conn
     return c
 
 
+def add(name: str, definition: str, *, test: str | None = None,
+        note: str | None = None, kind: str = "custom") -> str:
+    """Author a word of YOUR OWN — the same table our words live in, so
+    every surface (onto check, taxonomy_search, the MCP tools) speaks it
+    immediately. Check-first is the contract: a taken name is refused with
+    its findings, because one word means one thing. Custom words survive
+    re-seeding — the seed only replaces its own names."""
+    findings = check(name)
+    if findings:
+        return "REFUSED — the name is spoken for:\n" + "\n".join(findings) \
+            + "\nPick a different word; one word means one thing."
+    conn = connect()
+    conn.execute("INSERT INTO word VALUES (?,?,NULL,?,?,?)",
+                 (name.strip(), kind, definition.strip(), test, note))
+    conn.commit()
+    return f"added  {name} ({kind}) — {definition.strip()}"
+
+
+def words(kind: str | None = None) -> list[dict]:
+    """The vocabulary as rows — ours and yours, distinguishable by kind."""
+    conn = connect(readonly=DB_PATH.exists())
+    sql = "SELECT name, kind, definition, test FROM word"
+    args: list = []
+    if kind:
+        sql += " WHERE kind=?"
+        args.append(kind)
+    return [dict(r) for r in conn.execute(sql + " ORDER BY kind, name", args)]
+
+
 def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
     """Is this name spoken for? Returns human-readable findings; [] = free.
 

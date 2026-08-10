@@ -72,7 +72,26 @@ def _provenance(stub: str, session, print_hash: str) -> str:
             f"edit the instruments (code, data), not this file -->")
 
 
-def gen_skill(skill_name: str, write: bool = False) -> str:
+def _piecewise_already_refused(model: str) -> bool:
+    """THE ASSAY IS THE MEMORY. A model id with a piecewise refusal on record
+    and no acceptance since is skipped — steady state costs nothing, and a
+    NEW model id gets its shot automatically (auto-promotion intact). Force a
+    re-attempt with --try-local."""
+    try:
+        from montology_warehouse import connect
+
+        conn = connect()
+        row = conn.execute(
+            "SELECT outcome FROM gen_runs WHERE task='skill' AND model=? "
+            "ORDER BY ran_at DESC LIMIT 1", [f"{model}+piecewise"],
+        ).fetchone()
+        conn.close()
+        return bool(row) and row[0] == "refused"
+    except Exception:  # noqa: BLE001 — no warehouse, no memory: attempt
+        return False
+
+
+def gen_skill(skill_name: str, write: bool = False, try_local: bool = False) -> str:
     """Generate (or regenerate) one package's skill from its instruments.
 
     TWO DRAFTERS, ONE CONTRACT. With a served endpoint (MONTOLOGY_MODEL_URL)
@@ -98,6 +117,12 @@ def gen_skill(skill_name: str, write: bool = False) -> str:
         from ._session import tiny_session
 
         tiny = tiny_session()
+        if tiny is not None and not try_local and _piecewise_already_refused(_model_of(tiny)):
+            _record("skill", skill_name, "host-agent", "handoff", [])
+            return (
+                f"(piecewise skipped: {_model_of(tiny)} has a refusal on record — "
+                "`--try-local` re-attempts)\n\n" + _handoff(skill_name, pkg)
+            )
         if tiny is not None:
             text, failures = _assemble_piecewise(tiny, skill_name, pkg)
             if not failures:
@@ -150,7 +175,10 @@ def _assemble_piecewise(session, skill_name: str, pkg: str) -> tuple[str, list[s
 
     surface = package_surface(pkg)
     shape = duck_shape()
-    laws = STRUCTURAL + GROUNDING + (tools_exist(surface), substance(surface))
+    from .stubs import describe_skill, tool_method
+
+    specs = tuple((s.__doc__ or "") for s in (describe_skill, tool_method))
+    laws = STRUCTURAL + GROUNDING + (tools_exist(surface), substance(surface, specs))
     fns = [f for f in surface["functions"] if not f.get("infra")]
 
     desc = str(describe_skill(
@@ -168,8 +196,11 @@ def _assemble_piecewise(session, skill_name: str, pkg: str) -> tuple[str, list[s
                 skill_name=skill_name,
             )).split()).strip()
             low, doc = para.lower(), f["doc"].strip().lower()
+            from .laws import echoes as _echoes
+
             if len(para.split()) >= 10 and low != f["name"] \
-                    and not (doc and (low in doc or doc in low)):
+                    and not (doc and (low in doc or doc in low)) \
+                    and not any(_echoes(para, s) for s in specs):
                 break
         sections.append(f"## `{f['name']}`\n\n`{f['signature']}`\n\n{para}")
 
@@ -253,8 +284,8 @@ def gen_word(name: str, context: str = "") -> str:
         _record("word", name, _model_of(session), "refused", failures)
         return "REFUSED — the definition could not satisfy its laws:\n  " + "\n  ".join(failures)
     _record("word", name, _model_of(session), "accepted", [])
-    return (f"{line.strip()}\n\n(add it in ontology/src/montology_ontology/seed.py — "
-            "authorship stays a reviewed change; gen proposes, it does not commit)")
+    return (f"{line.strip()}\n\n(accept it with: montology onto add "
+            f"\"{name}\" \"<the definition above>\" — gen proposes, you commit)")
 
 
 def lint() -> list[str]:

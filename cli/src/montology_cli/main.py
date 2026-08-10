@@ -103,6 +103,30 @@ def onto_check(name: str) -> None:
     raise typer.Exit(1)
 
 
+@onto_app.command("add")
+def onto_add(
+    name: str,
+    definition: str,
+    test: str = typer.Option("", help="The one-line 'what is it' test."),
+    note: str = typer.Option("", help="Context worth keeping with the word."),
+) -> None:
+    """Author a word of your own — check-first; a taken name is refused with findings."""
+    from montology_ontology import add
+
+    got = add(name, definition, test=test or None, note=note or None)
+    typer.echo(got)
+    raise typer.Exit(1 if got.startswith("REFUSED") else 0)
+
+
+@onto_app.command("list")
+def onto_list(kind: str = typer.Argument("", help="Filter: core | adopted | custom.")) -> None:
+    """The vocabulary — ours and yours (kind=custom is yours)."""
+    from montology_ontology import words
+
+    for w in words(kind or None):
+        typer.echo(f"{w['kind']:<9} {w['name']:<24} {w['definition']}")
+
+
 @zoo_app.command("list")
 def zoo_list() -> None:
     """The curated models, from the zoo database."""
@@ -195,11 +219,12 @@ def crawl_brand(url: str) -> None:
 def gen_skill_cmd(
     name: str = typer.Argument(..., help="Skill to (re)generate: " ),
     write: bool = typer.Option(False, "--write", help="Write skills/<name>/SKILL.md (default: print)."),
+    try_local: bool = typer.Option(False, "--try-local", help="Re-attempt the local piecewise path even if this model has a refusal on record."),
 ) -> None:
     """Generate a package's skill from its instruments — AST surface, warehouse shape, house rules."""
     from montology_gen import gen_skill
 
-    typer.echo(gen_skill(name, write=write))
+    typer.echo(gen_skill(name, write=write, try_local=try_local))
 
 
 @gen_app.command("word")

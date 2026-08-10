@@ -48,6 +48,8 @@ def pull(source_id: str | None = None) -> list[str]:
 
 
 def _ingest(src: TaxonomySource, conn) -> int:
+    if src.id == "schemaorg":
+        return _ingest_schemaorg(src, conn)
     if src.fmt == "tsv":
         return _ingest_iab_tsv(src, conn)
     if src.fmt == "txt" and src.id == "google-product":
@@ -57,6 +59,42 @@ def _ingest(src: TaxonomySource, conn) -> int:
     raise NotImplementedError(
         f"no parser for fmt={src.fmt} yet — add one in pull.py (they are ~20 lines each)"
     )
+
+
+def _ingest_schemaorg(src: TaxonomySource, conn) -> int:
+    """The Schema.org JSON-LD graph: every Class and Property becomes a row.
+
+    code = the bare @id (schema:Thing -> Thing), parent = first subClassOf /
+    subPropertyOf, path = 'Class' or 'Property' plus the parent for display.
+    """
+    import json as _json
+
+    graph = _json.loads(_fetch(src.url)).get("@graph", [])
+    n = 0
+    for node in graph:
+        types = node.get("@type", [])
+        types = types if isinstance(types, list) else [types]
+        is_class = "rdfs:Class" in types
+        is_prop = "rdf:Property" in types
+        if not (is_class or is_prop):
+            continue
+        code = str(node.get("@id", "")).removeprefix("schema:")
+        label = node.get("rdfs:label", "")
+        label = label.get("@value", "") if isinstance(label, dict) else str(label)
+        if not code or not label:
+            continue
+        parent_key = "rdfs:subClassOf" if is_class else "rdfs:subPropertyOf"
+        parents = node.get(parent_key, [])
+        parents = parents if isinstance(parents, list) else [parents]
+        parent = str(parents[0].get("@id", "")).removeprefix("schema:") if parents else None
+        kind = "Class" if is_class else "Property"
+        conn.execute(
+            "INSERT OR REPLACE INTO taxonomy VALUES (?,?,?,?,?,?)",
+            (src.id, code, label, parent, None,
+             f"{kind}" + (f" < {parent}" if parent else "")),
+        )
+        n += 1
+    return n
 
 
 def _fetch(url: str) -> str:
