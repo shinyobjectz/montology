@@ -19,6 +19,7 @@ dependencies = [
 # passthrough to the zoo's lanes so `uv sync --extra …` works at the root
 topics = ["montology-zoo[topics]"]
 audio = ["montology-zoo[audio]"]
+science = ["montology-warehouse[science]"]
 gguf = ["montology-zoo[gguf]"]
 
 [tool.uv.workspace]

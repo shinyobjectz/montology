@@ -143,6 +143,49 @@ def taxonomy_tree_artifact(source: str = "iab-content", top: str = "") -> dict:
 
 
 @mcp.tool
+def chart_artifact(sql: str, kind: str = "bar", x: str = "", y: str = "",
+                   title: str = "") -> dict:
+    """A chart from a warehouse query, as an MCP Apps artifact.
+
+    Args:
+        sql: The query (registries attached: ontology.*, zoo.*, your tables).
+        kind: bar | line | scatter | pie.
+        x: Column for the x axis (default: first column).
+        y: Column for the y axis (default: second column).
+        title: Chart title.
+    """
+    from mcp_ui_server import create_ui_resource
+
+    from montology_warehouse import connect
+
+    try:
+        import plotly.express as px
+    except ImportError:
+        return {"error": "charts need the science lane: uv sync --extra science"}
+    try:
+        rel = connect().sql(sql)
+        cols = [d[0] for d in rel.description]
+        rows = rel.fetchmany(500)
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"SQL error: {e}"}
+    if not rows:
+        return {"error": "the query returned no rows"}
+    x = x or cols[0]
+    y = y or (cols[1] if len(cols) > 1 else cols[0])
+    data = {c: [r[i] for r in rows] for i, c in enumerate(cols)}
+    fig = {"bar": px.bar, "line": px.line, "scatter": px.scatter,
+           "pie": lambda **k: px.pie(names=k.pop("x"), values=k.pop("y"), **k)
+           }.get(kind, px.bar)(x=data[x] if kind != "pie" else data[x],
+                               y=data[y] if kind != "pie" else data[y], title=title or sql[:80])
+    page = fig.to_html(full_html=True, include_plotlyjs=True)
+    return create_ui_resource({
+        "uri": "ui://montology/chart",
+        "content": {"type": "rawHtml", "htmlString": page},
+        "encoding": "text",
+    })
+
+
+@mcp.tool
 def zoo_fit_artifact() -> dict:
     """The model shelf's fit table for THIS machine, as an MCP Apps artifact —
     which local models run here, with measured sizes and estimated peaks."""

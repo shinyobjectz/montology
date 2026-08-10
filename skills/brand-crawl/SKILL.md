@@ -20,7 +20,33 @@ colors are counted from the CSS, never guessed from the logo.
 
 First use needs the browser: `montology crawl setup` (one download).
 
-## The component-library method
+## The component-library pipeline (scaffold → components → lint → ship)
+
+```sh
+montology crawl brand https://brand.com > kit.json      # measure
+montology brand scaffold brandname kit.json             # tokens.ts + manifest
+# …you write components/ (below)…
+montology brand register brandname Hero hero components/Hero.tsx --source https://brand.com
+montology brand lint brandname                          # the gate
+```
+
+Components are stored BY BRAND AND BY TYPE (`manifest.json`) so downstream
+frameworks shop the library:
+
+- **Emails** — the `email-header` / `email-body` / `email-footer` types are
+  react-email's ingredients: compose them under react-email's `<Html>`,
+  render, send.
+- **Video** — the `video-title` / `video-lower-third` / `video-endcard`
+  types drop into Remotion compositions (use the remotion skill where
+  installed); they are ordinary React, tokens and all.
+- **Graphics / pages** — hero, card, pricing, banner render anywhere React
+  renders; static-export for graphic design crops.
+
+The gate (`brand lint`) is what keeps the library real: every component
+must import `../tokens` (no scraped hex — tokens are the contract), carry a
+type from the taxonomy, and exist where the manifest says.
+
+## Writing the components
 
 YOU write the React — that is the ruling, not an accident. (The mechanical
 converter considered for this, html-to-react-components, is years dormant

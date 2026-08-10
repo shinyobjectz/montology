@@ -21,11 +21,13 @@ onto_app = typer.Typer(help="The vocabulary.", no_args_is_help=True)
 zoo_app = typer.Typer(help="Local embedding models.", no_args_is_help=True)
 crawl_app = typer.Typer(help="Local crawling (brand sites, pages).", no_args_is_help=True)
 gen_app = typer.Typer(help="Generate skills, docs and words from instruments (Mellea).", no_args_is_help=True)
+brand_app = typer.Typer(help="Brand component libraries: scaffold, register, lint.", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(onto_app, name="onto")
 app.add_typer(zoo_app, name="zoo")
 app.add_typer(crawl_app, name="crawl")
 app.add_typer(gen_app, name="gen")
+app.add_typer(brand_app, name="brand")
 
 
 def _gen_backend_ok() -> bool:
@@ -346,6 +348,38 @@ def gen_lint_cmd() -> None:
     from montology_gen import lint
 
     lines = lint()
+    for line in lines:
+        typer.echo(line)
+    raise typer.Exit(1 if any(l.startswith("FAIL") for l in lines) else 0)
+
+
+@brand_app.command("scaffold")
+def brand_scaffold_cmd(brand: str, kit: str = typer.Argument(..., help="brand_kit JSON output, or a path to it.")) -> None:
+    """brands/<brand>/ from a measured kit: tokens.ts + manifest + README."""
+    from montology_crawl import brand_scaffold
+
+    got = brand_scaffold(brand, kit)
+    typer.echo(got)
+    raise typer.Exit(0 if got.startswith("scaffolded") else 1)
+
+
+@brand_app.command("register")
+def brand_register_cmd(brand: str, name: str, ctype: str, file: str,
+                       source: str = typer.Option("", help="The URL the component derives from.")) -> None:
+    """Add a component to the brand's manifest (type from the component taxonomy)."""
+    from montology_crawl import brand_register
+
+    got = brand_register(brand, name, ctype, file, source)
+    typer.echo(got)
+    raise typer.Exit(0 if got.startswith("registered") else 1)
+
+
+@brand_app.command("lint")
+def brand_lint_cmd(brand: str) -> None:
+    """The deterministic gate: manifest, files, types, tokens-not-hex."""
+    from montology_crawl import brand_lint
+
+    lines = brand_lint(brand)
     for line in lines:
         typer.echo(line)
     raise typer.Exit(1 if any(l.startswith("FAIL") for l in lines) else 0)

@@ -19,6 +19,7 @@ Playwright's browser is a one-time explicit download: `montology crawl
 setup`. Every tool answers a missing browser with that repair.
 """
 
+from .brand import COMPONENT_TYPES, lint as brand_lint, register as brand_register, scaffold as brand_scaffold
 from .tools import brand_kit, fetch_page, mellea_tools, page_sections
 
-__all__ = ["brand_kit", "fetch_page", "mellea_tools", "page_sections"]
+__all__ = ["COMPONENT_TYPES", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "mellea_tools", "page_sections"]
