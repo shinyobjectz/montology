@@ -148,13 +148,22 @@ MODELS = [
      "inventory. They belong in a tools package if creative generation lands."),
 
     # ── tiny generative (the optional GGUF shelf) ───────────────────────────
+    ("gen-granite-switch-3b", "ibm-granite/granite-switch-4.1-3b-preview", "generate",
+     "text-gen", None, "apache-2.0", "drafting", "carried",
+     "THE RULED DRAFTER for montology gen — the Switch family: same "
+     "twelve-adapter-function checkpoint line the wider system standardizes "
+     "on, so a properly served instance (an OpenAI-compatible endpoint via "
+     "MONTOLOGY_MODEL_URL) offers requirement-check as a CALIBRATED law, not "
+     "a judge. Honest state: llama.cpp arch support merged 2026-08-10 (PR "
+     "25107) and only a bf16 GGUF exists (8.4 GB) — small laptops read 'no' "
+     "in fit until a Q4/Q8 quant is published, at which point the artifact "
+     "repoints and this becomes the local default. Until then the running "
+     "Ollama default is granite4.1:3b (same family, no adapters)."),
     ("gen-qwen3-1.7b", "Qwen/Qwen3-1.7B", "generate", "text-gen", None,
-     "apache-2.0", "drafting", "carried",
-     "THE GEN SYSTEM'S DEFAULT DRAFTER (montology gen): the smallest model "
-     "trusted with law-constrained SKILL.md drafting — the 0.27-0.5B shelf "
-     "stays extraction-only. Unmeasured trust: the engine's refused/accepted "
-     "counts are the assay that will confirm or demote it. Ollama: qwen3:1.7b; "
-     "mellea-native alternative: granite4.1:3b."),
+     "apache-2.0", "drafting", "skip",
+     "Was briefly the drafter pick for size; FAMILY ALIGNMENT WON — Granite "
+     "is the house line across the system, the Switch checkpoint brings the "
+     "adapter functions, and a second model family was not worth 900 MB."),
     ("gen-qwen2.5-0.5b", "Qwen/Qwen2.5-0.5B-Instruct", "generate", "text-gen", None,
      "apache-2.0", "drafting", "carried",
      "Offline extraction and normalisation on any laptop; served via Ollama/llama.cpp."),
@@ -201,8 +210,9 @@ ARTIFACTS = [
     ("audio-clap", "onnx", "q8", "Xenova/larger_clap_general", "onnx/model_quantized.onnx"),
     ("asr-whisper-base", "ggml", "f16", "ggerganov/whisper.cpp", "ggml-base.bin"),
     ("asr-whisper-small", "ggml", "f16", "ggerganov/whisper.cpp", "ggml-small.bin"),
-    ("gen-qwen3-1.7b", "gguf", "q4_k_m", "unsloth/Qwen3-1.7B-GGUF",
-     "Qwen3-1.7B-Q4_K_M.gguf"),
+    ("gen-granite-switch-3b", "gguf", "bf16",
+     "barha/granite-switch-4.1-3b-preview-GGUF-pr25107",
+     "granite-switch-4.1-3b-preview-bf16.gguf"),
     ("gen-qwen2.5-0.5b", "gguf", "q4_k_m", "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
      "qwen2.5-0.5b-instruct-q4_k_m.gguf"),
     ("gen-smollm2-360m", "gguf", "q8_0", "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF",

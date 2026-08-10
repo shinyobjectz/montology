@@ -212,7 +212,7 @@ def gen_word_cmd(name: str, context: str = typer.Option("", help="Usage context 
 
 @gen_app.command("setup")
 def gen_setup_cmd() -> None:
-    """One-time: pull the gen system's default drafter (qwen3:1.7b via Ollama)."""
+    """One-time: pull the gen system's default drafter (granite4.1:3b via Ollama)."""
     import shutil
     import subprocess
 
@@ -221,8 +221,8 @@ def gen_setup_cmd() -> None:
                    "`montology gen setup`. (Or set MONTOLOGY_MODEL_URL to any "
                    "OpenAI-compatible endpoint instead — no Ollama needed.)")
         raise typer.Exit(1)
-    r = subprocess.run(["ollama", "pull", "qwen3:1.7b"], capture_output=True, text=True)
-    typer.echo("drafter ready (qwen3:1.7b)" if r.returncode == 0
+    r = subprocess.run(["ollama", "pull", "granite4.1:3b"], capture_output=True, text=True)
+    typer.echo("drafter ready (granite4.1:3b)" if r.returncode == 0
                else f"pull failed: {r.stderr[-300:]}")
     raise typer.Exit(r.returncode)
 

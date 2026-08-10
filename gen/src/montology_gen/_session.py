@@ -20,7 +20,7 @@ import urllib.request
 
 NO_BACKEND = (
     "No model backend is reachable for generation. Repair, either one:\n"
-    "  - install Ollama (ollama.com), run `montology gen setup` (pulls qwen3:1.7b, ~1.1GB), retry; or\n"
+    "  - install Ollama (ollama.com), run `montology gen setup` (pulls granite4.1:3b, ~2GB), retry; or\n"
     "  - set MONTOLOGY_MODEL_URL to any OpenAI-compatible endpoint "
     "(and MONTOLOGY_MODEL / MONTOLOGY_MODEL_KEY as needed).\n"
     "Deterministic commands (gen lint) never need a model."
@@ -54,7 +54,8 @@ def gen_session():
 
     from mellea import start_session
 
-    # qwen3:1.7b is the zoo's ruled default drafter (gen-qwen3-1.7b row);
-    # granite4.1:3b (mellea's native default) works the same way via
-    # MONTOLOGY_MODEL=granite4.1:3b.
-    return start_session("ollama", model_id=os.environ.get("MONTOLOGY_MODEL", "qwen3:1.7b"))
+    # granite4.1:3b — mellea's native default, and the house family. The
+    # RULED drafter is gen-granite-switch-3b (see its zoo row): it takes over
+    # as the local default the day a Switch quant is published; served over
+    # MONTOLOGY_MODEL_URL it additionally brings the adapter functions.
+    return start_session("ollama", model_id=os.environ.get("MONTOLOGY_MODEL", "granite4.1:3b"))
