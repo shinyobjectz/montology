@@ -28,7 +28,9 @@ COMPONENT_TYPES = (
     "feature", "banner", "logo-row",
     "email-header", "email-body", "email-footer",
     "video-title", "video-lower-third", "video-endcard",
-    "page",  # a COMPOSITION of library components — landing pages live here
+    "page",       # a COMPOSITION of library components — landing pages live here
+    "ad-banner",  # fixed-frame display creative (IAB sizes)
+    "ad-social",  # fixed-frame social statics
 )
 
 
@@ -177,6 +179,14 @@ def lint(brand: str) -> list[str]:
                           "hex codes copied from a scrape are drift, tokens are the contract")
         if re.search(r"#[0-9a-fA-F]{3,6}\b", re.sub(r"//[^\n]*", "", text)):
             report.append(f"FAIL {tag}: literal hex color in JSX — use the palette from tokens.ts")
+        if comp.get("type") in ("ad-banner", "ad-social"):
+            m = re.search(r"-(\d{2,4})x(\d{2,4})\.tsx$", comp.get("file", ""))
+            if not m:
+                report.append(f"FAIL {tag}: fixed-frame ads are named <name>-<w>x<h>.tsx "
+                              "so the format is legible from the filename")
+            elif f"{m.group(1)}" not in text or f"{m.group(2)}" not in text:
+                report.append(f"FAIL {tag}: the file claims {m.group(1)}x{m.group(2)} but those "
+                              "dimensions do not appear in the component — declare the frame")
 
     report.append(("FAIL" if any(r.startswith("FAIL") for r in report) else "ok")
                   + f" — {built} built, {candidates} candidate(s) awaiting conversion, "

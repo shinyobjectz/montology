@@ -20,7 +20,8 @@ setup`. Every tool answers a missing browser with that repair.
 """
 
 from .audit import brand_audit
+from .creative import FORMATS, assets as brand_assets, brief as brand_brief
 from .brand import COMPONENT_TYPES, lint as brand_lint, register as brand_register, scaffold as brand_scaffold
 from .tools import brand_kit, fetch_page, mellea_tools, page_sections
 
-__all__ = ["COMPONENT_TYPES", "brand_audit", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "mellea_tools", "page_sections"]
+__all__ = ["COMPONENT_TYPES", "FORMATS", "brand_assets", "brand_audit", "brand_brief", "brand_kit", "brand_lint", "brand_register", "brand_scaffold", "fetch_page", "mellea_tools", "page_sections"]

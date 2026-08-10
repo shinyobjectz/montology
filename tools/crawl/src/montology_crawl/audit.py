@@ -74,9 +74,27 @@ def brand_audit(url: str, max_pages: int = 4) -> str:
         "breakpoints": _counted(css, r"@media[^{]*?min-width\s*:\s*(\d+px)", 8),
         "buttons": _buttons(corpus),
         "components": _inventory(pages),
+        "logo": (re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)', home_html, re.I) or
+                 re.search(r'<link[^>]+rel=["\'](?:icon|apple-touch-icon)[^>]*href=["\']([^"\']+)', home_html, re.I) or
+                 [None, ""])[1] if True else "",
+        "images": _images(pages),
         "voice_sample": home_md[:1200],
     }
     return json.dumps(audit, indent=1)
+
+
+def _images(pages: dict[str, str]) -> list[str]:
+    """Distinct content images across pages — the asset candidates. Icons,
+    pixels and data URIs excluded; order preserved (hero images first)."""
+    out, seen = [], set()
+    for html in pages.values():
+        for src in re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', html, re.I):
+            if src.startswith("data:") or any(k in src.lower() for k in ("sprite", "icon", "pixel", "1x1")):
+                continue
+            if src not in seen:
+                seen.add(src)
+                out.append(src)
+    return out[:40]
 
 
 def _key_links(base: str, html: str) -> list[str]:

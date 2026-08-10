@@ -383,6 +383,25 @@ def brand_register_cmd(brand: str, name: str, ctype: str, file: str,
     raise typer.Exit(0 if got.startswith("registered") else 1)
 
 
+@brand_app.command("assets")
+def brand_assets_cmd(brand: str, audit: str = typer.Argument(..., help="brand_audit JSON or a path to it.")) -> None:
+    """Download the brand's images into brands/<brand>/assets/ (bounded, with ledger)."""
+    from montology_crawl import brand_assets
+
+    typer.echo(brand_assets(brand, audit))
+
+
+@brand_app.command("brief")
+def brand_brief_cmd(brand: str, deliverable: str,
+                    goal: str = typer.Option(..., "--goal", help="What the creative must achieve.")) -> None:
+    """The grounded creative brief: banner | social | video | email | landing."""
+    from montology_crawl import brand_brief
+
+    got = brand_brief(brand, deliverable, goal)
+    typer.echo(got)
+    raise typer.Exit(1 if not got.startswith("GROUNDED") else 0)
+
+
 @brand_app.command("lint")
 def brand_lint_cmd(brand: str) -> None:
     """The deterministic gate: manifest, files, types, tokens-not-hex."""
