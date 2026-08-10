@@ -331,11 +331,13 @@ def gen_setup_cmd() -> None:
 
 
 @gen_app.command("docs")
-def gen_docs_cmd(write: bool = typer.Option(False, "--write")) -> None:
-    """Regenerate the README's package map from the workspace (deterministic)."""
+def gen_docs_cmd(write: bool = typer.Option(False, "--write"),
+                 prose: bool = typer.Option(False, "--prose",
+                                            help="Also generate per-package paragraphs (needs a model).")) -> None:
+    """Regenerate the README's package map (deterministic); --prose adds paragraphs."""
     from montology_gen.engine import gen_docs
 
-    typer.echo(gen_docs(write=write))
+    typer.echo(gen_docs(write=write, prose=prose))
 
 
 @gen_app.command("lint")
