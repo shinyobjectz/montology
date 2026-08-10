@@ -165,6 +165,26 @@ def substance(surface: dict, spec_texts: tuple[str, ...] = ()) -> Law:
                check)
 
 
+def provenance_current(surface_hash: str) -> Law:
+    """The drift detector: a generated skill's provenance names the surface
+    hash it was drafted from; when the package's AST no longer matches, the
+    skill is STALE and lint fails with the regenerate repair — this is the
+    hook that forces regeneration, mechanically."""
+    import re as _re
+
+    def check(text: str) -> str | None:
+        m = _re.search(r"instruments=sha256:([0-9a-f]{16})", text)
+        if not m:
+            return None  # provenance.present already fails a missing header
+        if m.group(1) != surface_hash:
+            return (f"STALE — drafted from surface {m.group(1)}, the package is now "
+                    f"{surface_hash}. Repair: regenerate (montology gen skill <name>)")
+        return None
+
+    return Law("provenance.current", "The skill matches the package surface it documents.",
+               check)
+
+
 def word_laws(taken: Callable[[str], list[str]]) -> tuple[Law, ...]:
     """Laws for a generated ontology word: free, one sentence, no vendors."""
     def _free(text: str) -> str | None:
