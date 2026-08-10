@@ -36,6 +36,10 @@ _NOISE = {
     "config", "client", "server", "helper", "util", "utils", "data", "value",
     "item", "list", "name", "type", "error", "result", "response", "request",
     "check", "start", "stop", "close", "open", "call", "next", "state",
+    # measured leaking through the 2026-08-10 stress battery (8 real repos)
+    "constructor", "initialize", "window", "document", "string", "number",
+    "boolean", "tests", "default", "props", "clear", "params", "options",
+    "module", "view", "post", "json", "path", "connect", "join", "bind",
 }
 
 
