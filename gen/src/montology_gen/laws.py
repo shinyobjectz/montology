@@ -126,6 +126,33 @@ GROUNDING: tuple[Law, ...] = (
 )
 
 
+def substance(surface: dict) -> Law:
+    """Prose must ADD something: a tool section whose text merely echoes the
+    docstring, restates the tool's name, or runs under ten words is filler —
+    observed live from a 270M draft ('keyword_ideas' as its own method) and
+    exactly what a structural check cannot see."""
+    docs = {f["name"]: f["doc"].strip().lower() for f in surface["functions"]}
+
+    def check(text: str) -> str | None:
+        import re as _re
+
+        bad = []
+        for m in _re.finditer(r"## `([a-z_][a-z0-9_]*)`\n\n`[^`]*`\n\n(.*?)(?=\n## |\Z)",
+                              text, _re.S):
+            name, prose = m.group(1), " ".join(m.group(2).split()).strip().lower()
+            doc = docs.get(name, "")
+            if (len(prose.split()) < 10 or prose == name
+                    or (doc and (prose in doc or doc in prose))):
+                bad.append(name)
+        if bad:
+            return (f"sections for {bad} are filler — under ten words, a name echo, "
+                    "or a docstring restatement; method must add what the docstring lacks")
+        return None
+
+    return Law("piece.substance", "Every tool section adds real method beyond its docstring.",
+               check)
+
+
 def word_laws(taken: Callable[[str], list[str]]) -> tuple[Law, ...]:
     """Laws for a generated ontology word: free, one sentence, no vendors."""
     def _free(text: str) -> str | None:

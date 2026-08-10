@@ -21,7 +21,7 @@ from .instruments import (
     parse_frontmatter,
     skills_inventory,
 )
-from .laws import GROUNDING, STRUCTURAL, Law, tools_exist, word_laws
+from .laws import GROUNDING, STRUCTURAL, Law, substance, tools_exist, word_laws
 
 HOUSE_RULES = [
     "Numbers come from tools, never from memory — if a tool did not return it "
@@ -89,6 +89,27 @@ def gen_skill(skill_name: str, write: bool = False) -> str:
 
     session = gen_session()
     if isinstance(session, str):
+        # THE PIECEWISE EXPERIMENT: before handing off, let the atomic tier
+        # try the body DECOMPOSED — structure built by code (frontmatter and
+        # sections cannot fail to parse), prose filled slot by slot at the
+        # size the 292 MB model already passes. The laws judge the assembled
+        # whole; a refusal falls through to the handoff and the assay records
+        # both, so 'can the 292 do bodies' stays a measured question.
+        from ._session import tiny_session
+
+        tiny = tiny_session()
+        if tiny is not None:
+            text, failures = _assemble_piecewise(tiny, skill_name, pkg)
+            if not failures:
+                _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "accepted", [])
+                if write:
+                    target = ROOT / "skills" / skill_name / "SKILL.md"
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(text)
+                    return f"wrote {target.relative_to(ROOT)} (piecewise on the atomic tier; all laws hold)"
+                return text
+            _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "refused", failures)
+
         _record("skill", skill_name, "host-agent", "handoff", [])
         return _handoff(skill_name, pkg)
 
@@ -119,6 +140,47 @@ def gen_skill(skill_name: str, write: bool = False) -> str:
         target.write_text(text)
         return f"wrote {target.relative_to(ROOT)} ({len(text)} chars, all laws hold)"
     return text
+
+
+def _assemble_piecewise(session, skill_name: str, pkg: str) -> tuple[str, list[str]]:
+    """Structure from code, prose from atomic slots. Returns (text, failures)."""
+    import yaml
+
+    from .stubs import describe_skill, tool_method
+
+    surface = package_surface(pkg)
+    shape = duck_shape()
+    laws = STRUCTURAL + GROUNDING + (tools_exist(surface), substance(surface))
+    fns = [f for f in surface["functions"] if not f.get("infra")]
+
+    desc = str(describe_skill(
+        session, skill_name=skill_name,
+        tool_names=[f["name"] for f in fns], tool_docs=[f["doc"] for f in fns],
+    )).strip().replace("\n", " ")
+    sections = []
+    for f in fns:
+        # one retry per piece: atomic-sized revision is within the tier's
+        # floor, and a piece that stays filler fails the substance law below
+        para = ""
+        for _attempt in range(2):
+            para = " ".join(str(tool_method(
+                session, tool_signature=f["signature"], tool_doc=f["doc"],
+                skill_name=skill_name,
+            )).split()).strip()
+            low, doc = para.lower(), f["doc"].strip().lower()
+            if len(para.split()) >= 10 and low != f["name"] \
+                    and not (doc and (low in doc or doc in low)):
+                break
+        sections.append(f"## `{f['name']}`\n\n`{f['signature']}`\n\n{para}")
+
+    fm = yaml.safe_dump({"name": skill_name, "description": desc},
+                        sort_keys=False, allow_unicode=True, width=1000).strip()
+    header = _provenance("piecewise", session, fingerprint(surface, shape))
+    rules = "\n".join(f"- {r}" for r in HOUSE_RULES)
+    text = (f"---\n{fm}\n---\n\n{header}\n\n# {skill_name}\n\n"
+            + "\n\n".join(sections)
+            + f"\n\n## Rules\n\n{rules}\n")
+    return text, _check(text, laws)
 
 
 def _handoff(skill_name: str, pkg: str) -> str:

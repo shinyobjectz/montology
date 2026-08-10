@@ -27,6 +27,10 @@ SKILL_PACKAGES = {
     "montology": "cli/src/montology_cli",
 }
 
+# functions that are plumbing, not marketer surface — piecewise generation
+# skips them; mentioning them stays legal (tools_exist reads the full surface)
+INFRA_NAMES = ("mellea_tools", "setup", "main")
+
 # the env vars that exist; a generated skill may name no others
 KNOWN_ENV = (
     "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD", "SCRAPECREATORS_API_KEY",
@@ -56,6 +60,7 @@ def package_surface(pkg_path: str) -> dict:
                     "signature": f"{node.name}({args}){returns}",
                     "doc": doc,
                     "module": py.stem,
+                    "infra": node.name in INFRA_NAMES,
                 })
     return surface
 

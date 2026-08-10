@@ -56,6 +56,22 @@ def define_word(name: str, usage_context: str, existing_words: list[str]) -> str
 
 
 @generative
+def describe_skill(skill_name: str, tool_names: list[str], tool_docs: list[str]) -> str:
+    """One sentence for a skill roster: what these tools cover and WHEN a
+    marketer's agent should reach for this skill. Dense, concrete, under
+    forty words, no markdown, no leading 'This skill'."""
+    ...
+
+
+@generative
+def tool_method(tool_signature: str, tool_doc: str, skill_name: str) -> str:
+    """Two to four plain sentences of METHOD for this one tool: which
+    marketing question it answers, what to pass, and the one caveat that
+    prevents misuse. Mention only this tool. No markdown headings."""
+    ...
+
+
+@generative
 def package_doc(package_surface: dict, pyproject_description: str) -> str:
     """Write the one-paragraph README section for this package: what it is,
     the two or three functions that matter most from package_surface and
