@@ -20,3 +20,4 @@ brands/
 # `montology data pull`. Committed snapshots are a release decision, not a
 # default — flip this deliberately if we start shipping the db.
 ontology/data/ontology.db
+dist/

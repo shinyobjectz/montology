@@ -31,14 +31,37 @@ _NO_KEYS = (
 )
 
 
-def _post(path: str, payload: list[dict]) -> str:
+def _post(path: str, payload: list[dict]) -> dict | str:
     auth = _auth()
     if auth is None:
         return _NO_KEYS
     r = httpx.post(f"{BASE}{path}", auth=auth, json=payload, timeout=120)
     if r.status_code != 200:
         return f"DataForSEO answered {r.status_code}: {r.text[:300]}"
-    return json.dumps(r.json(), indent=1)[:20_000]
+    return r.json()
+
+
+def _result_items(data: dict | str) -> list[dict] | str:
+    """The v3 envelope: tasks[0].result[0].items — or the raw excerpt when
+    the shape surprises us (shaped answers must never hide a real payload)."""
+    if isinstance(data, str):
+        return data
+    try:
+        result = data["tasks"][0]["result"][0]
+        return result.get("items") or [result]
+    except (KeyError, IndexError, TypeError):
+        return json.dumps(data, indent=1)[:8_000]
+
+
+def _table(rows: list[dict], cols: list[tuple[str, str]]) -> str:
+    """Aligned text rows — what a marketer's agent actually reads."""
+    header = [h for h, _ in cols]
+    body = [[str(r.get(k, ""))[:60] for _, k in cols] for r in rows]
+    widths = [max(len(h), *(len(b[i]) for b in body)) if body else len(h)
+              for i, h in enumerate(header)]
+    lines = ["  ".join(h.ljust(w) for h, w in zip(header, widths))]
+    lines += ["  ".join(c.ljust(w) for c, w in zip(b, widths)) for b in body]
+    return "\n".join(lines)
 
 
 def serp_search(keyword: str, location: str = "United States", language: str = "en") -> str:
@@ -52,10 +75,17 @@ def serp_search(keyword: str, location: str = "United States", language: str = "
         location: Location name, e.g. "United States" or "London,England,United Kingdom".
         language: Two-letter language code.
     """
-    return _post(
+    items = _result_items(_post(
         "/serp/google/organic/live/advanced",
         [{"keyword": keyword, "location_name": location, "language_code": language}],
-    )
+    ))
+    if isinstance(items, str):
+        return items
+    organic = [i for i in items if i.get("type") == "organic"][:20]
+    if not organic:
+        return "the SERP came back with no organic items — likely all ads/features; retry or rephrase"
+    return _table(organic, [("rank", "rank_absolute"), ("title", "title"),
+                            ("url", "url"), ("domain", "domain")])
 
 
 def keyword_ideas(seed_keywords: str, location: str = "United States") -> str:
@@ -72,10 +102,19 @@ def keyword_ideas(seed_keywords: str, location: str = "United States") -> str:
         location: Location name for volume data (worldwide if the API gets none).
     """
     seeds = [k.strip() for k in seed_keywords.split(",") if k.strip()][:20]
-    return _post(
+    data = _post(
         "/keywords_data/google_ads/keywords_for_keywords/live",
         [{"keywords": seeds, "location_name": location}],
     )
+    if isinstance(data, str):
+        return data
+    try:  # this endpoint's result IS the list (no items nesting)
+        rows = data["tasks"][0]["result"][:40]
+    except (KeyError, IndexError, TypeError):
+        return json.dumps(data, indent=1)[:8_000]
+    rows.sort(key=lambda r: r.get("search_volume") or 0, reverse=True)
+    return _table(rows, [("keyword", "keyword"), ("volume", "search_volume"),
+                         ("cpc", "cpc"), ("competition", "competition")])
 
 
 def mellea_tools() -> list:

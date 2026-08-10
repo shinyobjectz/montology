@@ -3,6 +3,13 @@ name = "montology-gen"
 version = "0.1.0"
 description = "The generative system: skills, docs and words produced by Mellea from instruments — never from hand-written prompts."
 requires-python = ">=3.12"
+license = "Apache-2.0"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "mellea",
     "pyyaml",
@@ -18,3 +25,7 @@ montology-warehouse = { workspace = true }
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/socialite-ml/montology"
+Repository = "https://github.com/socialite-ml/montology"

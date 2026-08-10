@@ -92,6 +92,38 @@ def creator_posts(platform: str, handle: str) -> str:
     return _get(path, params)
 
 
+def _first_list_of_dicts(data) -> list[dict] | None:
+    """Platforms nest their post arrays differently; find the first plausible
+    one instead of hardcoding 27 shapes."""
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data
+    if isinstance(data, dict):
+        for v in data.values():
+            got = _first_list_of_dicts(v)
+            if got:
+                return got
+    return None
+
+
+def sc_api(endpoint: str, params_json: str = "{}") -> str:
+    """Call ANY ScrapeCreators endpoint — the passthrough behind the skill's
+    routing tables (110 endpoints, 27+ platforms).
+
+    Args:
+        endpoint: The path from the skill's routing table, e.g. "/v1/tiktok/profile"
+            or "/v2/instagram/user/posts".
+        params_json: JSON object of query params per that endpoint's spec
+            (fetch https://docs.scrapecreators.com{endpoint}/openapi.json for details).
+    """
+    try:
+        params = json.loads(params_json or "{}")
+    except json.JSONDecodeError as e:
+        return f'params_json could not be read ({e}). Pass a JSON object, e.g. {{"handle": "nike"}}'
+    if not endpoint.startswith("/v"):
+        return "endpoint must start with /v1, /v2 or /v3 — copy it from the skill's routing table"
+    return _get(endpoint, params)
+
+
 def mellea_tools() -> list:
     """The same functions, wrapped for a Mellea program's `tools=` list.
 
@@ -101,4 +133,4 @@ def mellea_tools() -> list:
     """
     from mellea.backends.tools import tool
 
-    return [tool(creator_profile), tool(creator_posts)]
+    return [tool(creator_profile), tool(creator_posts), tool(sc_api)]

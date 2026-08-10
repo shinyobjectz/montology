@@ -106,11 +106,13 @@ def peak_bytes(task: str, artifact_bytes: int, arch_row) -> int | None:
     return int(artifact_bytes * ACT_FACTOR) + ONNX_RUNTIME_MB * 1024**2
 
 
-def report() -> list[str]:
-    """The fit table for this machine, one line per model's best artifact."""
+def report(m: Machine | None = None) -> list[str]:
+    """The fit table, one line per model's best artifact. `m` is injectable
+    so the tight/no/no-disk verdicts are TESTABLE on machines that never
+    exercise them — an untested verdict is a guess wearing a table."""
     if not DB_PATH.exists():
         return ["The zoo database is empty. Repair: run `montology zoo sync` first."]
-    m = machine()
+    m = m or machine()
     conn = connect()
     lines = [
         f"this machine: {m.os} {m.arch}"
@@ -141,8 +143,14 @@ def report() -> list[str]:
                 f"{model['task']:<12} arch facts missing — re-run `zoo sync`"
             )
             continue
-        verdict = ("fits" if peak <= m.usable_ram * FITS_HEADROOM
-                   else "tight" if peak <= m.usable_ram else "no")
+        if best["bytes"] > m.free_disk:
+            verdict = "no-disk"
+        elif peak <= m.usable_ram * FITS_HEADROOM:
+            verdict = "fits"
+        elif peak <= m.usable_ram:
+            verdict = "tight"
+        else:
+            verdict = "no"
         via = ""
         if best["format"] == "gguf" and model["task"] == "generate":
             via = " (via ollama/llama.cpp)"

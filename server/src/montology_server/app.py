@@ -70,9 +70,9 @@ def taxonomy_search(query: str, source: str = "") -> str:
 # (tools.mellea_tools()), registered directly — FastMCP reads the signature
 # and docstring. One implementation, two transports.
 from montology_dataforseo.tools import keyword_ideas, serp_search  # noqa: E402
-from montology_scrapecreators.tools import creator_posts, creator_profile  # noqa: E402
+from montology_scrapecreators.tools import creator_posts, creator_profile, sc_api  # noqa: E402
 
-for fn in (serp_search, keyword_ideas, creator_profile, creator_posts):
+for fn in (serp_search, keyword_ideas, creator_profile, creator_posts, sc_api):
     mcp.tool(fn)
 
 

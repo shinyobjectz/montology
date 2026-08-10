@@ -25,6 +25,7 @@ SKILL_PACKAGES = {
     "scrapecreators": "tools/scrapecreators/src/montology_scrapecreators",
     "brand-crawl": "tools/crawl/src/montology_crawl",
     "montology": "cli/src/montology_cli",
+    "warehouse": "warehouse/src/montology_warehouse",
 }
 
 # functions that are plumbing, not marketer surface — piecewise generation

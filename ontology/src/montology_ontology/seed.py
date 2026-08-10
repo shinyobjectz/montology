@@ -43,7 +43,7 @@ def seed() -> str:
     conn = connect()
     for name, kind, owner, definition, test in WORDS:
         conn.execute(
-            "INSERT OR REPLACE INTO word VALUES (?,?,?,?,?,NULL)",
+            "INSERT OR REPLACE INTO word (name, kind, owner, definition, test, note) VALUES (?,?,?,?,?,NULL)",
             (name, kind, owner, definition, test),
         )
     conn.commit()

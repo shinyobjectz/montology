@@ -307,6 +307,60 @@ def gen_word(name: str, context: str = "") -> str:
             f"\"{name}\" \"<the definition above>\" — gen proposes, you commit)")
 
 
+PACKAGES = {  # workspace member -> import path, for the docs surface
+    "cli": "cli/src/montology_cli",
+    "ontology": "ontology/src/montology_ontology",
+    "zoo": "zoo/src/montology_zoo",
+    "server": "server/src/montology_server",
+    "warehouse": "warehouse/src/montology_warehouse",
+    "tools/dataforseo": "tools/dataforseo/src/montology_dataforseo",
+    "tools/scrapecreators": "tools/scrapecreators/src/montology_scrapecreators",
+    "tools/crawl": "tools/crawl/src/montology_crawl",
+    "gen": "gen/src/montology_gen",
+}
+
+
+def gen_docs(write: bool = False) -> str:
+    """The README's map table, regenerated from the workspace itself.
+
+    DETERMINISTIC — descriptions come from each package's pyproject, the
+    rows from the members list. package_doc (the stub) is the served-lane
+    upgrade for paragraph prose; the table never needed a model, which is
+    why it could never drift once this existed.
+    """
+    import re as _re
+    import tomllib
+
+    rows = []
+    for member, pkg in PACKAGES.items():
+        py = ROOT / member.split("/src")[0].split("/montology")[0] / "pyproject.toml"
+        py = ROOT / pathlib_parts(member) / "pyproject.toml"
+        meta = tomllib.loads(py.read_text())["project"]
+        import_name = pkg.rsplit("/", 1)[-1]
+        rows.append(f"| `{member}/` | `{import_name}` | {meta['description']} |")
+    table = ("| package | import | what it is |\n|---|---|---|\n"
+             + "\n".join(rows)
+             + "\n| `skills/` | — | Agent Skills: how to use all of the above, in the agent's language. |")
+
+    readme = (ROOT / "README.md").read_text()
+    new = _re.sub(
+        r"\| package \| import \| what it is \|.*?\| `skills/` \| — \|[^\n]*\|",
+        table.replace("\\", "\\\\"), readme, count=1, flags=_re.S,
+    )
+    if new == readme:
+        return "README map table already current"
+    if write:
+        (ROOT / "README.md").write_text(new)
+        return f"README map table regenerated ({len(rows)} packages)"
+    return table
+
+
+def pathlib_parts(member: str):
+    from pathlib import PurePosixPath
+
+    return PurePosixPath(member)
+
+
 def lint() -> list[str]:
     """Deterministic, model-free. In `just check`.
 

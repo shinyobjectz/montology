@@ -5,6 +5,6 @@ answers with the repair. Same design as montology-dataforseo: each @tool is
 a plain function the MCP server can expose unchanged.
 """
 
-from .tools import creator_profile, creator_posts, mellea_tools
+from .tools import creator_profile, creator_posts, mellea_tools, sc_api
 
-__all__ = ["mellea_tools", "creator_profile", "creator_posts"]
+__all__ = ["mellea_tools", "creator_profile", "creator_posts", "sc_api"]

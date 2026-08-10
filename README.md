@@ -30,27 +30,32 @@ the embeddings and the tools on your behalf.
 ## Quick start
 
 ```sh
-# as an agent plugin (any supporting client)
-# → point your client at this folder or install it as a plugin
+# TODAY (works now):
+git clone https://github.com/socialite-ml/montology && cd montology
+uv sync                     # every package, one lock
+uv run montology doctor     # what is set up, what is missing, how to fix it
+just                        # list everything else
 
-# as a workspace (developing)
-uv sync            # every package, one lock
-just               # list what you can do
-uvx montology      # the CLI: install data, run the server, manage keys
+# as an agent plugin: point any Agent Plugins client (or Claude Code) at
+# this folder — plugin.json + skills/ + mcp.json are the standard layout.
+
+# AFTER the first PyPI release (publish.yml, trusted publishing):
+uvx montology               # the CLI anywhere, no clone
 ```
 
 ## The map
 
 | package | import | what it is |
 |---|---|---|
-| `cli/` | `montology` | The `montology` command: setup, data pulls, doctor, serve. |
-| `ontology/` | `montology_ontology` | The SQLite vocabulary + IAB taxonomy ingest. Authored in `seed.py`, checked by `montology onto`. |
-| `zoo/` | `montology_zoo` | Embedding models from HuggingFace, run locally (ONNX/GGUF). A registry, a downloader, one `embed()` call. |
-| `server/` | `montology_server` | FastMCP server (stateless HTTP-ready) returning MCP Apps artifacts via `mcp-ui-server`. |
-| `tools/dataforseo/` | `montology_dataforseo` | DataForSEO wrapped as Mellea tools. |
-| `tools/scrapecreators/` | `montology_scrapecreators` | ScrapeCreators wrapped as Mellea tools. |
-| `warehouse/` | `montology_warehouse` | DuckDB — the analytical engine over your data, with the SQLite registries attached. |
-| `tools/crawl/` | `montology_crawl` | Local AI crawling (crawl4ai): pages as markdown, measured brand kits, component-ready sections. |
+| `cli/` | `montology_cli` | The montology CLI: install data, check the vocabulary, pull models, serve MCP. |
+| `ontology/` | `montology_ontology` | The marketing vocabulary as a SQLite database: house words, IAB and friends ingested relationally. |
+| `zoo/` | `montology_zoo` | Small models for marketing work, run on YOUR laptop: registry, downloader, embed(), transcribe(), topics. |
+| `server/` | `montology_server` | The montology MCP server: FastMCP (stateless HTTP-ready), artifacts via MCP Apps / mcp-ui. |
+| `warehouse/` | `montology_warehouse` | The analytical lane: DuckDB over the user's marketing data, with the registries attached. |
+| `tools/dataforseo/` | `montology_dataforseo` | DataForSEO wrapped as Mellea tools: SERPs, keywords, backlinks — answered with data. |
+| `tools/scrapecreators/` | `montology_scrapecreators` | ScrapeCreators wrapped as Mellea tools: public creator and post data across platforms. |
+| `tools/crawl/` | `montology_crawl` | Local AI crawling: brand sites into LLM-ready markdown, brand kits, and component-ready sections. |
+| `gen/` | `montology_gen` | The generative system: skills, docs and words produced by Mellea from instruments — never from hand-written prompts. |
 | `skills/` | — | Agent Skills: how to use all of the above, in the agent's language. |
 
 ## Alignment decisions (why it is shaped this way)
@@ -81,6 +86,10 @@ uvx montology      # the CLI: install data, run the server, manage keys
 
 ## Status
 
-Scaffold. The structure and contracts are real; most implementations are
-stubs with their intent documented. See `CLAUDE.md` for how the agent of
-record works on this repo.
+Working. The runtime is real and live-tested: embed/transcribe/topics run
+locally, eleven taxonomies ingest (30k+ rows), the crawler measures real
+sites, the MCP server answers real clients, and the gen system's laws are
+enforced in CI (`just check` = lint + the committed test suite). PyPI
+publish is one trusted-publisher registration away (see
+`.github/workflows/publish.yml`). `CLAUDE.md` says how the agent of record
+works on this repo.

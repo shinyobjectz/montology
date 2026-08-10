@@ -3,6 +3,13 @@ name = "montology-server"
 version = "0.1.0"
 description = "The montology MCP server: FastMCP (stateless HTTP-ready), artifacts via MCP Apps / mcp-ui."
 requires-python = ">=3.12"
+license = "Apache-2.0"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "fastmcp",
     "mcp-ui-server",
@@ -24,3 +31,7 @@ montology-warehouse = { workspace = true }
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/socialite-ml/montology"
+Repository = "https://github.com/socialite-ml/montology"

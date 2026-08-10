@@ -13,6 +13,7 @@ check:
     uv run montology onto check montology > /dev/null 2>&1; test $? -eq 1 && echo "ontology answers"
     uv run python -c "import json; json.load(open('plugin.json')); json.load(open('mcp.json')); print('plugin manifests parse')"
     uv run montology gen lint
+    uv run pytest tests -m "not integration"
 
 # Seed the vocabulary and pull every core taxonomy
 data-pull:
@@ -25,6 +26,10 @@ serve:
 # The MCP server, stateless Streamable HTTP
 serve-http:
     uv run montology-mcp --http
+
+# The committed proofs — offline fast suite (integration runs too when models are pulled)
+test:
+    uv run pytest tests
 
 # Is everything set up?
 doctor:

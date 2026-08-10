@@ -68,13 +68,20 @@ def brand_kit(url: str) -> str:
         return got
     markdown, html = got
 
-    colors = Counter(c.lower() for c in re.findall(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b", html))
+    # THE PALETTE LIVES IN LINKED STYLESHEETS, not the HTML — counting only
+    # inline styles measured the crumbs and missed the meal (caught in
+    # review before any real site was measured). Fetch the site's own CSS,
+    # bounded: same-ish origin resolution, 8 sheets, 300 KB each.
+    css = _linked_css(url, html)
+    corpus = html + "\n" + css
+    colors = Counter(c.lower() for c in re.findall(r"#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b", corpus))
     fonts = Counter(
         f.strip().strip("'\"")
-        for decl in re.findall(r"font-family\s*:\s*([^;}]+)", html, re.I)
+        for decl in re.findall(r"font-family\s*:\s*([^;}]+)", corpus, re.I)
         for f in decl.split(",")
         if f.strip().strip("'\"").lower() not in
-        ("sans-serif", "serif", "monospace", "system-ui", "inherit", "initial")
+        ("sans-serif", "serif", "monospace", "system-ui", "inherit", "initial", "var")
+        and not f.strip().startswith("var(")
     )
 
     def meta(prop: str) -> str:
@@ -92,14 +99,36 @@ def brand_kit(url: str) -> str:
 
     kit = {
         "url": url,
+        "stylesheets_counted": corpus.count("\n") > html.count("\n"),
         "title": meta("og:site_name") or meta("og:title"),
         "description": meta("og:description") or meta("description"),
         "logo": meta("og:image") or logo,
-        "colors": [{"hex": f"#{c}", "count": n} for c, n in colors.most_common(12)],
+        "colors": [{"hex": c if c.startswith("#") else f"#{c}", "count": n}
+                   for c, n in colors.most_common(12)],
         "fonts": [{"family": f, "count": n} for f, n in fonts.most_common(8)],
         "voice_sample": markdown[:1_500],
     }
     return json.dumps(kit, indent=1)
+
+
+def _linked_css(base_url: str, html: str, cap: int = 8) -> str:
+    """Fetch the page's linked stylesheets (bounded), for honest counting."""
+    import urllib.parse
+
+    import httpx
+
+    hrefs = re.findall(r'<link[^>]+rel=["\']stylesheet["\'][^>]*href=["\']([^"\']+)', html, re.I)
+    hrefs += re.findall(r'<link[^>]+href=["\']([^"\']+)["\'][^>]*rel=["\']stylesheet["\']', html, re.I)
+    out = []
+    for href in dict.fromkeys(hrefs)[:cap] if isinstance(hrefs, dict) else list(dict.fromkeys(hrefs))[:cap]:
+        try:
+            got = httpx.get(urllib.parse.urljoin(base_url, href), timeout=15,
+                            follow_redirects=True)
+            if got.status_code == 200 and len(got.text) < 300_000:
+                out.append(got.text)
+        except httpx.HTTPError:
+            continue
+    return "\n".join(out)
 
 
 def page_sections(url: str) -> str:

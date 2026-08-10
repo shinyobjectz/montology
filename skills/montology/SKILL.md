@@ -23,7 +23,9 @@ montology data pull     # fetch the taxonomies into the local database
 | "What category is this, officially?" | `taxonomy_search` / `montology onto check` — IAB Content/Audience/Ad Product, Google Product, Topics |
 | "Who ranks for this? What should we target?" | DataForSEO tools: `serp_search`, `keyword_ideas` |
 | "What is this creator posting? How is it doing?" | ScrapeCreators tools: `creator_profile`, `creator_posts` |
-| "Which of our captions are alike?" | the zoo: `montology zoo list`, then embed locally |
+| "Which of our captions are alike?" | `montology zoo embed text-minilm "cap A" "cap B" …` — prints the similarity matrix |
+| "What are people talking about?" | `montology zoo topics file.txt` — discovered topics (BERTopic over the local embedder) |
+| "Transcribe this call / podcast ad" | `montology zoo transcribe audio.wav` (whisper.cpp, local) |
 | "What do we call this?" | the ontology: check before naming, one word one meaning |
 | "Analyze this spreadsheet / join it with categories" | the warehouse: `montology data load`, then `montology sql` (DuckDB; registries attached) |
 | "What does this brand's site say / look like?" | crawl tools: `fetch_page`, `brand_kit`, `page_sections` — see the brand-crawl skill |

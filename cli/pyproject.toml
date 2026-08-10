@@ -3,6 +3,13 @@ name = "montology"
 version = "0.1.0"
 description = "The montology CLI: install data, check the vocabulary, pull models, serve MCP."
 requires-python = ">=3.12"
+license = "Apache-2.0"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "typer",
     "montology-ontology",
@@ -29,3 +36,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # project name `montology` ≠ package dir `montology_cli`; hatchling needs telling
 packages = ["src/montology_cli"]
+
+[project.urls]
+Homepage = "https://github.com/socialite-ml/montology"
+Repository = "https://github.com/socialite-ml/montology"

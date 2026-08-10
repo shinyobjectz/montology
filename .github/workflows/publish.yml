@@ -1,0 +1,25 @@
+# PyPI via Trusted Publishing (OIDC) — no tokens in the repo, ever.
+# ONE-TIME SETUP (repo owner, on pypi.org): for each package name, add a
+# "trusted publisher": owner socialite-ml, repo montology, workflow
+# publish.yml, environment pypi. Then `git tag v0.1.0 && git push --tags`.
+#
+# KNOWN CAVEAT, stated not hidden: three packages depend on mellea, pinned
+# in-workspace to git rev 7248890 (0.8.0.dev0). Published wheels can only
+# declare `mellea` by name, which pip resolves from PyPI (0.7.x today) —
+# verify the 0.7-compat story or wait for mellea's next release before the
+# first tag.
+name: publish
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build --all-packages
+      - run: uv publish

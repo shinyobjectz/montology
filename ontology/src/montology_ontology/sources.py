@@ -74,13 +74,13 @@ SOURCES: tuple[TaxonomySource, ...] = (
     # ── extra: pertinent, pull on request ───────────────────────────────────
     TaxonomySource(
         "shopify-product", "Shopify Product Taxonomy",
-        "https://github.com/Shopify/product-taxonomy",
+        "https://raw.githubusercontent.com/Shopify/product-taxonomy/main/dist/en/taxonomy.json",
         "json", "extra",
         "10k+ categories with attributes — richer than Google's tree; heavy, so opt-in.",
     ),
     TaxonomySource(
         "openooh-venue", "OpenOOH Venue Taxonomy",
-        "https://github.com/openooh/venue-taxonomy",
+        "https://raw.githubusercontent.com/openooh/venue-taxonomy/main/specification.json",
         "json", "extra",
         "Digital-out-of-home venue types; niche channel, real standard.",
     ),
@@ -101,17 +101,17 @@ SOURCES: tuple[TaxonomySource, ...] = (
     ),
     TaxonomySource(
         "naics", "NAICS (North American Industry Classification System)",
-        "https://github.com/CompileInc/naics-codes",
+        "https://codeload.github.com/CompileInc/naics-codes/tar.gz/refs/heads/master",
         "json", "extra",
-        "Industry classification — firmographics for B2B. Machine-readable but a "
-        "per-code TOML tree: the tree-walk ingest gets written on first pull.",
+        "Industry classification — firmographics for B2B. Ingested from the repo "
+        "tarball (one fetch, not two thousand API calls).",
     ),
     TaxonomySource(
         "sic", "SIC codes",
-        "https://github.com/CompileInc/sic-codes",
+        "https://codeload.github.com/CompileInc/sic-codes/tar.gz/refs/heads/master",
         "json", "extra",
-        "NAICS's predecessor, still what many registries file under; same TOML-tree "
-        "ingest note as naics.",
+        "NAICS's predecessor, still what many registries file under; same tarball "
+        "ingest as naics.",
     ),
 
     # ── evaluate: promising, question unanswered ────────────────────────────

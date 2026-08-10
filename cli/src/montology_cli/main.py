@@ -109,13 +109,43 @@ def onto_add(
     definition: str,
     test: str = typer.Option("", help="The one-line 'what is it' test."),
     note: str = typer.Option("", help="Context worth keeping with the word."),
+    owner: str = typer.Option("", help="The word this one lives inside (must exist)."),
+    code: str = typer.Option("", help="A short dotted code, socialite-style (must be free)."),
 ) -> None:
     """Author a word of your own — check-first; a taken name is refused with findings."""
     from montology_ontology import add
 
-    got = add(name, definition, test=test or None, note=note or None)
+    got = add(name, definition, test=test or None, note=note or None,
+              owner=owner or None, code=code or None)
     typer.echo(got)
     raise typer.Exit(1 if got.startswith("REFUSED") else 0)
+
+
+@onto_app.command("map")
+def onto_map(word: str, target: str,
+             note: str = typer.Option("", help="Why this mapping holds.")) -> None:
+    """Pin a word to a taxonomy row: montology onto map flight iab-content:634"""
+    from montology_ontology import map_word
+
+    if ":" not in target:
+        typer.echo("target is source:code, e.g. iab-content:634 or schemaorg:Organization")
+        raise typer.Exit(1)
+    source, code = target.split(":", 1)
+    got = map_word(word, source, code, note or None)
+    typer.echo(got)
+    raise typer.Exit(1 if got.startswith("REFUSED") else 0)
+
+
+@onto_app.command("mappings")
+def onto_mappings(word: str = typer.Argument("", help="One word, or empty for all.")) -> None:
+    """The word↔taxonomy joins on record."""
+    from montology_ontology import mappings
+
+    rows = mappings(word or None)
+    if not rows:
+        typer.echo("(no mappings yet — montology onto map WORD source:code)")
+    for m in rows:
+        typer.echo(f"{m['word']:<20} -> {m['source']}:{m['code']}  {m['path'] or m['name'] or '(row gone)'}")
 
 
 @onto_app.command("list")
@@ -298,6 +328,14 @@ def gen_setup_cmd() -> None:
     typer.echo("atomic tier ready (gemma3:270m, 292 MB); bodies use the host agent" if r.returncode == 0
                else f"pull failed: {r.stderr[-300:]}")
     raise typer.Exit(r.returncode)
+
+
+@gen_app.command("docs")
+def gen_docs_cmd(write: bool = typer.Option(False, "--write")) -> None:
+    """Regenerate the README's package map from the workspace (deterministic)."""
+    from montology_gen.engine import gen_docs
+
+    typer.echo(gen_docs(write=write))
 
 
 @gen_app.command("lint")

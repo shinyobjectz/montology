@@ -3,6 +3,13 @@ name = "montology-crawl"
 version = "0.1.0"
 description = "Local AI crawling: brand sites into LLM-ready markdown, brand kits, and component-ready sections."
 requires-python = ">=3.12"
+license = "Apache-2.0"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = ["crawl4ai", "httpx", "mellea"]
 
 [tool.uv.sources]
@@ -11,3 +18,7 @@ mellea = { git = "https://github.com/generative-computing/mellea.git", rev = "72
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/socialite-ml/montology"
+Repository = "https://github.com/socialite-ml/montology"

@@ -1,0 +1,15 @@
+name: check
+on:
+  push: {branches: [main]}
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run python -m compileall -q cli ontology zoo server tools warehouse gen && echo "syntax ok"
+      - run: uv run python -c "import json; json.load(open('plugin.json')); json.load(open('mcp.json'))"
+      - run: uv run montology gen lint
+      - run: uv run pytest tests -m "not integration"

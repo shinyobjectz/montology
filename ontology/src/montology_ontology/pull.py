@@ -50,6 +50,14 @@ def pull(source_id: str | None = None) -> list[str]:
 def _ingest(src: TaxonomySource, conn) -> int:
     if src.id == "schemaorg":
         return _ingest_schemaorg(src, conn)
+    if src.id in ("naics", "sic"):
+        return _ingest_code_tarball(src, conn)
+    if src.id == "shopify-product":
+        return _ingest_shopify(src, conn)
+    if src.id == "openooh-venue":
+        return _ingest_openooh(src, conn)
+    if src.id == "google-nlp-categories":
+        return _ingest_google_nlp(src, conn)
     if src.fmt == "tsv":
         return _ingest_iab_tsv(src, conn)
     if src.fmt == "txt" and src.id == "google-product":
@@ -93,6 +101,103 @@ def _ingest_schemaorg(src: TaxonomySource, conn) -> int:
             (src.id, code, label, parent, None,
              f"{kind}" + (f" < {parent}" if parent else "")),
         )
+        n += 1
+    return n
+
+
+def _ingest_code_tarball(src: TaxonomySource, conn) -> int:
+    """CompileInc NAICS/SIC: a repo tarball of per-code TOML files
+    (`code = "11"` / `name = "..."`). Parent = the code minus its last digit
+    when that code exists — the hierarchy IS the code string."""
+    import io
+    import tarfile
+    import tomllib
+
+    raw = httpx.get(src.url, follow_redirects=True, timeout=120).content
+    rows: dict[str, str] = {}
+    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as tar:
+        for member in tar.getmembers():
+            if not member.name.endswith(".toml"):
+                continue
+            f = tar.extractfile(member)
+            if f is None:
+                continue
+            try:
+                data = tomllib.loads(f.read().decode())
+            except (tomllib.TOMLDecodeError, UnicodeDecodeError):
+                continue
+            code, name = str(data.get("code", "")), str(data.get("name", ""))
+            if code and name:
+                rows[code] = name
+    n = 0
+    for code, name in rows.items():
+        parent = next((code[:i] for i in range(len(code) - 1, 1, -1) if code[:i] in rows), None)
+        conn.execute("INSERT OR REPLACE INTO taxonomy VALUES (?,?,?,?,?,?)",
+                     (src.id, code, name, parent, len(code) - 1, f"{code} {name}"))
+        n += 1
+    return n
+
+
+def _ingest_shopify(src: TaxonomySource, conn) -> int:
+    """Shopify dist taxonomy.json: verticals -> categories with full_name."""
+    import json as _json
+
+    data = _json.loads(_fetch(src.url))
+    n = 0
+    for vertical in data.get("verticals", []):
+        for cat in vertical.get("categories", []):
+            code = str(cat.get("id", "")).rsplit("/", 1)[-1]
+            parent = cat.get("parent_id")
+            parent = str(parent).rsplit("/", 1)[-1] if parent else None
+            full = cat.get("full_name", cat.get("name", ""))
+            if not code or not full:
+                continue
+            conn.execute("INSERT OR REPLACE INTO taxonomy VALUES (?,?,?,?,?,?)",
+                         (src.id, code, cat.get("name", full), parent,
+                          int(cat.get("level", 0)) + 1, full.replace(" > ", " > ")))
+            n += 1
+    return n
+
+
+def _ingest_openooh(src: TaxonomySource, conn) -> int:
+    """OpenOOH specification.json: nested categories with enumeration ids."""
+    import json as _json
+
+    spec = _json.loads(_fetch(src.url))["openooh_venue_taxonomy"]["specification"]
+
+    n = 0
+
+    def walk(cats, parent_code, path):
+        nonlocal n
+        for cat in cats or []:
+            code = str(cat.get("enumeration_id", cat.get("name", "")))
+            name = cat.get("name", "")
+            here = f"{path} > {name}" if path else name
+            conn.execute("INSERT OR REPLACE INTO taxonomy VALUES (?,?,?,?,?,?)",
+                         (src.id, code, name, parent_code,
+                          here.count(">") + 1, here))
+            n += 1
+            walk(cat.get("children"), code, here)
+
+    walk(spec.get("categories"), None, "")
+    return n
+
+
+def _ingest_google_nlp(src: TaxonomySource, conn) -> int:
+    """The categories page: scrape /Path/Like/This strings from the HTML."""
+    import re as _re
+
+    html = _fetch(src.url)
+    paths = sorted({m for m in _re.findall(r"(/[A-Z][\w&' ]+(?:/[\w&'\-, ]+)*)", html)
+                    if m.count("/") >= 1 and "http" not in m and len(m) < 120})
+    n = 0
+    for path in paths:
+        parts = [p for p in path.split("/") if p]
+        if not parts:
+            continue
+        parent = "/" + "/".join(parts[:-1]) if len(parts) > 1 else None
+        conn.execute("INSERT OR REPLACE INTO taxonomy VALUES (?,?,?,?,?,?)",
+                     (src.id, path, parts[-1], parent, len(parts), " > ".join(parts)))
         n += 1
     return n
 

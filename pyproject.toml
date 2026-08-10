@@ -49,6 +49,11 @@ montology-gen = { workspace = true }
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
 [tool.hatch.build.targets.wheel]
 # The root is a virtual aggregator; the packages are the products.
 bypass-selection = true
