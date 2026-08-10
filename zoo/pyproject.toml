@@ -1,12 +1,20 @@
 [project]
 name = "montology-zoo"
 version = "0.1.0"
-description = "Embedding models from HuggingFace, run locally — a registry, a downloader, one embed() call."
+description = "Small models for marketing work, run on YOUR laptop: registry, downloader, embed(), transcribe(), topics."
 requires-python = ">=3.12"
-dependencies = ["huggingface-hub", "httpx"]
+dependencies = [
+    "huggingface-hub",
+    "httpx",
+    # the runtime the README promises: embed() works out of the box
+    "onnxruntime",
+    "tokenizers",
+    "numpy",
+    "pillow",
+]
 
 [project.optional-dependencies]
-onnx = ["onnxruntime", "tokenizers"]
+audio = ["soundfile"]
 gguf = ["llama-cpp-python"]
 # Topic DISCOVERY (BERTopic/KeyBERT) is library-shaped, not weights-shaped:
 # both compose over the zoo's carried embedders — the lane is an extra, not

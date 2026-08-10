@@ -16,9 +16,10 @@ llama.cpp — montology never compiles C++ on a marketer's laptop.
 """
 
 from .db import DB_PATH, connect
+from .run import ZooError, embed, embed_audio, embed_image, embed_text, similarity, transcribe
 from .fit import machine, report as fit_report
 from .pull import pull
 from .seed import seed
 from .sync import sync
 
-__all__ = ["DB_PATH", "connect", "fit_report", "machine", "pull", "seed", "sync"]
+__all__ = ["DB_PATH", "ZooError", "connect", "embed", "embed_audio", "embed_image", "embed_text", "fit_report", "machine", "pull", "seed", "similarity", "sync", "transcribe"]

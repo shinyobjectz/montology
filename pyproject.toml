@@ -15,6 +15,12 @@ dependencies = [
     "montology-gen",
 ]
 
+[project.optional-dependencies]
+# passthrough to the zoo's lanes so `uv sync --extra …` works at the root
+topics = ["montology-zoo[topics]"]
+audio = ["montology-zoo[audio]"]
+gguf = ["montology-zoo[gguf]"]
+
 [tool.uv.workspace]
 members = [
     "cli",

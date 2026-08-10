@@ -167,6 +167,54 @@ def zoo_fit() -> None:
         typer.echo(line)
 
 
+@zoo_app.command("embed")
+def zoo_embed(model_id: str, texts: list[str]) -> None:
+    """Embed one or more texts; prints dims and the pairwise similarity matrix."""
+    from montology_zoo import ZooError, embed_text
+
+    try:
+        v = embed_text(model_id, list(texts))
+    except ZooError as e:
+        typer.echo(str(e))
+        raise typer.Exit(1)
+    typer.echo(f"{v.shape[0]} texts -> {v.shape[1]} dims")
+    if len(texts) > 1:
+        sims = v @ v.T
+        for i, a in enumerate(texts):
+            for j in range(i + 1, len(texts)):
+                typer.echo(f"  {sims[i, j]:+.3f}  {a[:36]!r} ~ {texts[j][:36]!r}")
+
+
+@zoo_app.command("transcribe")
+def zoo_transcribe(wav: str, model_id: str = typer.Option("asr-whisper-base", "--model")) -> None:
+    """Transcribe an audio file via whisper.cpp on the zoo's model."""
+    from montology_zoo import ZooError, transcribe
+
+    try:
+        typer.echo(transcribe(model_id, wav))
+    except ZooError as e:
+        typer.echo(str(e))
+        raise typer.Exit(1)
+
+
+@zoo_app.command("topics")
+def zoo_topics(file: str, model_id: str = typer.Option("text-minilm", "--model"),
+               min_size: int = typer.Option(5, "--min-size")) -> None:
+    """Discover topics in a text file (one document per line)."""
+    import pathlib as _pl
+
+    from montology_zoo import ZooError
+    from montology_zoo.topics import discover_topics
+
+    lines = [l.strip() for l in _pl.Path(file).read_text().splitlines() if l.strip()]
+    try:
+        for t_ in discover_topics(lines, model_id=model_id, min_topic_size=min_size):
+            typer.echo(f"{t_['count']:>4}  {t_['topic']}  {', '.join(t_['terms'])}")
+    except ZooError as e:
+        typer.echo(str(e))
+        raise typer.Exit(1)
+
+
 @zoo_app.command("pull")
 def zoo_pull(model_id: str) -> None:
     """Download a model's weights (the smallest synced artifact)."""
