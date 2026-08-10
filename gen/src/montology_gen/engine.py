@@ -86,7 +86,7 @@ def _piecewise_already_refused(model: str) -> bool:
             "ORDER BY ran_at DESC LIMIT 1", [f"{model}+piecewise"],
         ).fetchone()
         conn.close()
-        return bool(row) and row[0] == "refused"
+        return bool(row) and row[0] in ("refused", "errored")
     except Exception:  # noqa: BLE001 — no warehouse, no memory: attempt
         return False
 
@@ -124,7 +124,20 @@ def gen_skill(skill_name: str, write: bool = False, try_local: bool = False) -> 
                 "`--try-local` re-attempts)\n\n" + _handoff(skill_name, pkg)
             )
         if tiny is not None:
-            text, failures = _assemble_piecewise(tiny, skill_name, pkg)
+            # A model that cannot even produce structured output is an assay
+            # outcome (errored), never a traceback — observed live: a
+            # thinking-mode 0.8B answered the stub with empty output and the
+            # ValidationError escaped to the user.
+            try:
+                text, failures = _assemble_piecewise(tiny, skill_name, pkg)
+            except Exception as e:  # noqa: BLE001
+                _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "errored",
+                        [f"{type(e).__name__}"])
+                _record("skill", skill_name, "host-agent", "handoff", [])
+                return (
+                    f"(piecewise errored on {_model_of(tiny)}: {type(e).__name__} — "
+                    "recorded)\n\n" + _handoff(skill_name, pkg)
+                )
             if not failures:
                 _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "accepted", [])
                 if write:
@@ -277,8 +290,14 @@ def gen_word(name: str, context: str = "") -> str:
         if (ROOT / "ontology" / "data" / "ontology.db").exists() else []
     laws = word_laws(onto_check)
 
-    line = define_word(session, name=name, usage_context=context or f"the montology workspace, package surfaces mentioning {name}",
-                       existing_words=existing)
+    try:
+        line = define_word(session, name=name,
+                           usage_context=context or f"the montology workspace, package surfaces mentioning {name}",
+                           existing_words=existing)
+    except Exception as e:  # noqa: BLE001
+        _record("word", name, _model_of(session), "errored", [type(e).__name__])
+        return (f"the model could not produce a definition ({type(e).__name__}). "
+                "Repair: retry, or define it yourself with `montology onto add`.")
     failures = _check(line, laws)
     if failures:
         _record("word", name, _model_of(session), "refused", failures)
