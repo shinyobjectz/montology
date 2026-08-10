@@ -43,11 +43,12 @@ def init(path: str = typer.Argument(".", help="The repo to initialize (default: 
          name: str = typer.Option("", "--name", help="Workspace name (default: the repo's)."),
          yes: bool = typer.Option(False, "--yes", help="Non-interactive: no prompts."),
          json_out: bool = typer.Option(False, "--json", help="Machine summary (implies --yes)."),
-         agents: str = typer.Option("", "--agents", help="Harnesses to wire: claude,cursor,codex (default: detected).")) -> None:
+         agents: str = typer.Option("", "--agents", help="Harnesses to wire: claude,cursor,codex (default: detected)."),
+         from_: str = typer.Option("", "--from", help="Inherit an org ontology (git URL / path / .db URL).")) -> None:
     """Initialize the ontology layer into this repo: .monty/, agent wiring, the words skill."""
     from .init import init_command
 
-    init_command(path, name, yes or json_out, json_out, agents)
+    init_command(path, name, yes or json_out, json_out, agents, from_)
 
 
 @app.command()
@@ -74,9 +75,11 @@ def doctor() -> None:
     if root is not None:
         checks.insert(2, (bool(words()), "vocabulary",
                           "empty — `monty scan --candidates` lists what the code is asking for"))
+    from ._ui import emit
+
     for ok, label, repair in checks:
         mark = "ok " if ok else "MISSING"
-        typer.echo(f"[{mark}] {label}" + ("" if ok else f" — {repair}"))
+        emit(f"[{mark}] {label}" + ("" if ok else f" — {repair}"))
 
 
 def _gen_backend_ok() -> bool:
@@ -96,12 +99,13 @@ def onto_check(name: str) -> None:
     """Is this name free, ours, or ruled on? Run BEFORE naming anything."""
     from montology_ontology import check
 
+    from ._ui import emit, emit_all
+
     findings = check(name)
     if not findings:
-        typer.echo(f"FREE  '{name}' is not spoken for.")
+        emit(f"FREE  '{name}' is not spoken for.")
         raise typer.Exit(0)
-    for f in findings:
-        typer.echo(f)
+    emit_all(findings)
     raise typer.Exit(1)
 
 
@@ -169,17 +173,38 @@ def onto_rename(was: str, now: str,
     typer.echo(_migrate(was, now))
 
 
+@onto_app.command("pull")
+def onto_pull(source: str = typer.Argument("", help="Git URL, workspace path, or http(s) .db URL — remembered once given.")) -> None:
+    """Inherit the ORG vocabulary: one ontology, every repo. Local words survive."""
+    from montology_gen import sync as _sync
+    from montology_ontology import pull
+
+    got = pull(source or None)
+    typer.echo(got)
+    if got.startswith(("REFUSED", "no upstream")):
+        raise typer.Exit(1)
+    typer.echo(_sync())
+
+
 @onto_app.command("list")
 def onto_list(kind: str = typer.Argument("", help="Filter: core | inner | adopted | custom.")) -> None:
     """The vocabulary as rows."""
     from montology_ontology import words
 
+    from ._ui import console
+
     rows = words(kind or None)
     if not rows:
         typer.echo("(no words yet — monty onto add NAME \"definition\", or monty scan --candidates)")
+        return
+    from rich.table import Table
+
+    table = Table(box=None, header_style="bold cyan", pad_edge=False)
+    for col in ("kind", "word", "code", "is"):
+        table.add_column(col)
     for w in rows:
-        code = f" [{w['code']}]" if w["code"] else ""
-        typer.echo(f"{w['kind']:<8} {w['name']:<24}{code} {w['definition']}")
+        table.add_row(w["kind"], f"[bold]{w['name']}[/bold]", w["code"] or "—", w["definition"])
+    console.print(table)
 
 
 @app.command()
@@ -214,9 +239,10 @@ def lint() -> None:
     from montology_gen import lint as gen_lint
     from montology_scan import design_lint, lint as scan_lint
 
+    from ._ui import emit_all
+
     lines = scan_lint() + design_lint() + gen_lint()
-    for line in lines:
-        typer.echo(line)
+    emit_all(lines)
     if any(line.startswith("FAIL") or line.endswith("FAILED") for line in lines):
         raise typer.Exit(1)
 
@@ -266,11 +292,20 @@ def design_tokens(category: str = typer.Argument("", help="color | space | radiu
     """The design vocabulary as rows."""
     from montology_ontology import tokens
 
+    from ._ui import console, _swatched
+
     rows = tokens(category or None)
     if not rows:
         typer.echo("(no tokens yet — monty design candidates shows what the code uses)")
+        return
+    from rich.table import Table
+
+    table = Table(box=None, header_style="bold cyan", pad_edge=False)
+    for col in ("category", "token", "value"):
+        table.add_column(col)
     for t in rows:
-        typer.echo(f"{t['category']:<11} {t['name']:<24} {t['value']}")
+        table.add_row(t["category"], f"[bold]{t['name']}[/bold]", _swatched(t["value"]))
+    console.print(table)
 
 
 @design_app.command("candidates")
@@ -278,7 +313,9 @@ def design_candidates_cmd() -> None:
     """The design values the code is asking to have named — adoption-ready."""
     from montology_scan import design_candidates
 
-    typer.echo(design_candidates())
+    from ._ui import emit_all
+
+    emit_all(design_candidates().splitlines())
 
 
 @design_app.command("ingest")
@@ -286,7 +323,9 @@ def design_ingest() -> None:
     """Adopt the repo's own Tailwind theme (v4 @theme, v3 config) as tokens."""
     from montology_scan import ingest_theme
 
-    typer.echo(ingest_theme())
+    from ._ui import emit
+
+    emit(ingest_theme())
 
 
 @design_app.command("recipes")

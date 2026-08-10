@@ -59,6 +59,12 @@ def lint(root: Path | None = None) -> list[str]:
     cfg = _config(root).get("scan", {})
     enforced_kinds = set(cfg.get("enforced_kinds", ["core", "inner"]))
     allow = {a.lower() for a in cfg.get("allow", [])}
+    # ADVISORY BY DEFAULT. "No declaration named after a word" is a strong
+    # culture (it is ours) — but in most repos `class Journal` implementing
+    # the journal concept is ordinary, and a first-run false-positive storm
+    # is an uninstall. Enforce is the opt-in: [scan] collisions = "enforce".
+    collisions_mode = cfg.get("collisions", "advisory")
+    ctag = "FAIL" if collisions_mode == "enforce" else "warn"
 
     vocab = words()
     report: list[str] = []
@@ -83,20 +89,24 @@ def lint(root: Path | None = None) -> list[str]:
         low = d["name"].lower()
         if low in enforced and low not in allow:
             w = enforced[low]
+            hint = ("" if collisions_mode == "enforce"
+                    else " (advisory — promote with [scan] collisions = \"enforce\")")
             report.append(
-                f"FAIL {d['file']}:{d['line']}: {d['kind']} {d['name']!r} collides with "
+                f"{ctag} {d['file']}:{d['line']}: {d['kind']} {d['name']!r} collides with "
                 f"the word {w['name']!r} ({w['kind']}) — \"{w['definition'][:80]}\". "
                 f"Repair: rename the {d['kind']}, or record the exception in "
-                f"montology.toml [scan] allow."
+                f"montology.toml [scan] allow." + hint
             )
 
     failed = sum(1 for r in report if r.startswith("FAIL"))
+    warned = sum(1 for r in report if r.startswith("warn"))
     for lang, n in surface["skipped_langs"].items():
         report.append(f"note: {n} {lang} file(s) skipped — no declaration query yet")
     report.append(
         ("FAIL" if failed else "ok")
         + f" — {len(surface['decls'])} declarations in {surface['files']} files, "
         f"{len(vocab)} words, {failed} failure(s)"
+        + (f", {warned} advisory collision(s)" if warned else "")
     )
     return report
 

@@ -114,6 +114,10 @@ def stress_one(repo: Path) -> dict:
         victim = classish.most_common(1)[0][0]
         monty(["onto", "add", victim.lower(), "a word meaning something else entirely",
                "--kind", "core"], repo)
+        toml0 = repo / ".monty" / "montology.toml"
+        toml0.write_text(toml0.read_text().replace(
+            'enforced_kinds = ["core", "inner"]',
+            'enforced_kinds = ["core", "inner"]\ncollisions = "enforce"'))
         lint1 = monty(["lint"], repo)
         hit_file = next((d["file"] for d in surface["decls"] if d["name"] == victim), "")
         fired = lint1.returncode == 1 and victim in lint1.stdout and hit_file in lint1.stdout

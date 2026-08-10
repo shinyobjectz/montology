@@ -130,12 +130,14 @@ def wire_agents(root: Path, agents: tuple[str, ...]) -> dict:
 
 
 def init_command(path: str = ".", name: str = "", yes: bool = False,
-                 as_json: bool = False, agents: str = "") -> None:
+                 as_json: bool = False, agents: str = "", upstream: str = "") -> None:
     from datetime import UTC, datetime
 
     target = _repo_root(Path(path).expanduser().resolve())
+    from ._ui import emit
+
     interactive = sys.stdin.isatty() and sys.stdout.isatty() and not yes
-    echo = (lambda *_: None) if as_json else typer.echo
+    echo = (lambda *_: None) if as_json else (lambda s="": emit(str(s)))
 
     summary: dict = {"workspace": str(target), "created": [], "notes": [], "ok": True}
 
@@ -163,12 +165,36 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
             name=ws_name, created=datetime.now(UTC).date(), spec=engine_spec()))
         summary["created"].append(".monty/montology.toml")
 
+    import os
+
     import montology_ontology as onto
 
+    os.environ.setdefault("MONTOLOGY_WORKSPACE", str(target))
     db = marker / "ontology.db"
     if not db.exists():
         onto.connect(db).close()
         summary["created"].append(".monty/ontology.db (empty — yours to author)")
+
+    if upstream:  # the org ontology: inherit before anything renders
+        got = onto.pull(upstream, target)
+        summary["created"].append(got.splitlines()[0])
+        summary["notes"].extend(got.splitlines()[1:])
+
+    # THE WEDGE: a Tailwind theme is a design vocabulary the repo already
+    # wrote — adopt it so the very first lint is worth reading
+    from montology_scan import ingest_theme, tailwind_theme
+
+    try:
+        if tailwind_theme(target):
+            do_ingest = True
+            if interactive:
+                do_ingest = typer.confirm(
+                    "  a Tailwind theme was found — adopt it as design tokens "
+                    "(the theme becomes the law)?", default=True)
+            if do_ingest:
+                summary["created"].append(ingest_theme(target).splitlines()[0])
+    except Exception as e:  # noqa: BLE001 — a broken config never blocks init
+        summary["notes"].append(f"tailwind ingest skipped ({type(e).__name__})")
 
     wired = wire_agents(target, chosen)
     summary["created"].extend(wired["made"])
@@ -176,9 +202,6 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
     summary["notes"].extend(wired["notes"])
 
     # the words skill — rendered even when empty (it says what to do)
-    import os
-
-    os.environ.setdefault("MONTOLOGY_WORKSPACE", str(target))
     from montology_gen import sync as gen_sync
 
     summary["created"].append(gen_sync())
@@ -191,7 +214,8 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
     if as_json:
         typer.echo(json.dumps(summary, indent=2))
         return
-    echo(f"\n✔ montology linked into {target.name}/")
+    echo("")
+    echo(f"✔ montology linked into {target.name}/")
     for c in summary["created"]:
         echo(f"  {c}")
     for n in summary["notes"]:

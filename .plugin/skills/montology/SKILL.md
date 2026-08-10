@@ -1,6 +1,6 @@
 ---
 name: montology
-description: The ontology layer for this repo — a vocabulary as a database, enforced against the code. Use when naming anything (a class, a concept, a tag), when a name feels contested, when vocabulary and code have drifted, or to build an ontology for a codebase from what it already declares.
+description: Design-system and vocabulary drift for this repo — the Tailwind theme as enforced tokens, rogue values with nearest-token receipts, words as a database checked before naming anything, org ontologies inherited across repos, and token-precise renames. Use when naming things, when styles or concepts have drifted, when adopting a design system, or when propagating a rename.
 ---
 
 # Montology: the vocabulary is a database
@@ -30,6 +30,15 @@ stays correct only as long as someone remembers it; this one has a gate.
    a silence.
 5. **Never hand-edit the words skill.** It is GENERATED; `monty sync`
    re-renders it after any change (onto add/rule do this themselves).
+
+## One ontology, every repo
+
+`monty onto pull <git-url|path|.db-url>` inherits the ORG vocabulary
+(pinned in montology.toml after the first pull; `monty init --from <src>`
+does both at once). Upstream rows refresh on every pull; this repo's own
+words always survive; conflicts are loud and local wins. When upstream
+renames a word, the pull prints the exact `monty migrate` command — run
+it on a clean tree.
 
 ## Rulings: how arguments end
 

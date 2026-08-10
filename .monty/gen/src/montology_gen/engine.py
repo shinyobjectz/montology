@@ -151,8 +151,9 @@ def sync(write: bool = True) -> str:
     if write:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text)
-        n = len(vocabulary()["words"])
-        return f"synced {SKILL_REL} ({n} words)"
+        v = vocabulary()
+        return (f"synced {SKILL_REL} ({len(v['words'])} words"
+                + (f", {len(v['tokens'])} tokens" if v["tokens"] else "") + ")")
     return text
 
 

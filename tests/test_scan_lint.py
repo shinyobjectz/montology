@@ -30,10 +30,20 @@ def test_declarations_across_languages(repo):
     assert got["errors"] == 0
 
 
+def test_collision_is_advisory_by_default(repo, onto_db):
+    from montology_scan import lint
+
+    onto_db.add("atlas", "what a tenant holds", kind="core")
+    report = lint(repo)
+    assert any(r.startswith("warn") and "Atlas" in r and "advisory" in r for r in report)
+    assert report[-1].startswith("ok") and "advisory collision" in report[-1]
+
+
 def test_collision_fails_with_repair(repo, onto_db):
     from montology_scan import lint
 
     onto_db.add("atlas", "what a tenant holds", kind="core")
+    (repo / ".monty" / "montology.toml").write_text('[scan]\ncollisions = "enforce"\n')
     report = lint(repo)
     fails = [r for r in report if r.startswith("FAIL")]
     assert any("a.py" in f and "Atlas" in f and "rename" in f.lower() for f in fails)
@@ -45,7 +55,7 @@ def test_allow_records_the_exception(repo, onto_db):
 
     onto_db.add("atlas", "what a tenant holds", kind="core")
     (repo / ".monty" / "montology.toml").write_text(
-        'name = "t"\n[scan]\nallow = ["atlas"]\n')
+        'name = "t"\n[scan]\ncollisions = "enforce"\nallow = ["atlas"]\n')
     assert lint(repo)[-1].startswith("ok")
 
 
