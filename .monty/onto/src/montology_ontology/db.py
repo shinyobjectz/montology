@@ -215,7 +215,7 @@ def doctrines() -> list[dict]:
     return [dict(r) for r in conn.execute("SELECT * FROM doctrine ORDER BY ord")]
 
 
-TOKEN_CATEGORIES = ("color", "space", "radius", "shadow", "font", "breakpoint")
+TOKEN_CATEGORIES = ("color", "space", "radius", "shadow", "font", "breakpoint", "recipe")
 
 
 def token_add(name: str, category: str, value: str, note: str | None = None) -> str:

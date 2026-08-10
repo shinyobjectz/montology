@@ -281,6 +281,22 @@ def design_candidates_cmd() -> None:
     typer.echo(design_candidates())
 
 
+@design_app.command("ingest")
+def design_ingest() -> None:
+    """Adopt the repo's own Tailwind theme (v4 @theme, v3 config) as tokens."""
+    from montology_scan import ingest_theme
+
+    typer.echo(ingest_theme())
+
+
+@design_app.command("recipes")
+def design_recipes(min_uses: int = typer.Option(3, "--min", help="Occurrences before a combo counts.")) -> None:
+    """Recurring utility compositions with no name — components the markup wants."""
+    from montology_scan import recipe_candidates
+
+    typer.echo(recipe_candidates(min_uses=min_uses))
+
+
 @design_app.command("scan")
 def design_scan() -> None:
     """The style surface: colors, spacing, classes, escapes — measured."""

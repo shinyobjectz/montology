@@ -17,6 +17,8 @@ from .surface import declarations, languages_covered
 from .lint import lint, candidates
 from .astgrep import sg
 from .rename import migrate
-from .styles import design_candidates, design_lint, style_surface
+from .styles import (design_candidates, design_lint, ingest_theme,
+                     recipe_candidates, style_surface, tailwind_theme)
 
-__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "lint", "migrate", "sg", "style_surface"]
+__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "ingest_theme", "lint", "migrate",
+           "recipe_candidates", "sg", "style_surface", "tailwind_theme"]

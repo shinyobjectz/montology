@@ -127,6 +127,7 @@ def style_surface(root: Path) -> dict:
     where: dict[str, str] = {}          # value -> "file:line" first seen
     defined_classes: set[str] = set()
     used_classes: Counter[str] = Counter()
+    class_strings: Counter[str] = Counter()
     custom_props: dict[str, str] = {}
     arbitrary: list[dict] = []
 
@@ -183,7 +184,12 @@ def style_surface(root: Path) -> dict:
             continue
         for m in class_attr_re.finditer(text):
             line = text[:m.start()].count("\n") + 1
-            for cls in m.group(1).split():
+            classes = m.group(1).split()
+            if len(classes) >= 4 and sum(_is_utility(c) for c in classes) >= max(3, len(classes) // 2):
+                key = " ".join(sorted(set(classes)))
+                class_strings[key] += 1
+                where.setdefault(key, f"{f.relative_to(root)}:{line}")
+            for cls in classes:
                 used_classes[cls] += 1
                 for arb in TW_ARBITRARY_RE.findall(cls):
                     arbitrary.append({"class": cls, "file": f"{f.relative_to(root)}:{line}"})
@@ -204,8 +210,8 @@ def style_surface(root: Path) -> dict:
 
     return {"colors": colors, "spacing": spacing, "fonts": fonts, "where": where,
             "defined_classes": defined_classes, "used_classes": used_classes,
-            "custom_props": custom_props, "arbitrary": arbitrary,
-            "files": len(css_files) + len(markup_files)}
+            "class_strings": class_strings, "custom_props": custom_props,
+            "arbitrary": arbitrary, "files": len(css_files) + len(markup_files)}
 
 
 NEAR = 30  # channel-sum distance under which two colors are "the same blue"
@@ -295,3 +301,112 @@ def design_candidates(root: Path | None = None, top: int = 8) -> str:
     for fam, n in surface["fonts"].most_common(3):
         lines.append(f"{n:>5}x  {fam:<24}— adopt: monty design token <name> font \"{fam}\"")
     return "\n".join(lines) or "no style surface found (no css/markup files)."
+
+
+# ── Tailwind as vocabulary ──────────────────────────────────────────────────
+
+# Tailwind v4 @theme namespaces -> token categories (custom properties ARE
+# the theme in v4, and our CSS walk already collects them)
+_V4_NAMESPACES = {"--color-": "color", "--spacing-": "space", "--font-": "font",
+                  "--radius-": "radius", "--shadow-": "shadow",
+                  "--breakpoint-": "breakpoint"}
+_CONFIG_SECTIONS = {"colors": "color", "spacing": "space", "fontFamily": "font",
+                    "borderRadius": "radius", "boxShadow": "shadow",
+                    "screens": "breakpoint"}
+
+
+def tailwind_theme(root: Path) -> list[dict]:
+    """The theme the repo already declared, as adoption-ready tokens:
+    v4 @theme custom properties, and v3 tailwind.config.{js,ts,cjs,mjs}."""
+    from tree_sitter_language_pack import get_parser
+
+    found: list[dict] = []
+    surface_props = style_surface(root)["custom_props"]
+    for prop, value in surface_props.items():
+        for ns, category in _V4_NAMESPACES.items():
+            if prop.startswith(ns) and value:
+                found.append({"name": prop[len(ns):], "category": category,
+                              "value": value, "source": "tailwind @theme"})
+
+    for cfg_name in ("tailwind.config.js", "tailwind.config.cjs",
+                     "tailwind.config.mjs", "tailwind.config.ts"):
+        cfg = root / cfg_name
+        if not cfg.exists():
+            continue
+        lang = "typescript" if cfg.suffix == ".ts" else "javascript"
+        tree = get_parser(lang).parse(cfg.read_bytes())
+
+        def key_of(pair) -> str:
+            k = pair.child(0)
+            text = k.text.decode(errors="replace").strip("'\"")
+            return text
+
+        def walk(node, path):
+            for child in node.children:
+                if child.type == "pair":
+                    key = key_of(child)
+                    value_node = child.children[-1]
+                    if value_node.type == "object":
+                        walk(value_node, path + [key])
+                    elif value_node.type in ("string", "template_string"):
+                        section = next((p for p in path if p in _CONFIG_SECTIONS), None)
+                        if section:
+                            below = [p for p in path[path.index(section) + 1:]] + [key]
+                            name = "-".join(str(b) for b in below if b not in ("DEFAULT",))
+                            found.append({
+                                "name": name or key,
+                                "category": _CONFIG_SECTIONS[section],
+                                "value": value_node.text.decode(errors="replace").strip("'\"`"),
+                                "source": cfg_name,
+                            })
+                elif child.child_count:
+                    walk(child, path)
+        walk(tree.root_node, [])
+    return found
+
+
+def ingest_theme(root: Path | None = None) -> str:
+    """Adopt the repo's own Tailwind theme as tokens — the vocabulary they
+    already declared, now enforced. Existing tokens are never overwritten."""
+    from montology_ontology import token_add, tokens
+
+    root = root or workspace_root()
+    theme = tailwind_theme(root)
+    if not theme:
+        return ("no Tailwind theme found (no @theme custom properties, no "
+                "tailwind.config.*) — declare tokens directly: monty design token")
+    have = {t["name"] for t in tokens()}
+    added = skipped = 0
+    for t in theme:
+        if t["name"] in have:
+            skipped += 1
+            continue
+        got = token_add(t["name"], t["category"], t["value"], note=t["source"])
+        if got.startswith("token"):
+            added += 1
+            have.add(t["name"])
+        else:
+            skipped += 1
+    return (f"ingested {added} token(s) from the Tailwind theme "
+            f"({skipped} already named or refused) — the theme is now the law; "
+            "monty lint aligns literals to it")
+
+
+def recipe_candidates(root: Path | None = None, min_uses: int = 3, top: int = 10) -> str:
+    """Recurring utility compositions with no name — the components the
+    markup is asking for (the shadcn move, mined instead of imposed)."""
+    from montology_ontology import tokens
+
+    root = root or workspace_root()
+    named = {t["value"] for t in tokens("recipe")}
+    surface = style_surface(root)
+    lines = []
+    for combo, n in surface["class_strings"].most_common(top * 3):
+        if n < min_uses or combo in named:
+            continue
+        lines.append(f"{n:>4}x  {combo}\n       (first at {surface['where'].get(combo, '?')})  "
+                     f"— name it: monty design token <name> recipe \"{combo}\"")
+        if len(lines) >= top:
+            break
+    return "\n".join(lines) or (f"no recurring unnamed recipes (threshold: {min_uses}+ "
+                                 "uses of 4+ utilities).")

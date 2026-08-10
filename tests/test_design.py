@@ -77,3 +77,54 @@ def test_token_contract(onto_db):
     assert refused.startswith("REFUSED") and "one" in refused.lower()
     assert onto_db.token_add("x", "hue", "#fff").startswith("REFUSED")
     assert onto_db.tokens("color")[0]["value"] == "#061a1c"
+
+
+def test_tailwind_v4_theme_ingests_as_tokens(tmp_path, onto_db, monkeypatch):
+    from montology_scan import ingest_theme
+
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    (tmp_path / ".monty").mkdir()
+    (tmp_path / "theme.css").write_text(
+        "@theme { --color-brand: #061a1c; --color-danger: #b91c1c;\n"
+        "  --spacing-lg: 2rem; --font-display: Inter; }\n")
+    got = ingest_theme(tmp_path)
+    assert "ingested 4 token(s)" in got
+    toks = {t["name"]: t for t in onto_db.tokens()}
+    assert toks["brand"]["value"] == "#061a1c" and toks["brand"]["category"] == "color"
+    assert toks["lg"]["category"] == "space"
+    assert toks["display"]["category"] == "font"
+    # ingest is idempotent — never overwrites
+    assert "0 token(s)" in ingest_theme(tmp_path).replace("ingested 0", "0")
+
+
+def test_tailwind_v3_config_ingests_nested_names(tmp_path, onto_db, monkeypatch):
+    from montology_scan import tailwind_theme
+
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    (tmp_path / ".monty").mkdir()
+    (tmp_path / "tailwind.config.js").write_text(
+        'module.exports = { theme: { extend: {\n'
+        '  colors: { brand: { 500: "#061a1c", light: "#eef2f2" }, danger: "#b91c1c" },\n'
+        '  spacing: { 18: "4.5rem" } } } }\n')
+    theme = {t["name"]: t for t in tailwind_theme(tmp_path)}
+    assert theme["brand-500"]["value"] == "#061a1c"
+    assert theme["brand-light"]["category"] == "color"
+    assert theme["danger"]["value"] == "#b91c1c"
+    assert theme["18"]["category"] == "space"
+
+
+def test_recipes_mine_recurring_compositions(tmp_path, onto_db, monkeypatch):
+    from montology_scan import recipe_candidates
+
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    (tmp_path / ".monty").mkdir()
+    card = "rounded-lg border bg-white p-4 shadow-sm"
+    (tmp_path / "A.tsx").write_text("".join(
+        f'export function C{i}() {{ return <div className="{card}">x</div>; }}\n'
+        for i in range(4)))
+    got = recipe_candidates(tmp_path, min_uses=3)
+    assert "4x" in got and "rounded-lg" in got and "monty design token" in got
+    # naming it silences the candidate
+    normalized = " ".join(sorted(card.split()))
+    onto_db.token_add("card", "recipe", normalized)
+    assert "no recurring unnamed recipes" in recipe_candidates(tmp_path, min_uses=3)
