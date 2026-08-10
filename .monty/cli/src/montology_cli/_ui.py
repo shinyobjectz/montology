@@ -48,14 +48,31 @@ _PREFIX_STYLES = (
 )
 
 
+_ACCENTS = re.compile(
+    r"(?P<hex>#[0-9a-fA-F]{6}\b)"          # a color -> swatch + code
+    r"|'(?P<name>[^']{1,40})'"               # a quoted word -> bold yellow
+    r"|(?P<score>\(Δ?\d+(?:\.\d+)?\))"  # (0.74) / (Δ2) -> bold
+    r"|(?P<count>\b\d+×)"                  # 11× -> bold
+)
+
+
 def _swatched(text: str, base_style: str = "") -> Text:
-    """The line as rich Text, every #rrggbb preceded by a swatch in it."""
+    """The line as rich Text: hex colors carry swatches, quoted names read
+    bold yellow, scores and counts carry weight — the FINDING is the
+    payoff and must not whisper."""
     out = Text()
     pos = 0
-    for m in _HEX.finditer(text):
+    for m in _ACCENTS.finditer(text):
         out.append(text[pos:m.start()], style=base_style)
-        out.append("▉▉", style=m.group(0).lower())
-        out.append(" " + m.group(0), style=base_style)
+        if m.group("hex"):
+            out.append("▉▉", style=m.group("hex").lower())
+            out.append(" " + m.group("hex"), style=base_style)
+        elif m.group("name") is not None:
+            out.append("'", style=base_style)
+            out.append(m.group("name"), style="bold yellow")
+            out.append("'", style=base_style)
+        else:
+            out.append(m.group(0), style="bold")
         pos = m.end()
     out.append(text[pos:], style=base_style)
     return out

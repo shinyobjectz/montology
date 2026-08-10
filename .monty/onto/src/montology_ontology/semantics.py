@@ -46,7 +46,11 @@ def _embed(texts: list[str]):
         from model2vec import StaticModel
     except ImportError:
         return _NO_MODEL
+    import os
+
     import numpy as np
+
+    os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
     model = StaticModel.from_pretrained(_MODEL_ID)
 
@@ -117,10 +121,12 @@ def audit(dup_threshold: float = 0.70, candidates: list[dict] | None = None) -> 
                     f"({sims[i, j]:.2f}) — {flavor} Merge, or sharpen one "
                     f"definition until they part.")
 
-    # misfiled owners: a word whose nearest meanings live in another family
+    # misfiled owners: a word whose nearest meanings live in another family.
+    # Needs POPULATION — under ~10 words every neighbor is a stranger and
+    # the signal is noise (measured on a 5-word fixture).
     owners = [w["owner"] or w["name"] for w in rows]
     for i, w in enumerate(rows):
-        if not w["owner"]:
+        if len(rows) < 10 or not w["owner"]:
             continue
         order = sims[i].argsort()[::-1]
         neighbors = [owners[j] for j in order[1:4]]

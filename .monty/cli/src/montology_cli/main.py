@@ -200,10 +200,25 @@ def onto_pull(source: str = typer.Argument("", help="Git URL, workspace path, or
 def onto_similar(query: str,
                  top: int = typer.Option(8, "--top", help="How many neighbors.")) -> None:
     """The words nearest a name or definition — the meaning may already have a word."""
-    from ._ui import emit_all
+    from rich.text import Text
+
+    from ._ui import console
     from montology_ontology import semantic_similar
 
-    emit_all(semantic_similar(query, top).splitlines())
+    for line in semantic_similar(query, top).splitlines():
+        parts = line.split(maxsplit=2)
+        if len(parts) == 3 and parts[0].replace(".", "").isdigit():
+            score = float(parts[0])
+            hot = score >= 0.5
+            row = Text(f"{parts[0]:>6}  ", style="bold yellow" if hot else "dim")
+            row.append(f"{parts[1]:<22}", style="bold" if hot else "")
+            row.append(parts[2], style="dim")
+            console.print(row)
+            if hot:
+                console.print(Text("        ↑ this meaning may already have its word",
+                                   style="dim yellow"))
+        else:
+            console.print(line)
 
 
 @onto_app.command("audit")

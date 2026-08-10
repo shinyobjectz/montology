@@ -67,6 +67,8 @@ losslessly round-trippable — proven on eight real repos).
 
 ## Semantic hearing
 
+![similar → the string laws pass → the audit hears the duplicate](docs/semantics.gif)
+
 The string laws enforce *one word, one meaning*. The `[semantics]` extra
 hears the dual — *one meaning, one word* — with POTION static embeddings
 (~30 MB, numpy-only; no torch, no runtime): `monty onto audit` flags two
@@ -92,6 +94,20 @@ defined in both places is a loud conflict (local wins — reconcile
 deliberately). When the org renames a word, every repo's next pull
 prints the exact `monty migrate` command: that is how a rename crosses
 the fleet.
+
+## The two models it carries (and the ones it refuses)
+
+montology is deliberately near-modelless — the deterministic laws do the
+enforcing — but it carries exactly two, each chosen for a measured floor:
+
+| model | size | lane | what it does | what it refuses |
+|---|---|---|---|---|
+| **POTION** (`potion-base-8M`, model2vec) | ~30 MB, numpy-only | `[semantics]` extra | static embeddings over definitions: `onto similar`, `onto audit` — duplicate meanings, org/local doubles, misfiled clusters. Millisecond inference, no torch, no runtime. | deciding anything. A cosine score proposes; only a ruling makes vocabulary. |
+| **gemma3:270m** (via Ollama, optional) | 292 MB, user-installed | `monty gen <word>` | drafts ONE-LINE definitions under the word laws (refused over written wrong) when no host agent is present — the autonomous lane. | bodies and prose. The 270M capability floor is atomic one-liners; everything longer is the host agent's work or a served endpoint (`MONTOLOGY_MODEL_URL`). |
+
+Nothing heavier ships, ever: no torch, no onnxruntime, no bundled
+weights. The host agent (Claude, Cursor, Codex) is always the best
+drafter available, and the gate never needs a model at all.
 
 ## For agents
 
