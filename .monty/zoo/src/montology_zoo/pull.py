@@ -9,14 +9,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .db import DB_PATH, connect
+from .db import connect, db_path
 
-# weights are CACHE, and the cache lives inside .monty (never tracked)
-MODELS_DIR = Path(__file__).resolve().parents[3] / "cache" / "models"
+from montology_core import workspace_root
+
+
+def models_dir() -> Path:
+    """Weights are CACHE, and the cache lives inside .monty (never tracked)."""
+    return workspace_root() / ".monty" / "cache" / "models"
 
 
 def pull(model_id: str) -> str:
-    if not DB_PATH.exists():
+    if not db_path().exists():
         return "The zoo database is empty. Repair: run `monty zoo sync` first."
     conn = connect()
     arts = conn.execute(
@@ -30,7 +34,7 @@ def pull(model_id: str) -> str:
 
     got: list[str] = []
     best = arts[0]
-    target = MODELS_DIR / model_id
+    target = models_dir() / model_id
     # the artifact itself, plus the sidecar files ONNX needs to tokenize
     files = [best["path"]]
     if best["format"] == "onnx":

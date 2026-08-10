@@ -11,6 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "montology-core",
     "huggingface-hub",
     "httpx",
     # the runtime the README promises: embed() works out of the box
@@ -35,3 +36,6 @@ build-backend = "hatchling.build"
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"
 Repository = "https://github.com/socialite-ml/montology"
+
+[tool.uv.sources]
+montology-core = { workspace = true }

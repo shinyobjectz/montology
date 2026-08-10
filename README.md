@@ -15,10 +15,11 @@ Montology is three things at once:
    embedding zoo (HuggingFace models run locally via ONNX/GGUF), Mellea-wrapped
    marketing tools (DataForSEO, ScrapeCreators), and an MCP server that ships
    interactive artifacts via [MCP Apps / mcp-ui](https://github.com/MCP-UI-Org/mcp-ui).
-3. **An [Agent Plugin](https://agent-plugins.org).** The repo root is a valid
+3. **An [Agent Plugin](https://agent-plugins.org).** `.plugin/` is a valid
    Agent Plugins 1.0.0 folder — `plugin.json`, `skills/`, `mcp.json` — so it
    installs into ChatGPT, Codex, Cursor, GitHub Copilot, and VS Code, and
-   Claude Code reads the same `skills/` natively.
+   Claude Code reads the same `skills/` natively (a workspace symlinks them
+   into `.claude/skills` at init).
 
 ## Who this is for
 
@@ -30,17 +31,23 @@ the embeddings and the tools on your behalf.
 ## Quick start
 
 ```sh
-# TODAY (works now):
+npm install -g montology    # a thin launcher: ensures uv, runs the engine via uvx
+mkdir my-workspace && cd my-workspace
+monty init                  # onboarding: scaffold, installs (model weights,
+                            # Chromium, render deps) with progress, first project
+```
+
+`monty init` creates a WORKSPACE — `.plugin/` (the agent face), `data/` (the
+vocabulary + taxonomies + model shelf), `design/` (the render harness),
+`projects/` (engagements) — and wires Claude Code automatically (`.mcp.json`,
+`.claude/skills`). Open your agent inside it and everything is live. Agents
+run the same init non-interactively: `monty init --yes --json` (secrets from
+the environment, gaps reported with their repair).
+
+```sh
+# contributors work the repo itself (it is a workspace too):
 git clone https://github.com/socialite-ml/montology && cd montology
-uv sync                     # every package, one lock
-uv run monty doctor     # what is set up, what is missing, how to fix it
-just                        # list everything else
-
-# as an agent plugin: point any Agent Plugins client (or Claude Code) at
-# this folder — plugin.json + skills/ + mcp.json are the standard layout.
-
-# AFTER the first PyPI release (publish.yml, trusted publishing):
-uvx montology               # the CLI anywhere, no clone
+uv sync && just             # the action surface: what is live, what to do
 ```
 
 ## The shape

@@ -5,6 +5,7 @@ description = "Marketing + monorepo + ontology — the workspace root. The CLI v
 requires-python = ">=3.12"
 dependencies = [
     "montology",
+    "montology-core",
     "montology-ontology",
     "montology-zoo",
     "montology-dataforseo",
@@ -23,6 +24,7 @@ science = ["montology-warehouse[science]"]
 
 [tool.uv.workspace]
 members = [
+    ".monty/core",
     ".monty/cli",
     ".monty/onto",
     ".monty/zoo",
@@ -37,6 +39,7 @@ members = [
 
 [tool.uv.sources]
 montology = { workspace = true }
+montology-core = { workspace = true }
 montology-ontology = { workspace = true }
 montology-zoo = { workspace = true }
 montology-dataforseo = { workspace = true }

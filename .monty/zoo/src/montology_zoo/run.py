@@ -30,8 +30,8 @@ from pathlib import Path
 
 import numpy as np
 
-from .db import DB_PATH, connect
-from .pull import MODELS_DIR, pull
+from .db import connect, db_path
+from .pull import models_dir, pull
 
 
 class ZooError(RuntimeError):
@@ -39,7 +39,7 @@ class ZooError(RuntimeError):
 
 
 def _model_row(model_id: str) -> dict:
-    if not DB_PATH.exists():
+    if not db_path().exists():
         raise ZooError("the zoo database is empty. Repair: run `monty zoo sync`.")
     conn = connect()
     row = conn.execute("SELECT * FROM model WHERE id=?", (model_id,)).fetchone()
@@ -57,7 +57,7 @@ def _model_row(model_id: str) -> dict:
 
 
 def _ensure_local(model_id: str, row: dict) -> Path:
-    target = MODELS_DIR / model_id / row["artifact"]["path"]
+    target = models_dir() / model_id / row["artifact"]["path"]
     if not target.exists():
         got = pull(model_id)
         if not target.exists():
@@ -75,7 +75,7 @@ def _text_session(model_id: str):
 
     row = _model_row(model_id)
     onnx_path = _ensure_local(model_id, row)
-    tok_path = MODELS_DIR / model_id / "tokenizer.json"
+    tok_path = models_dir() / model_id / "tokenizer.json"
     if not tok_path.exists():
         raise ZooError(f"{model_id} has no tokenizer.json beside its weights — re-run `monty zoo pull {model_id}`.")
     tok = Tokenizer.from_file(str(tok_path))
@@ -119,7 +119,7 @@ def _image_session(model_id: str):
 
     row = _model_row(model_id)
     onnx_path = _ensure_local(model_id, row)
-    pre_path = MODELS_DIR / model_id / "preprocessor_config.json"
+    pre_path = models_dir() / model_id / "preprocessor_config.json"
     pre = json.loads(pre_path.read_text()) if pre_path.exists() else {}
     sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
     return row, pre, sess
@@ -234,7 +234,7 @@ def _audio_session(model_id: str):
 
     row = _model_row(model_id)
     onnx_path = _ensure_local(model_id, row)
-    pre_path = MODELS_DIR / model_id / "preprocessor_config.json"
+    pre_path = models_dir() / model_id / "preprocessor_config.json"
     pre = json.loads(pre_path.read_text()) if pre_path.exists() else {}
     return row, pre, ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
 

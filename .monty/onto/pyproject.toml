@@ -10,7 +10,7 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["httpx"]
+dependencies = ["httpx", "montology-core"]
 
 [build-system]
 requires = ["hatchling"]
@@ -19,3 +19,6 @@ build-backend = "hatchling.build"
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"
 Repository = "https://github.com/socialite-ml/montology"
+
+[tool.uv.sources]
+montology-core = { workspace = true }

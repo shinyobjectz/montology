@@ -12,8 +12,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ._session import gen_session, tiny_session
+from montology_core import workspace_root
+
 from .instruments import (
-    ROOT,
     SKILL_PACKAGES,
     duck_shape,
     fingerprint,
@@ -141,10 +142,11 @@ def gen_skill(skill_name: str, write: bool = False, try_local: bool = False) -> 
             if not failures:
                 _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "accepted", [])
                 if write:
-                    target = ROOT / ".plugin" / "skills" / skill_name / "SKILL.md"
+                    ws = workspace_root()
+                    target = ws / ".plugin" / "skills" / skill_name / "SKILL.md"
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_text(text)
-                    return f"wrote {target.relative_to(ROOT)} (piecewise on the atomic tier; all laws hold)"
+                    return f"wrote {target.relative_to(ws)} (piecewise on the atomic tier; all laws hold)"
                 return text
             _record("skill", skill_name, f"{_model_of(tiny)}+piecewise", "refused", failures)
 
@@ -172,11 +174,12 @@ def gen_skill(skill_name: str, write: bool = False, try_local: bool = False) -> 
         return "REFUSED — the generation could not satisfy its laws:\n  " + "\n  ".join(failures)
     _record("skill", skill_name, _model_of(session), "accepted", [])
 
-    target = ROOT / ".plugin" / "skills" / skill_name / "SKILL.md"
+    ws = workspace_root()
+    target = ws / ".plugin" / "skills" / skill_name / "SKILL.md"
     if write:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text)
-        return f"wrote {target.relative_to(ROOT)} ({len(text)} chars, all laws hold)"
+        return f"wrote {target.relative_to(ws)} ({len(text)} chars, all laws hold)"
     return text
 
 
@@ -286,8 +289,10 @@ def gen_word(name: str, context: str = "") -> str:
 
     from .stubs import define_word
 
+    from montology_ontology import db_path as _onto_db_path
+
     existing = [r["name"] for r in connect(readonly=True).execute("SELECT name FROM word")] \
-        if (ROOT / "ontology" / "data" / "ontology.db").exists() else []
+        if _onto_db_path().exists() else []
     laws = word_laws(onto_check)
 
     try:
@@ -308,6 +313,7 @@ def gen_word(name: str, context: str = "") -> str:
 
 
 PACKAGES = {  # workspace member -> import path, for the docs surface
+    ".monty/core": ".monty/core/src/montology_core",
     ".monty/cli": ".monty/cli/src/montology_cli",
     ".monty/onto": ".monty/onto/src/montology_ontology",
     ".monty/zoo": ".monty/zoo/src/montology_zoo",
@@ -331,10 +337,15 @@ def gen_docs(write: bool = False, prose: bool = False) -> str:
     import re as _re
     import tomllib
 
+    ws = workspace_root()
+    if not (ws / ".monty" / "gen" / "pyproject.toml").exists():
+        return ("gen docs regenerates the engine's own README from its member "
+                "pyprojects — run it inside the montology repo checkout, not a "
+                "user workspace.")
+
     rows = []
     for member, pkg in PACKAGES.items():
-        py = ROOT / member.split("/src")[0].split("/montology")[0] / "pyproject.toml"
-        py = ROOT / pathlib_parts(member) / "pyproject.toml"
+        py = ws / pathlib_parts(member) / "pyproject.toml"
         meta = tomllib.loads(py.read_text())["project"]
         import_name = pkg.rsplit("/", 1)[-1]
         rows.append(f"| `{member}/` | `{import_name}` | {meta['description']} |")
@@ -342,7 +353,7 @@ def gen_docs(write: bool = False, prose: bool = False) -> str:
              + "\n".join(rows)
              + "\n| `skills/` | — | Agent Skills: how to use all of the above, in the agent's language. |")
 
-    readme = (ROOT / "README.md").read_text()
+    readme = (ws / "README.md").read_text()
     new = _re.sub(
         r"\| package \| import \| what it is \|.*?\| `skills/` \| — \|[^\n]*\|",
         table.replace("\\", "\\\\"), readme, count=1, flags=_re.S,
@@ -351,7 +362,7 @@ def gen_docs(write: bool = False, prose: bool = False) -> str:
     if new == readme:
         report.append("README map table already current")
     elif write:
-        (ROOT / "README.md").write_text(new)
+        (ws / "README.md").write_text(new)
         report.append(f"README map table regenerated ({len(rows)} packages)")
     else:
         return table
@@ -368,7 +379,7 @@ def gen_docs(write: bool = False, prose: bool = False) -> str:
 
             paras = []
             for member, pkg in PACKAGES.items():
-                meta = tomllib.loads((ROOT / pathlib_parts(member) / "pyproject.toml").read_text())["project"]
+                meta = tomllib.loads((ws / pathlib_parts(member) / "pyproject.toml").read_text())["project"]
                 try:
                     para = str(package_doc(session, package_surface=package_surface(pkg),
                                            pyproject_description=meta["description"])).strip()
@@ -379,8 +390,8 @@ def gen_docs(write: bool = False, prose: bool = False) -> str:
                    "`monty gen docs --prose --write` -->\n\n# The packages\n\n"
                    + "\n\n".join(paras) + "\n")
             if write:
-                (ROOT / "docs").mkdir(exist_ok=True)
-                (ROOT / "docs" / "PACKAGES.md").write_text(doc)
+                (ws / "docs").mkdir(exist_ok=True)
+                (ws / "docs" / "PACKAGES.md").write_text(doc)
                 report.append(f"docs/PACKAGES.md written ({len(paras)} paragraphs)")
             else:
                 report.append(doc[:2000])
@@ -405,7 +416,7 @@ def lint() -> list[str]:
     from .laws import provenance_current
 
     for skill in skills_inventory():
-        text = (ROOT / skill["path"]).read_text()
+        text = (workspace_root() / skill["path"]).read_text()
         laws = STRUCTURAL + (GROUNDING if skill["generated"] else ())
         # THE DRIFT GATE, the promise made in CLAUDE.md kept here: a GENERATED
         # skill is re-checked against the package's CURRENT AST on every lint —
@@ -421,7 +432,7 @@ def lint() -> list[str]:
     # the no-prompt ban, enforced where it could be broken
     import re
 
-    for py in sorted((ROOT / ".monty" / "gen" / "src" / "montology_gen").glob("*.py")):
+    for py in sorted(Path(__file__).resolve().parent.glob("*.py")):
         for bad in re.findall(r'"(You are[^"]{0,60}|Please [^"]{0,60})"', py.read_text()):
             failed = True
             report.append(f"FAIL {py.name}: prompt-shaped string {bad!r} — specs, not prompts")

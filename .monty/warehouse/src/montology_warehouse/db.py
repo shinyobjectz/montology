@@ -11,14 +11,27 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parents[4] / "data"
-WAREHOUSE_PATH = DATA_DIR / "warehouse.duckdb"
+from montology_core import workspace_root
 
-# the registries DuckDB attaches, when they exist
-_REGISTRIES = {
-    "ontology": Path(__file__).resolve().parents[4] / "data" / "ontology.db",
-    "zoo": Path(__file__).resolve().parents[4] / "data" / "zoo.db",
-}
+# Tests pin these directly; when None they resolve lazily from the workspace.
+WAREHOUSE_PATH: Path | None = None
+_REGISTRIES: dict[str, Path] | None = None
+
+
+def warehouse_path() -> Path:
+    """Where the warehouse lives: pinned, or the workspace's data/
+    (gitignored there — user data never ships)."""
+    if WAREHOUSE_PATH is not None:
+        return WAREHOUSE_PATH
+    return workspace_root() / "data" / "warehouse.duckdb"
+
+
+def _registries_map() -> dict[str, Path]:
+    """The registries DuckDB attaches, when they exist."""
+    if _REGISTRIES is not None:
+        return _REGISTRIES
+    data = workspace_root() / "data"
+    return {"ontology": data / "ontology.db", "zoo": data / "zoo.db"}
 
 
 def connect(path: Path | None = None) -> Any:
@@ -30,10 +43,10 @@ def connect(path: Path | None = None) -> Any:
     """
     import duckdb
 
-    target = path or WAREHOUSE_PATH
+    target = path or warehouse_path()
     target.parent.mkdir(parents=True, exist_ok=True)
     conn = duckdb.connect(str(target))
-    for name, registry in _REGISTRIES.items():
+    for name, registry in _registries_map().items():
         if not registry.exists():
             continue  # not pulled yet — monty data pull / zoo sync
         try:

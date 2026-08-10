@@ -19,7 +19,7 @@ import re
 from pathlib import Path
 from urllib.parse import urljoin
 
-from .brand import BRANDS_DIR, COMPONENT_TYPES
+from .brand import COMPONENT_TYPES, brands_dir
 
 # (name, width, height, use) — the sizes that actually run
 FORMATS: dict[str, list[tuple[str, int, int, str]]] = {
@@ -62,7 +62,7 @@ def assets(brand: str, audit_json: str, cap: int = 16) -> str:
     except (json.JSONDecodeError, OSError) as e:
         return f"could not read the audit ({e}); pass brand_audit output or a path to it"
 
-    root = BRANDS_DIR / brand / "assets"
+    root = brands_dir() / brand / "assets"
     root.mkdir(parents=True, exist_ok=True)
     base = audit.get("url", "")
     urls: list[str] = []
@@ -99,7 +99,7 @@ def brief(brand: str, deliverable: str, goal: str) -> str:
     agent designs FROM this; the gate checks the result."""
     if deliverable not in FORMATS:
         return f"deliverable must be one of: {', '.join(FORMATS)} (got {deliverable!r})"
-    root = BRANDS_DIR / brand
+    root = brands_dir() / brand
     if not (root / "manifest.json").exists():
         return (f"no library at projects/{brand} — run the pipeline first: "
                 f"monty crawl audit <url> && monty brand scaffold {brand} audit.json")

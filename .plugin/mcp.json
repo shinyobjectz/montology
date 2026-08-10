@@ -2,7 +2,11 @@
   "mcpServers": {
     "montology": {
       "command": "uvx",
-      "args": ["--from", "montology", "montology-mcp"],
+      "args": [
+        "--from",
+        "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli",
+        "montology-mcp"
+      ],
       "env": {
         "DATAFORSEO_LOGIN": "${DATAFORSEO_LOGIN}",
         "DATAFORSEO_PASSWORD": "${DATAFORSEO_PASSWORD}",

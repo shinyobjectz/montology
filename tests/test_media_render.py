@@ -41,7 +41,8 @@ def test_ffmpeg_absent_carries_repair(tmp_path, monkeypatch):
 
 
 def test_render_harness_contract(tmp_path, monkeypatch):
-    monkeypatch.setattr(rmod, "BRANDS_DIR", tmp_path / "projects")
+    from montology_crawl import brand as _b
+    monkeypatch.setattr(_b, "BRANDS_DIR", tmp_path / "projects")
     monkeypatch.setattr(rmod, "DESIGN_DIR", tmp_path / "design")
     # the harness template: node-resolvable react, automatic JSX, props seam,
     # and THE BRAND BINDING — design imports @brand/*, bound per render

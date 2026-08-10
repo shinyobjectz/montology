@@ -1,0 +1,13 @@
+[project]
+name = "montology-core"
+version = "0.1.0"
+description = "Workspace discovery: every montology command finds its root the way git does."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/montology_core"]

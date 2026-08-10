@@ -36,6 +36,9 @@ WORDS = [
     ("plugin", "adopted", None,
      "the Agent Plugins 1.0.0 package: plugin.json + skills/ + mcp.json — how montology ships",
      "how it installs"),
+    ("workspace", "core", None,
+     "the directory `monty init` lays down — .monty/ (cache), .plugin/ (the agent face), data/, design/, projects/ — found from anywhere inside by walking up for .monty, the way git finds .git",
+     "where work happens"),
 ]
 
 

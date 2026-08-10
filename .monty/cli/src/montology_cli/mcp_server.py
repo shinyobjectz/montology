@@ -23,7 +23,7 @@ import html
 
 from fastmcp import FastMCP
 
-from montology_ontology import DB_PATH, check as onto_check, connect
+from montology_ontology import check as onto_check, connect, db_path
 
 mcp = FastMCP(
     "montology",
@@ -52,7 +52,7 @@ def taxonomy_search(query: str, source: str = "") -> str:
         query: The category or topic to look for.
         source: Optional source id to narrow (e.g. 'iab-content', 'google-product').
     """
-    if not DB_PATH.exists():
+    if not db_path().exists():
         return "The taxonomy database has not been pulled yet. Repair: run `monty data pull`."
     conn = connect(readonly=True)
     sql = "SELECT source, code, name, path FROM taxonomy WHERE name LIKE ?"
@@ -111,7 +111,7 @@ def taxonomy_tree_artifact(source: str = "iab-content", top: str = "") -> dict:
     """
     from mcp_ui_server import create_ui_resource
 
-    if not DB_PATH.exists():
+    if not db_path().exists():
         rows = []
     else:
         conn = connect(readonly=True)
@@ -254,6 +254,9 @@ def gen_assay_artifact() -> dict:
 
 
 def main() -> None:
+    from montology_core import load_env
+
+    load_env()  # the workspace .env: vendor keys reach every tool
     parser = argparse.ArgumentParser(description="The montology MCP server.")
     parser.add_argument("--http", action="store_true", help="serve stateless Streamable HTTP instead of stdio")
     parser.add_argument("--port", type=int, default=8848)

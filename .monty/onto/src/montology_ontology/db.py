@@ -17,9 +17,18 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-# the TRACKED central store — the user asked for the dbs in git
-DATA_DIR = Path(__file__).resolve().parents[4] / "data"
-DB_PATH = DATA_DIR / "ontology.db"
+from montology_core import workspace_root
+
+# Tests pin DB_PATH directly; when None it resolves lazily from the
+# workspace (the tracked data/ store — the user asked for the dbs in git).
+DB_PATH: Path | None = None
+
+
+def db_path() -> Path:
+    """Where the ontology db lives: pinned, or the workspace's data/."""
+    if DB_PATH is not None:
+        return DB_PATH
+    return workspace_root() / "data" / "ontology.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS word (
@@ -55,7 +64,7 @@ CREATE INDEX IF NOT EXISTS taxonomy_name ON taxonomy(name);
 
 
 def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Connection:
-    target = path or DB_PATH
+    target = path or db_path()
     if readonly:
         c = sqlite3.connect(f"file:{target}?mode=ro", uri=True)
     else:
@@ -143,7 +152,7 @@ def mappings(word: str | None = None) -> list[dict]:
 
 def words(kind: str | None = None) -> list[dict]:
     """The vocabulary as rows — ours and yours, distinguishable by kind."""
-    conn = connect(readonly=DB_PATH.exists())
+    conn = connect(readonly=db_path().exists())
     sql = "SELECT name, kind, definition, test FROM word"
     args: list = []
     if kind:
@@ -158,7 +167,7 @@ def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
     The agent-facing gate: run before naming anything. Checks house words
     first, then exact hits in every ingested taxonomy.
     """
-    conn = c or connect(readonly=DB_PATH.exists())
+    conn = c or connect(readonly=db_path().exists())
     low = name.strip().lower()
     findings: list[str] = []
     w = conn.execute("SELECT * FROM word WHERE lower(name)=?", (low,)).fetchone()

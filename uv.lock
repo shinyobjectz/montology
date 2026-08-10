@@ -11,6 +11,7 @@ resolution-markers = [
 [manifest]
 members = [
     "montology",
+    "montology-core",
     "montology-crawl",
     "montology-dataforseo",
     "montology-gen",
@@ -1920,12 +1921,14 @@ source = { editable = ".monty/cli" }
 dependencies = [
     { name = "fastmcp" },
     { name = "mcp-ui-server" },
+    { name = "montology-core" },
     { name = "montology-crawl" },
     { name = "montology-gen" },
     { name = "montology-media" },
     { name = "montology-ontology" },
     { name = "montology-warehouse" },
     { name = "montology-zoo" },
+    { name = "rich" },
     { name = "typer" },
 ]
 
@@ -1933,14 +1936,21 @@ dependencies = [
 requires-dist = [
     { name = "fastmcp" },
     { name = "mcp-ui-server" },
+    { name = "montology-core", editable = ".monty/core" },
     { name = "montology-crawl", editable = ".monty/tools/crawl" },
     { name = "montology-gen", editable = ".monty/gen" },
     { name = "montology-media", editable = ".monty/media" },
     { name = "montology-ontology", editable = ".monty/onto" },
     { name = "montology-warehouse", editable = ".monty/warehouse" },
     { name = "montology-zoo", editable = ".monty/zoo" },
+    { name = "rich" },
     { name = "typer" },
 ]
+
+[[package]]
+name = "montology-core"
+version = "0.1.0"
+source = { editable = ".monty/core" }
 
 [[package]]
 name = "montology-crawl"
@@ -1950,6 +1960,7 @@ dependencies = [
     { name = "crawl4ai" },
     { name = "httpx" },
     { name = "mellea" },
+    { name = "montology-core" },
 ]
 
 [package.metadata]
@@ -1957,6 +1968,7 @@ requires-dist = [
     { name = "crawl4ai" },
     { name = "httpx" },
     { name = "mellea", git = "https://github.com/generative-computing/mellea.git?rev=72488902af314c290392c689e90e0395eca49b44" },
+    { name = "montology-core", editable = ".monty/core" },
 ]
 
 [[package]]
@@ -1980,6 +1992,7 @@ version = "0.1.0"
 source = { editable = ".monty/gen" }
 dependencies = [
     { name = "mellea" },
+    { name = "montology-core" },
     { name = "montology-ontology" },
     { name = "montology-warehouse" },
     { name = "pyyaml" },
@@ -1988,6 +2001,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "mellea", git = "https://github.com/generative-computing/mellea.git?rev=72488902af314c290392c689e90e0395eca49b44" },
+    { name = "montology-core", editable = ".monty/core" },
     { name = "montology-ontology", editable = ".monty/onto" },
     { name = "montology-warehouse", editable = ".monty/warehouse" },
     { name = "pyyaml" },
@@ -2010,10 +2024,14 @@ version = "0.1.0"
 source = { editable = ".monty/onto" }
 dependencies = [
     { name = "httpx" },
+    { name = "montology-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx" }]
+requires-dist = [
+    { name = "httpx" },
+    { name = "montology-core", editable = ".monty/core" },
+]
 
 [[package]]
 name = "montology-scrapecreators"
@@ -2036,6 +2054,7 @@ version = "0.1.0"
 source = { editable = ".monty/warehouse" }
 dependencies = [
     { name = "duckdb" },
+    { name = "montology-core" },
 ]
 
 [package.optional-dependencies]
@@ -2050,6 +2069,7 @@ science = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb" },
+    { name = "montology-core", editable = ".monty/core" },
     { name = "plotly", marker = "extra == 'science'" },
     { name = "polars", marker = "extra == 'science'" },
     { name = "scikit-learn", marker = "extra == 'science'" },
@@ -2064,6 +2084,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "montology" },
+    { name = "montology-core" },
     { name = "montology-crawl" },
     { name = "montology-dataforseo" },
     { name = "montology-gen" },
@@ -2096,6 +2117,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "montology", editable = ".monty/cli" },
+    { name = "montology-core", editable = ".monty/core" },
     { name = "montology-crawl", editable = ".monty/tools/crawl" },
     { name = "montology-dataforseo", editable = ".monty/tools/dataforseo" },
     { name = "montology-gen", editable = ".monty/gen" },
@@ -2121,6 +2143,7 @@ source = { editable = ".monty/zoo" }
 dependencies = [
     { name = "httpx" },
     { name = "huggingface-hub" },
+    { name = "montology-core" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "pillow" },
@@ -2146,6 +2169,7 @@ requires-dist = [
     { name = "huggingface-hub" },
     { name = "keybert", marker = "extra == 'topics'" },
     { name = "llama-cpp-python", marker = "extra == 'gguf'" },
+    { name = "montology-core", editable = ".monty/core" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "pillow" },

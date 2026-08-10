@@ -20,8 +20,17 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[4] / "data"
-DB_PATH = DATA_DIR / "zoo.db"
+from montology_core import workspace_root
+
+# Tests pin DB_PATH directly; when None it resolves lazily from the workspace.
+DB_PATH: Path | None = None
+
+
+def db_path() -> Path:
+    """Where the zoo db lives: pinned, or the workspace's data/."""
+    if DB_PATH is not None:
+        return DB_PATH
+    return workspace_root() / "data" / "zoo.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS model (
@@ -61,7 +70,7 @@ CREATE TABLE IF NOT EXISTS arch (
 
 
 def connect(path: Path | None = None) -> sqlite3.Connection:
-    target = path or DB_PATH
+    target = path or db_path()
     target.parent.mkdir(parents=True, exist_ok=True)
     c = sqlite3.connect(target)
     c.executescript(SCHEMA)

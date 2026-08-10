@@ -19,9 +19,18 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .brand import BRANDS_DIR
+from .brand import brands_dir
 
-DESIGN_DIR = Path.cwd() / "design"
+from montology_core import workspace_root as _workspace_root
+
+# Tests pin design_dir() directly; when None it resolves lazily.
+DESIGN_DIR: Path | None = None
+
+
+def design_dir() -> Path:
+    if DESIGN_DIR is not None:
+        return DESIGN_DIR
+    return _workspace_root() / "design"
 
 _NO_NODE = ("node is not installed. Repair: install Node.js (nodejs.org or "
             "`brew install node`), then rerun `monty brand render-setup <brand>`.")
@@ -87,13 +96,13 @@ def render_setup(brand: str = "") -> str:
     """ONE shared harness at design/ — npm install once for every project."""
     if shutil.which("node") is None or shutil.which("npm") is None:
         return _NO_NODE
-    DESIGN_DIR.mkdir(exist_ok=True)
-    pkg = DESIGN_DIR / "package.json"
+    design_dir().mkdir(exist_ok=True)
+    pkg = design_dir() / "package.json"
     if not pkg.exists():
         pkg.write_text(json.dumps(PACKAGE_JSON, indent=1))
-    (DESIGN_DIR / "render.mjs").write_text(RENDER_MJS)
+    (design_dir() / "render.mjs").write_text(RENDER_MJS)
     r = subprocess.run(["npm", "install", "--no-fund", "--no-audit"],
-                       cwd=DESIGN_DIR, capture_output=True, text=True, timeout=600)
+                       cwd=design_dir(), capture_output=True, text=True, timeout=600)
     if r.returncode != 0:
         return f"npm install failed: {r.stderr[-300:]}"
     return "render harness ready at design/ (react, react-dom, esbuild — shared by every project)"
@@ -103,8 +112,8 @@ def render(brand: str, component_file: str, props_json: str = "{}",
            scale: int = 2) -> str:
     """component → out/<name>.html, and for fixed-frame files → out/<name>.png
     at the declared WxH (retina by default: scale=2)."""
-    root = BRANDS_DIR / brand
-    rd = DESIGN_DIR
+    root = brands_dir() / brand
+    rd = design_dir()
     if not (rd / "node_modules").exists():
         got = render_setup()
         if not got.startswith("render harness"):

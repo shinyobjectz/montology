@@ -10,7 +10,7 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["duckdb"]
+dependencies = ["duckdb", "montology-core"]
 
 [project.optional-dependencies]
 # THE RULED SCIENCE STACK — chosen like the zoo chooses models: wheels on
@@ -32,3 +32,6 @@ build-backend = "hatchling.build"
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"
 Repository = "https://github.com/socialite-ml/montology"
+
+[tool.uv.sources]
+montology-core = { workspace = true }

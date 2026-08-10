@@ -10,9 +10,10 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["crawl4ai", "httpx", "mellea"]
+dependencies = ["crawl4ai", "httpx", "mellea", "montology-core"]
 
 [tool.uv.sources]
+montology-core = { workspace = true }
 mellea = { git = "https://github.com/generative-computing/mellea.git", rev = "72488902af314c290392c689e90e0395eca49b44" }
 
 [build-system]

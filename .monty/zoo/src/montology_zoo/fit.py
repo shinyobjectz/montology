@@ -37,7 +37,7 @@ import platform
 import shutil
 from dataclasses import dataclass
 
-from .db import DB_PATH, connect
+from .db import connect, db_path
 
 # ── the estimate constants, named and owned ─────────────────────────────────
 ACT_FACTOR = 1.5          # encoder activations + ORT workspace, batch 1 seq ≤ 512
@@ -110,7 +110,7 @@ def report(m: Machine | None = None) -> list[str]:
     """The fit table, one line per model's best artifact. `m` is injectable
     so the tight/no/no-disk verdicts are TESTABLE on machines that never
     exercise them — an untested verdict is a guess wearing a table."""
-    if not DB_PATH.exists():
+    if not db_path().exists():
         return ["The zoo database is empty. Repair: run `monty zoo sync` first."]
     m = m or machine()
     conn = connect()

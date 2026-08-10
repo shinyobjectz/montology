@@ -11,7 +11,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "montology-core",
     "typer",
+    "rich",
     "montology-ontology",
     "montology-zoo",
         "montology-warehouse",
@@ -23,11 +25,12 @@ dependencies = [
 ]
 
 [project.scripts]
-monty = "montology_cli.main:app"
-montology = "montology_cli.main:app"  # long-form alias; `monty` is the verb
+monty = "montology_cli.main:run"
+montology = "montology_cli.main:run"  # long-form alias; `monty` is the verb
 montology-mcp = "montology_cli.mcp_server:main"  # what .plugin/mcp.json runs
 
 [tool.uv.sources]
+montology-core = { workspace = true }
 montology-ontology = { workspace = true }
 montology-zoo = { workspace = true }
 montology-warehouse = { workspace = true }
@@ -42,6 +45,24 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # project name `montology` ≠ package dir `montology_cli`; hatchling needs telling
 packages = ["src/montology_cli"]
+
+# THE SCAFFOLD RIDES IN THE WHEEL: `monty init` materializes a workspace
+# from these — the plugin face, the shipped registries, the design mediums.
+# Paths reach out of this member into the repo root, which exists wherever
+# the wheel is built from a checkout (uvx from git builds exactly that way).
+[tool.hatch.build.targets.wheel.force-include]
+"../../.plugin" = "montology_cli/_scaffold/.plugin"
+"../../data/ontology.db" = "montology_cli/_scaffold/data/ontology.db"
+"../../data/zoo.db" = "montology_cli/_scaffold/data/zoo.db"
+"../../design/package.json" = "montology_cli/_scaffold/design/package.json"
+"../../design/package-lock.json" = "montology_cli/_scaffold/design/package-lock.json"
+"../../design/render.mjs" = "montology_cli/_scaffold/design/render.mjs"
+"../../design/components" = "montology_cli/_scaffold/design/components"
+"../../design/email" = "montology_cli/_scaffold/design/email"
+"../../design/image" = "montology_cli/_scaffold/design/image"
+"../../design/presentation" = "montology_cli/_scaffold/design/presentation"
+"../../design/video" = "montology_cli/_scaffold/design/video"
+"../../design/web" = "montology_cli/_scaffold/design/web"
 
 [project.urls]
 Homepage = "https://github.com/socialite-ml/montology"

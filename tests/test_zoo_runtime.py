@@ -2,10 +2,10 @@
 import numpy as np
 import pytest
 
-from montology_zoo.pull import MODELS_DIR
+from montology_zoo.pull import models_dir
 
 pytestmark = pytest.mark.integration
-needs = lambda mid, f: pytest.mark.skipif(not (MODELS_DIR / mid / f).exists(),
+needs = lambda mid, f: pytest.mark.skipif(not (models_dir() / mid / f).exists(),
                                           reason=f"{mid} not pulled")
 
 

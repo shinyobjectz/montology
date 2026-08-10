@@ -12,6 +12,6 @@ Real infrastructure, marketer-shaped: files go in, SQL comes out, and
 nothing needs a server or an account.
 """
 
-from .db import WAREHOUSE_PATH, connect, load_file, query
+from .db import connect, load_file, query, warehouse_path
 
-__all__ = ["WAREHOUSE_PATH", "connect", "load_file", "query"]
+__all__ = ["connect", "load_file", "query", "warehouse_path"]

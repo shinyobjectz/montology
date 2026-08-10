@@ -19,8 +19,18 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 
-# projects/ are ENGAGEMENTS: each carries a brand instantiation + its work
-BRANDS_DIR = Path.cwd() / "projects"
+from montology_core import workspace_root
+
+# Tests pin BRANDS_DIR directly; when None it resolves lazily from the
+# workspace. projects/ are ENGAGEMENTS: each carries a brand instantiation
+# + its work.
+BRANDS_DIR: Path | None = None
+
+
+def brands_dir() -> Path:
+    if BRANDS_DIR is not None:
+        return BRANDS_DIR
+    return workspace_root() / "projects"
 
 # The type taxonomy downstream frameworks shop by. Small on purpose;
 # extend by decision, not accretion.
@@ -51,7 +61,7 @@ def scaffold(brand: str, kit_json: str) -> str:
     if not re.match(r"^[a-z0-9][a-z0-9-]*$", brand):
         return f"brand {brand!r} must be lowercase-kebab (it becomes a directory and an import path)"
 
-    root = BRANDS_DIR / brand
+    root = brands_dir() / brand
     (root / "components").mkdir(parents=True, exist_ok=True)
 
     # an AUDIT (brand_audit) carries the full system; a KIT just the basics.
@@ -124,7 +134,7 @@ def scaffold(brand: str, kit_json: str) -> str:
 
 def register(brand: str, name: str, ctype: str, file: str, source_url: str = "") -> str:
     """Add a component to the brand's manifest — the library's ledger."""
-    root = BRANDS_DIR / brand
+    root = brands_dir() / brand
     mf = root / "manifest.json"
     if not mf.exists():
         return f"no manifest at projects/{brand}/ — run `monty brand scaffold {brand} <kit>` first"
@@ -142,7 +152,7 @@ def register(brand: str, name: str, ctype: str, file: str, source_url: str = "")
 
 def lint(brand: str) -> list[str]:
     """The deterministic gate. FAIL lines carry their repair."""
-    root = BRANDS_DIR / brand
+    root = brands_dir() / brand
     report: list[str] = []
     mf = root / "manifest.json"
     if not mf.exists():

@@ -10,6 +10,19 @@ import os
 
 import typer
 
+def run() -> None:
+    """The console entry: load the workspace .env, run the app, and turn a
+    missing workspace into its repair instead of a traceback."""
+    from montology_core import WorkspaceError, load_env
+
+    load_env()
+    try:
+        app()
+    except WorkspaceError as e:
+        typer.echo(str(e), err=True)
+        raise SystemExit(2) from None
+
+
 app = typer.Typer(
     name="montology",
     help="Marketing + monorepo + ontology. Data pulls, vocabulary checks, models, serving.",
@@ -32,6 +45,19 @@ app.add_typer(brand_app, name="brand")
 app.add_typer(convert_app, name="convert")
 
 
+@app.command()
+def init(path: str = typer.Argument(".", help="Where the workspace goes (default: here)."),
+         name: str = typer.Option("", "--name", help="Workspace name (default: the directory's)."),
+         brand: str = typer.Option("", "--brand", help="A first brand URL to crawl into projects/."),
+         yes: bool = typer.Option(False, "--yes", help="Non-interactive: no prompts, env-only secrets."),
+         json_out: bool = typer.Option(False, "--json", help="Machine summary (implies --yes)."),
+         no_install: bool = typer.Option(False, "--no-install", help="Scaffold only; skip downloads.")) -> None:
+    """Create a workspace here: scaffold, install everything, onboard."""
+    from .init import init_command
+
+    init_command(path, name, brand, yes or json_out, json_out, no_install)
+
+
 def _gen_backend_ok() -> bool:
     import urllib.request
 
@@ -47,10 +73,14 @@ def _gen_backend_ok() -> bool:
 @app.command()
 def doctor() -> None:
     """Is everything set up? Says what is missing and how to fix it."""
-    from montology_ontology import DB_PATH
+    from montology_core import find_root
+    from montology_ontology import db_path
 
+    root = find_root()
     checks = [
-        (DB_PATH.exists(), "taxonomy database", "run: monty data pull"),
+        (root is not None, "workspace",
+         "run `monty init` here (or cd into one) — every command needs a workspace root"),
+        (root is not None and db_path().exists(), "taxonomy database", "run: monty data pull"),
         (bool(os.environ.get("DATAFORSEO_LOGIN")), "DataForSEO login",
          "export DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD (app.dataforseo.com/api-access)"),
         (bool(os.environ.get("SCRAPECREATORS_API_KEY")), "ScrapeCreators key",
@@ -164,9 +194,9 @@ def onto_list(kind: str = typer.Argument("", help="Filter: core | adopted | cust
 @zoo_app.command("list")
 def zoo_list() -> None:
     """The curated models, from the zoo database."""
-    from montology_zoo import DB_PATH, connect, seed
+    from montology_zoo import connect, db_path, seed
 
-    if not DB_PATH.exists():
+    if not db_path().exists():
         seed()
     conn = connect()
     for m in conn.execute("SELECT * FROM model ORDER BY status, task, id"):

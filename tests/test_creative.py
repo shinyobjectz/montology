@@ -11,7 +11,6 @@ from montology_crawl.audit import _images
 @pytest.fixture()
 def brands(tmp_path, monkeypatch):
     monkeypatch.setattr(b, "BRANDS_DIR", tmp_path / "brands")
-    monkeypatch.setattr(c, "BRANDS_DIR", tmp_path / "brands")
     return b
 
 
