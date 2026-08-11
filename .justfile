@@ -17,6 +17,7 @@ setup:
 check:
     uv run python -m compileall -q .monty && echo "syntax ok"
     uv run python -c "import json; json.load(open('.plugin/plugin.json')); json.load(open('.plugin/mcp.json')); print('plugin manifests parse')"
+    diff -q .plugin/skills/montology/SKILL.md skills/montology/SKILL.md > /dev/null && echo "skills/ mirror in sync"
     uv run monty lint
     uv run pytest tests -q
 

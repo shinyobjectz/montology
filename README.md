@@ -1,3 +1,21 @@
+<p align="center"><img src="docs/banner.png" alt="montology — your codebase's vocabulary, enforced" width="100%"></p>
+
+**Your codebase's vocabulary, enforced — and your agents can't drift it.**
+Words, design tokens, and rulings live in a database; a tree-sitter scan
+checks every named thing in ten languages against them; a pre-write hook
+corrects your coding agent before drift ever lands.
+
+```sh
+# the CLI, works today
+uvx --from "git+https://github.com/socialite-ml/montology#subdirectory=.monty/cli" monty init
+
+# the agent skill (Claude Code, Cursor, and friends)
+npx skills add socialite-ml/montology
+
+# npm (the launcher)
+npm install -g montology
+```
+
 # montology
 
 **Your design system and your vocabulary, enforced — in any repo, by one
