@@ -3,17 +3,19 @@
 The engine and the front door are ready; two registry steps require the
 `zaiusai` accounts (2FA), and no automation can do them.
 
-## npm (`montology`, bin `monty`)
+## npm — DONE (2026-08-10)
 
-The package at `npm/` is complete and the name is free. Your account
-requires a second factor for publish, so the token in `~/.npmrc`
-authenticates but cannot publish. Either:
+`montology@0.2.0` is live: `npm install -g montology` works from the
+public registry (verified with a clean global install). The token in
+~/.npmrc has publish rights; future releases are `cd npm && npm version
+<x.y.z> && npm publish`.
 
-    cd npm && npm publish --access public
-    # complete the browser step npm prints, once
+## skills.sh — DONE (2026-08-10)
 
-…or mint an **Automation**-type granular token at npmjs.com (bypasses
-2FA), replace the line in `~/.npmrc`, and re-run the publish.
+Auto-indexed: https://skills.sh/socialite-ml/montology (2 skills, the
+`npx skills add socialite-ml/montology` command shown on-page). The
+top-level `skills/` mirror is what the installer discovers; the gate
+diffs it against `.plugin/skills/` so it cannot drift.
 
 ## PyPI (uvx montology without git)
 
