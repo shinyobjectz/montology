@@ -423,14 +423,28 @@ def explain(no_draft: bool = typer.Option(False, "--no-draft", help="Skip atomic
 
 
 @app.command()
-def guard() -> None:
+def drift(samples: int = typer.Option(12, "--samples", help="History points to measure.")) -> None:
+    """The telescope: lexicon and palette drift across the repo's git history."""
+    from ._ui import emit_all
+    from montology_scan import measure_history, render_drift
+
+    emit_all(render_drift(measure_history(samples=samples)))
+
+
+@app.command()
+def guard(stats: bool = typer.Option(False, "--stats", help="Repair-following, measured from the log.")) -> None:
     """The firewall (hook entry): reads a proposed edit as JSON on stdin,
     allows silently or DENIES with the repair — drift cannot enter."""
     import sys as _sys
 
-    from ._ui import emit, emit_err
+    from ._ui import emit, emit_all, emit_err
     from montology_scan import guard_hook
 
+    if stats:
+        from montology_scan.guard import stats as guard_stats
+
+        emit_all(guard_stats())
+        return
     raise typer.Exit(guard_hook(_sys.stdin.read(), err=emit_err, out=emit))
 
 

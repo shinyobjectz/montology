@@ -97,6 +97,13 @@ CREATE TABLE IF NOT EXISTS token (
   origin    TEXT
 );
 
+CREATE TABLE IF NOT EXISTS guard_runs (
+  ran_at    TEXT NOT NULL,
+  path      TEXT NOT NULL,
+  verdict   TEXT NOT NULL,           -- deny | allow | advisory
+  findings  TEXT
+);
+
 CREATE TABLE IF NOT EXISTS gen_runs (
   ran_at      TEXT NOT NULL,
   task        TEXT NOT NULL,

@@ -119,3 +119,28 @@ def test_migrate_rewrites_every_position_a_name_occupies(repo):
     migrate("atlas", "chart", apply=True, root=repo)
     text = (repo / "s.py").read_text()
     assert 'x = "atlas"' in text and "# atlas" in text and "chart = 1" in text
+
+
+def test_drift_measures_history(tmp_path):
+    import subprocess
+
+    from montology_scan import measure_history, render_drift
+
+    repo = tmp_path / "r"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    env = ["git", "-c", "user.email=t@t", "-c", "user.name=t", "-C", str(repo)]
+    (repo / "a.py").write_text("class One:\n    pass\n")
+    subprocess.run([*env, "add", "-A"], check=True)
+    subprocess.run([*env, "commit", "-qm", "one"], check=True)
+    (repo / "b.css").write_text(".x { color: #061a1c; } .y { color: #ff0000; }")
+    (repo / "a.py").write_text("class One:\n    pass\n\nclass Two:\n    pass\n")
+    subprocess.run([*env, "add", "-A"], check=True)
+    subprocess.run([*env, "commit", "-qm", "two"], check=True)
+
+    rows = measure_history(repo, samples=2)
+    assert len(rows) == 2
+    assert rows[0]["decls"] == 1 and rows[1]["decls"] == 2
+    assert rows[0]["colors"] == 0 and rows[1]["colors"] == 2
+    out = "\n".join(render_drift(rows))
+    assert "drift:" in out and "lexicon 1" in out

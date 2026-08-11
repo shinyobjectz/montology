@@ -173,6 +173,8 @@ def run_hook(stdin_text: str, err=None, out=None) -> int:
         blocking, advisory = check_text(root, path, text)
     except Exception:  # noqa: BLE001 — the guard fails OPEN, always
         return 0
+    _log(root, path, "deny" if blocking else ("advisory" if advisory else "allow"),
+         blocking + advisory)
     if blocking:
         err("montology guard: this edit introduces vocabulary drift —")
         for b in blocking:
@@ -184,3 +186,63 @@ def run_hook(stdin_text: str, err=None, out=None) -> int:
     for a in advisory:
         out(f"montology guard (advisory): {a}")
     return 0
+
+
+def _log(root: Path, path: str, verdict: str, findings: list[str]) -> None:
+    """Every hook decision, recorded — the compliance dataset accumulates
+    from ordinary usage. Logging must never block an edit: fail open."""
+    try:
+        import sqlite3
+        from datetime import UTC, datetime
+
+        db = root / ".monty" / "ontology.db"
+        conn = sqlite3.connect(db, timeout=0.5)
+        conn.execute("CREATE TABLE IF NOT EXISTS guard_runs (ran_at TEXT NOT NULL, "
+                     "path TEXT NOT NULL, verdict TEXT NOT NULL, findings TEXT)")
+        conn.execute("INSERT INTO guard_runs VALUES (?,?,?,?)",
+                     (datetime.now(UTC).isoformat(), path, verdict,
+                      "; ".join(findings)[:2000]))
+        conn.commit()
+        conn.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def stats(root: Path | None = None) -> list[str]:
+    """Repair-following, measured: a deny followed by an allow on the same
+    path within 30 minutes is a COMPLIED denial — the agent read the
+    repair and applied it."""
+    import sqlite3
+    from datetime import datetime
+
+    from montology_core import workspace_root
+
+    root = root or workspace_root()
+    db = root / ".monty" / "ontology.db"
+    if not db.exists():
+        return ["no guard history — the log begins with the first hooked edit."]
+    conn = sqlite3.connect(db)
+    try:
+        rows = conn.execute("SELECT ran_at, path, verdict FROM guard_runs "
+                            "ORDER BY ran_at").fetchall()
+    except sqlite3.OperationalError:
+        return ["no guard history — the log begins with the first hooked edit."]
+    if not rows:
+        return ["no guard history — the log begins with the first hooked edit."]
+    denies = [(t, p) for t, p, v in rows if v == "deny"]
+    allows = [(t, p) for t, p, v in rows if v == "allow"]
+    complied = 0
+    for dt, dp in denies:
+        d = datetime.fromisoformat(dt)
+        if any(ap == dp and 0 < (datetime.fromisoformat(at) - d).total_seconds() < 1800
+               for at, ap in allows):
+            complied += 1
+    total = len(rows)
+    lines = [f"guard: {total} hooked edit(s) — {len(allows)} allowed, "
+             f"{len(denies)} denied, {sum(1 for *_, v in rows if v == 'advisory')} advisory"]
+    if denies:
+        rate = complied / len(denies)
+        lines.append(f"repair-following: {complied}/{len(denies)} denials were followed "
+                     f"by a clean edit to the same file within 30 min ({rate:.0%}) — "
+                     "the compliance measurement, accumulating from ordinary use")
+    return lines
