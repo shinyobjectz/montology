@@ -423,12 +423,27 @@ def explain(no_draft: bool = typer.Option(False, "--no-draft", help="Skip atomic
 
 
 @app.command()
-def drift(samples: int = typer.Option(12, "--samples", help="History points to measure.")) -> None:
-    """The telescope: lexicon and palette drift across the repo's git history."""
+def drift(samples: int = typer.Option(12, "--samples", help="History points to measure."),
+          csv: bool = typer.Option(False, "--csv", help="Machine-readable rows (the research lane).")) -> None:
+    """The telescope: lexicon, palette and convergence across the git history."""
     from ._ui import emit_all
-    from montology_scan import measure_history, render_drift
+    from montology_scan import drift_csv, measure_history, render_drift
 
-    emit_all(render_drift(measure_history(samples=samples)))
+    rows = measure_history(samples=samples)
+    if csv:
+        for line in drift_csv(rows):
+            typer.echo(line)
+        return
+    emit_all(render_drift(rows))
+
+
+@app.command()
+def vitals() -> None:
+    """The pulse: the state of this repo's meaning, one verdict — track it per repo."""
+    from ._ui import emit_all
+    from montology_scan import vitals as scan_vitals
+
+    emit_all(scan_vitals())
 
 
 @app.command()

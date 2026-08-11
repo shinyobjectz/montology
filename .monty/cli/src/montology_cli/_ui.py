@@ -47,6 +47,9 @@ _PREFIX_STYLES = (
     ("gen lint:", "bold cyan"),
     ("✔", "bold green"),
     ("montology guard:", "bold red"),
+    ("verdict: TENDED", "bold green"),
+    ("verdict: DRIFTING", "bold yellow"),
+    ("verdict: UNTENDED", "bold red"),
     ("•", "bold yellow"),
 )
 

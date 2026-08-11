@@ -1041,7 +1041,7 @@ wheels = [
 
 [[package]]
 name = "montology"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = ".monty/cli" }
 dependencies = [
     { name = "fastmcp" },
@@ -1073,12 +1073,12 @@ provides-extras = ["semantics"]
 
 [[package]]
 name = "montology-core"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = ".monty/core" }
 
 [[package]]
 name = "montology-gen"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = ".monty/gen" }
 dependencies = [
     { name = "mellea" },
@@ -1099,7 +1099,7 @@ requires-dist = [
 
 [[package]]
 name = "montology-ontology"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = ".monty/onto" }
 dependencies = [
     { name = "montology-core" },
@@ -1119,7 +1119,7 @@ provides-extras = ["semantics"]
 
 [[package]]
 name = "montology-scan"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = ".monty/scan" }
 dependencies = [
     { name = "montology-core" },
@@ -1138,7 +1138,7 @@ requires-dist = [
 
 [[package]]
 name = "montology-workspace"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "montology" },

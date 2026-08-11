@@ -122,3 +122,23 @@ occur.
   concept-level and design-level curves, and whether enforcement bends
   them, are open — and both instruments needed to answer are now in
   this repo.
+
+## The program (the single plan, v0.2.0 forward)
+
+Shipped in 0.2.0 — "Meaning over time":
+1. one replay engine: convergence merged into `monty drift` (+ `--csv`);
+2. `monty vitals`: the per-repo verdict (TENDED / DRIFTING / UNTENDED),
+   reasons with repairs — the trackable number;
+3. the guard log + `--stats`: repair-following measured from ordinary use;
+4. `vitals` and `convergence` seeded as house words.
+
+The open queue, in order:
+1. **Agent-era slopes** — drift curves on repos with known heavy AI
+   authorship; the hypothesis: super-linear semantic drift without
+   enforcement.
+2. **The three-arm compliance study** — prose vs retrieved skill vs
+   enforced guard; metrics: naming consistency, re-litigation rate,
+   overhead. The guard log is the passive arm already running.
+3. **The enforcement-bend experiment** — the closed loop (candidates →
+   adoption → guard → migrate) run live on a drifting repo: does it
+   produce the flask curve where the excalidraw curve would occur?

@@ -1,6 +1,6 @@
 {
   "name": "montology",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The ontology layer for any monorepo \u2014 the monty CLI. A thin launcher: ensures uv, then runs the Python engine via uvx.",
   "bin": {
     "monty": "bin/monty.js"

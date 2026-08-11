@@ -16,12 +16,14 @@ build, with the repair attached.
 from .surface import declarations, languages_covered
 from .lint import lint, candidates
 from .astgrep import sg
+from .drift import csv as drift_csv
 from .drift import measure_history, render as render_drift
+from .vitals import vitals
 from .explain import explain
 from .guard import run_hook as guard_hook
 from .rename import migrate
 from .styles import (design_candidates, design_lint, ingest_theme,
                      recipe_candidates, style_surface, tailwind_theme)
 
-__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "explain", "guard_hook", "measure_history", "ingest_theme", "lint", "migrate",
+__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "drift_csv", "explain", "guard_hook", "measure_history", "vitals", "ingest_theme", "lint", "migrate",
            "recipe_candidates", "sg", "style_surface", "tailwind_theme"]

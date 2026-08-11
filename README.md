@@ -95,6 +95,33 @@ and **renames** — the old name retires, old material stays readable, and
 by *token* (tree-sitter positions, strings and comments untouched,
 losslessly round-trippable — proven on eight real repos).
 
+## Meaning over time
+
+![monty vitals: one verdict per repo](docs/vitals.gif)
+
+Three instruments make a repo's meaning a *tracked quantity*:
+
+- **`monty vitals`** — the pulse: gate state, vocabulary state, design
+  state, guard compliance → one verdict (**TENDED / DRIFTING /
+  UNTENDED**) with every reason carrying its repair. Track it per repo
+  the way you track CI.
+- **`monty drift`** — the telescope: the git history sampled into
+  lexicon, palette and convergence curves (`--csv` for the research
+  lane). First observation, excalidraw's full history: the palette
+  fragmented ~10× in two years (4→11→27→42 distinct colors) while
+  declarations merely doubled — and their one-off CSS-variable cleanup
+  did not hold. Flask's concept lexicon, by contrast: 49 concepts in 15
+  years, flat since 2019. **Convergence is a property of tending, not
+  of software.**
+- **`monty guard --stats`** — repair-following, measured: every hook
+  denial followed by a clean edit within 30 minutes is a complied
+  denial. The compliance dataset accumulates from ordinary use; every
+  hooked workspace is a passive experiment in whether enforcement
+  closes the literature's *text-action disconnect*.
+
+The research notes — instruments, first measurements, prior art, open
+protocols — live in [`research/FINDINGS.md`](research/FINDINGS.md).
+
 ## Semantic hearing
 
 ![similar → the string laws pass → the audit hears the duplicate](docs/semantics.gif)

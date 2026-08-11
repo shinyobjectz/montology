@@ -40,6 +40,15 @@ words always survive; conflicts are loud and local wins. When upstream
 renames a word, the pull prints the exact `monty migrate` command — run
 it on a clean tree.
 
+## Meaning over time (vitals · drift · guard --stats)
+
+- `monty vitals` — run FIRST when asked "how is this repo doing": one
+  verdict (TENDED / DRIFTING / UNTENDED), each reason with its repair.
+- `monty drift [--csv]` — history curves: lexicon, palette, convergence.
+  A palette growing super-linearly or a `new` column that never decays
+  is untended meaning; cite the rows, never estimate.
+- `monty guard --stats` — repair-following measured from the hook log.
+
 ## The firewall (the guard)
 
 `monty init` installs a PreToolUse hook: every proposed Write/Edit is

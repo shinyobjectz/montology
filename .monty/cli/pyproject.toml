@@ -1,6 +1,6 @@
 [project]
 name = "montology"
-version = "0.1.0"
+version = "0.2.0"
 description = "The montology CLI (`monty`): an ontology context layer for any monorepo — check, scan, lint, sync, serve."
 requires-python = ">=3.12"
 license = "Apache-2.0"
