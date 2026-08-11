@@ -88,6 +88,16 @@ def scan_candidates(top: int = 15) -> str:
 
 
 @mcp.tool
+def repo_vitals() -> str:
+    """The state of this repo's meaning: one verdict (TENDED / DRIFTING /
+    UNTENDED) with every reason carrying its repair. Run FIRST when asked
+    how a repo is doing."""
+    from montology_scan import vitals
+
+    return "\n".join(vitals())
+
+
+@mcp.tool
 def ontology_lint() -> str:
     """The gate: collisions, code resolution, drift — each FAIL carries its repair."""
     from montology_gen import lint as gen_lint

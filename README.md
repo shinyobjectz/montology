@@ -103,8 +103,10 @@ Three instruments make a repo's meaning a *tracked quantity*:
 
 - **`monty vitals`** — the pulse: gate state, vocabulary state, design
   state, guard compliance → one verdict (**TENDED / DRIFTING /
-  UNTENDED**) with every reason carrying its repair. Track it per repo
-  the way you track CI.
+  UNTENDED**) with every reason carrying its repair — plus whether the
+  firewall is wired and the org upstream it inherits. `--json` is the
+  dashboard shape; `--strict` exits 1 unless TENDED, so a repo can gate
+  on its own tending. Track it per repo the way you track CI.
 - **`monty drift`** — the telescope: the git history sampled into
   lexicon, palette and convergence curves (`--csv` for the research
   lane). First observation, excalidraw's full history: the palette

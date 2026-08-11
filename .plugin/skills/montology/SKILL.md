@@ -44,6 +44,7 @@ it on a clean tree.
 
 - `monty vitals` — run FIRST when asked "how is this repo doing": one
   verdict (TENDED / DRIFTING / UNTENDED), each reason with its repair.
+  `--json` is the dashboard shape; `--strict` exits 1 unless TENDED (CI).
 - `monty drift [--csv]` — history curves: lexicon, palette, convergence.
   A palette growing super-linearly or a `new` column that never decays
   is untended meaning; cite the rows, never estimate.

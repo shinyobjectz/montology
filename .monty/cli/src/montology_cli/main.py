@@ -438,12 +438,22 @@ def drift(samples: int = typer.Option(12, "--samples", help="History points to m
 
 
 @app.command()
-def vitals() -> None:
+def vitals(json_out: bool = typer.Option(False, "--json", help="The dashboard shape."),
+           strict: bool = typer.Option(False, "--strict", help="Exit 1 unless TENDED — for CI.")) -> None:
     """The pulse: the state of this repo's meaning, one verdict — track it per repo."""
     from ._ui import emit_all
-    from montology_scan import vitals as scan_vitals
+    from montology_scan import build_vitals
+    from montology_scan.vitals import render_vitals
 
-    emit_all(scan_vitals())
+    r = build_vitals()
+    if json_out:
+        import json as _json
+
+        typer.echo(_json.dumps(r, indent=2))
+    else:
+        emit_all(render_vitals(r))
+    if strict and r["state"] != "tended":
+        raise typer.Exit(1)
 
 
 @app.command()

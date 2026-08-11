@@ -18,12 +18,12 @@ from .lint import lint, candidates
 from .astgrep import sg
 from .drift import csv as drift_csv
 from .drift import measure_history, render as render_drift
-from .vitals import vitals
+from .vitals import build_vitals, vitals, vitals_json
 from .explain import explain
 from .guard import run_hook as guard_hook
 from .rename import migrate
 from .styles import (design_candidates, design_lint, ingest_theme,
                      recipe_candidates, style_surface, tailwind_theme)
 
-__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "drift_csv", "explain", "guard_hook", "measure_history", "vitals", "ingest_theme", "lint", "migrate",
+__all__ = ["candidates", "declarations", "languages_covered", "design_candidates", "design_lint", "drift_csv", "explain", "guard_hook", "build_vitals", "measure_history", "vitals", "vitals_json", "ingest_theme", "lint", "migrate",
            "recipe_candidates", "sg", "style_surface", "tailwind_theme"]

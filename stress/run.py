@@ -130,7 +130,20 @@ def stress_one(repo: Path) -> dict:
     else:
         row["collision"] = "skipped (no class-like decls)"
 
-    # 5. migrate round-trip: lossless or it does not ship
+    # 5. vitals: the verdict must compose on every real repo, and the JSON
+    #    must honor the dashboard contract (state consistent with verdict)
+    got = monty(["vitals", "--json"], repo)
+    try:
+        v = json.loads(got.stdout)
+        consistent = v["state"] in ("tended", "drifting", "untended") \
+            and v["verdict"].lower().startswith(v["state"]) \
+            and (v["state"] == "tended") == (not v["reasons"])
+        row["vitals"] = (v["state"] if consistent
+                         else f"FAIL: inconsistent ({v['state']} vs {v['verdict'][:30]})")
+    except Exception as e:  # noqa: BLE001
+        row["vitals"] = f"FAIL: {type(e).__name__} {got.stderr.strip()[-80:]}"
+
+    # 6. migrate round-trip: lossless or it does not ship
     once = [n for n, c in Counter(d["name"] for d in surface["decls"]).items()
             if c >= 1 and n[:1].isupper() and n.isalpha() and len(n) > 4]
     if once:
@@ -171,7 +184,7 @@ def main() -> None:
             pass  # clones cached for re-runs; pass --keep is a no-op kept for symmetry
 
     cols = ["repo", "init", "files", "decls", "errors", "skipped", "scan_s",
-            "collision", "migrate", "candidates"]
+            "collision", "vitals", "migrate", "candidates"]
     lines = ["# Stress battery — " + time.strftime("%Y-%m-%d"), "",
              "| " + " | ".join(cols) + " |",
              "|" + "---|" * len(cols)]
