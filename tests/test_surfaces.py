@@ -46,6 +46,37 @@ def test_manifest_is_a_claim_and_an_import_is_a_fact(repo):
     assert [p["owner"] for p in m["phantoms"]] == ["ghost-lib"]
 
 
+def test_a_required_but_unreferenced_dependency_can_be_recorded(repo, onto_db):
+    """`postgrex` is never referenced and must not be removed — it is the
+    driver Ecto loads at runtime. The escape is a recorded decision in the
+    config, not a widened definition of proof."""
+    from montology_scan.surf import gate
+
+    (repo / ".monty" / "montology.toml").write_text(
+        'name = "app"\n\n[surface]\nallow = { "ghost-lib" = "the runtime driver" }\n')
+    lines = gate(repo)
+
+    assert any("recorded phantom" in x and "the runtime driver" in x for x in lines)
+    assert not any(x.startswith("FAIL") for x in lines)
+
+
+def test_a_recorded_phantom_a_word_bears_on_still_fails(repo, onto_db):
+    """An exception covers 'nothing imports it'. It does NOT cover the
+    vocabulary claiming the thing implements a term."""
+    from montology_scan.surf import bear, gate, record
+
+    (repo / ".monty" / "montology.toml").write_text(
+        'name = "app"\n\n[surface]\nallow = ["ghost-lib"]\n')
+    conn = onto_db.connect()
+    conn.execute("INSERT INTO word (name, kind, definition, code) VALUES (?,?,?,?)",
+                 ("haunting", "core", "d", "haunt"))
+    conn.commit()
+    record(repo)
+    bear("haunting", "python:ghost-lib")
+
+    assert any(x.startswith("FAIL") and "haunting" in x for x in gate(repo))
+
+
 def test_a_phantom_nothing_bears_on_is_untidy_not_fatal(repo, onto_db):
     from montology_scan.surf import gate
 

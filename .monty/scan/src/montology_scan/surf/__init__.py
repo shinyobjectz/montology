@@ -278,6 +278,35 @@ def unbearing_phantoms(root: Path | None = None) -> list[dict]:
 
 # ── the gate ─────────────────────────────────────────────────────────────
 
+def allowed(root: Path | None = None) -> dict[str, str]:
+    """Phantoms recorded as deliberate, from [surface] allow.
+
+    Some dependencies are genuinely never referenced and genuinely required:
+    `postgrex` is the driver `Ecto.Adapters.Postgres` loads at runtime,
+    `sweet_xml` is an OPTIONAL dep of ex_aws that the consumer must declare,
+    `zod` is a peer of `ai`. The sweep is right that nothing imports them —
+    and deleting them breaks the build.
+
+    So the escape is the one this repo already uses for collisions: a named
+    exception is A RECORDED DECISION, in the config, with its reason. Not a
+    widened definition of proof, which is the thing doctrine forbids.
+    """
+    import tomllib
+
+    root = _root(root)
+    f = root / ".monty" / "montology.toml"
+    if not f.exists():
+        return {}
+    try:
+        cfg = tomllib.loads(f.read_text()).get("surface", {})
+    except tomllib.TOMLDecodeError:
+        return {}
+    entries = cfg.get("allow", [])
+    if isinstance(entries, dict):
+        return {str(k): str(v) for k, v in entries.items()}
+    return {str(e): "" for e in entries}
+
+
 def gate(root: Path | None = None) -> list[str]:
     """The lint finding, measured fresh: a phantom a word bears on.
 
@@ -297,11 +326,18 @@ def gate(root: Path | None = None) -> list[str]:
     claims: dict[str, list[str]] = {}
     for b in bearings(root):
         claims.setdefault(b["surface_id"], []).append(b["word_name"])
+    ok = allowed(root)
 
     out: list[str] = []
     for p in sorted(m["phantoms"], key=lambda s: (s["kind"], s["owner"])):
         where = f", declared in {p['declared_at']}" if p.get("declared_at") else ""
         words = claims.get(p["id"], [])
+        if p["owner"] in ok and not words:
+            # A recorded decision, not a finding. Still SHOWN — an exception
+            # nobody ever sees again is how a stale one survives for years.
+            why = f" — {ok[p['owner']]}" if ok[p["owner"]] else ""
+            out.append(f"note surface {p['owner']!r} is a recorded phantom{why}")
+            continue
         if words:
             out.append(
                 f"FAIL surface {p['owner']!r} ({p['kind']}{where}) is a phantom — "
