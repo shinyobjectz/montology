@@ -24,7 +24,7 @@ WORDS = [
      "a decision written down in the database — because a decision that is not written down gets re-litigated",
      "why it is this way"),
     ("scan", "core", None, "scan",
-     "the tree-sitter sweep of a codebase: every declaration measured, checked against the vocabulary",
+     "the tree-sitter sweep of a codebase: every declaration measured, every dependency surface and the seams between them, checked against the vocabulary",
      "what the code claims"),
     ("collision", "core", "scan", "scan.collision",
      "a declaration named after a word that means something else — the failure scan exists to catch",
@@ -41,6 +41,9 @@ WORDS = [
     ("ruling", "core", "ontology", "onto.ruling",
      "a recorded boundary decision: an overload (say Y not X), a collision (whose word it is, who moved), or a rename (was, now, why)",
      "how arguments end"),
+    ("amendment", "core", "ontology", "onto.amendment",
+     "a word's own text corrected in place — the name and its history stay, and what the field said before is ledgered; the counterpart to a rename, which retires the name instead",
+     "what a word used to say"),
     ("token", "core", "ontology", "onto.token",
      "a named design value — color, space, radius, shadow, font, breakpoint — the vocabulary a visual system trades in",
      "what design means"),
@@ -59,6 +62,15 @@ WORDS = [
     ("sync", "core", "ontology", "onto.sync",
      "rendering the database to the generated words skill — prose is output, never source",
      "how agents read it"),
+    ("surface", "core", None, "surf",
+     "what a thing exposes: its named, callable, importable face — ours and a dependency's alike, whose it is being an attribute and not a second word",
+     "what something offers"),
+    ("seam", "core", "surface", "surf.seam",
+     "one point where two surfaces meet — an import that resolves, a call that lands, a config key read; direction is an attribute, so inputs and outputs need no words of their own",
+     "where two things touch"),
+    ("phantom", "core", "surface", "surf.phantom",
+     "a surface with no seam: declared, never met — the mirror of a candidate, which is a declaration with no word",
+     "what nothing touches"),
 ]
 
 DOCTRINE = [
@@ -72,6 +84,16 @@ DOCTRINE = [
      "that means something else), unresolvable code prefixes, generated prose "
      "gone stale behind the database. Errors carry the repair. An ontology "
      "without enforcement is a glossary."),
+    ("The seam is the evidence", 30,
+     "There is no word for proof-of-use, because a seam IS proof of use: if a "
+     "surface is genuinely used there is a seam, and if there is no seam it is "
+     "a phantom. Static seams — an import that resolves, a call that lands, a "
+     "config key read — are deterministic, so they gate. Observed seams "
+     "(traces, telemetry) only cover paths that happened to run, so absence "
+     "proves nothing: they may raise confidence, never fail a build, and never "
+     "promote a phantom. A phantom is a claim about STATIC evidence — if one is "
+     "wrong the probe is wrong, and the repair is to teach the probe, not to "
+     "widen what counts as proof until nothing is ever a phantom."),
 ]
 
 

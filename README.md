@@ -102,6 +102,7 @@ ts/tsx, js, go, rust, elixir, ruby, java, c, c++):
 monty onto check thread        # FREE / TAKEN / RULED — before naming ANYTHING
 monty scan --candidates        # the words your codebase is asking for
 monty onto add thread "a stateful user↔agent session" --code atl.thread
+monty onto amend thread --definition "…" --why "a later ruling narrowed it"
 monty lint                     # collisions (advisory by default), code-tree
                                # integrity, stale prose — each with its repair
 ```
@@ -112,6 +113,12 @@ and **renames** — the old name retires, old material stays readable, and
 `monty migrate old new --apply` propagates the rename through the code
 by *token* (tree-sitter positions, strings and comments untouched,
 losslessly round-trippable — proven on eight real repos).
+
+When a ruling narrows a word you already authored, **`monty onto amend`**
+corrects the record in place: the name and its history stay, every field
+that changes is ledgered with the text it replaced, and an unknown name or
+a no-op is refused. Editing the database around the authoring path is the
+same drift the gate exists to catch.
 
 ## Meaning over time
 

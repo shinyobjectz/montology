@@ -63,6 +63,57 @@ def build_vitals(root: Path | None = None) -> dict:
         reasons_untended.append(f"no words while the code asks for {len(cands)} "
                                 "(monty scan --candidates, then onto add)")
 
+    # what the repo stands on: phantoms over surfaces is the pulse of
+    # whether it is carrying dead weight, or claiming weight it dropped.
+    r["surfaces"] = None
+    try:
+        from .surf import bearings, measure
+
+        m = measure(root)
+        if m["surfaces"]:
+            claimed = {b["surface_id"] for b in bearings(root)}
+            ghosts = m["phantoms"]
+            lying = [p for p in ghosts if p["id"] in claimed]
+            r["surfaces"] = {"surfaces": len(m["surfaces"]), "seams": len(m["seams"]),
+                             "phantoms": len(ghosts), "claimed_phantoms": len(lying)}
+            if lying:
+                reasons_drifting.append(
+                    f"{len(lying)} phantom(s) a word bears on (monty surface --phantoms)")
+    except Exception:  # noqa: BLE001 — an absent capability is an absent section
+        pass
+
+    # the vocabulary's own health, and where terms are being rerouted
+    r["health"] = None
+    try:
+        from .health import health as _health
+
+        h = _health(root)
+        if h["words"]:
+            c = h["counts"]
+            r["health"] = {k: c.get(k, 0) for k in
+                           ("carried", "unnamed", "thin", "prose-only", "dead")}
+            # Deliberately NOT a verdict: montology's own sequencing seeds the
+            # vocabulary BEFORE the code that implements it, so a freshly
+            # added word is "dead" by construction. Counting that as untended
+            # would punish the workflow this tool prescribes. It is reported,
+            # and `monty onto health` is where you go to act on it.
+    except Exception:  # noqa: BLE001
+        pass
+
+    r["stale"] = None
+    try:
+        from .stale import stale as _stale
+
+        s = _stale(root)
+        if s["routes"]:
+            r["stale"] = {"routes": s["routes"], "live": len(s["findings"]),
+                          "unscopable": len(s["unscopable"])}
+            if s["findings"]:
+                reasons_drifting.append(f"{len(s['findings'])} deprecated term(s) "
+                                        "still in use (monty onto stale)")
+    except Exception:  # noqa: BLE001
+        pass
+
     # the design system
     toks = tokens()
     styles = style_surface(root)
@@ -124,6 +175,20 @@ def render_vitals(r: dict) -> list[str]:
     v = r["vocabulary"]
     lines.append(f"vocabulary: {v['words']} word(s); code asking for {v['candidates']} more"
                  + (f" (top: {', '.join(v['top_candidates'])})" if v["top_candidates"] else ""))
+    s = r.get("surfaces")
+    if s:
+        lines.append(f"surfaces: {s['surfaces']} surface(s), {s['seams']} seam(s), "
+                     f"{s['phantoms']} phantom(s)"
+                     + (f", {s['claimed_phantoms']} of them claimed by a word"
+                        if s["claimed_phantoms"] else ""))
+    h = r.get("health")
+    if h:
+        lines.append(f"words: {h['carried']} carried, {h['unnamed']} unnamed, "
+                     f"{h['thin']} thin, {h['prose-only']} prose-only, {h['dead']} dead")
+    st = r.get("stale")
+    if st:
+        lines.append(f"routes: {st['routes']} — {st['live']} with deprecated terms "
+                     f"still in use, {st['unscopable']} unscopable (cannot gate)")
     d = r["design"]
     if d["colors"]:
         lines.append(f"design: {d['tokens']} token(s), {d['colors']} distinct color(s) "

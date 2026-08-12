@@ -98,6 +98,28 @@ def lint(root: Path | None = None) -> list[str]:
                 f"montology.toml [scan] allow." + hint
             )
 
+    # phantoms: the other direction. A collision is the vocabulary and the
+    # code meaning different things by one name; a phantom a word bears on
+    # is the vocabulary pointing at something the code no longer touches.
+    try:
+        from .surf import gate as surface_gate
+
+        report.extend(surface_gate(root))
+    except Exception as exc:  # noqa: BLE001 — a probe must not break the gate
+        report.append(f"note surface: not measured ({type(exc).__name__}: {exc})")
+
+    # routes: pure-table findings, so no false positive is possible — a
+    # route pointing at a word that does not exist is wrong by inspection.
+    # The scoped term SWEEP stays out of the gate deliberately (see `stale`):
+    # it is advisory until a repo has scoped its routes.
+    try:
+        from montology_ontology import render_routes, route_analyse
+
+        report.extend(x for x in render_routes(route_analyse())
+                      if x.startswith(("FAIL", "warn")))
+    except Exception as exc:  # noqa: BLE001
+        report.append(f"note route: not analysed ({type(exc).__name__}: {exc})")
+
     failed = sum(1 for r in report if r.startswith("FAIL"))
     warned = sum(1 for r in report if r.startswith("warn"))
     for lang, n in surface["skipped_langs"].items():

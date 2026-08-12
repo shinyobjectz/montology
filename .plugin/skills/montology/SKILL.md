@@ -18,6 +18,13 @@ stays correct only as long as someone remembers it; this one has a gate.
    --test "<one-line what-is-it>" --code <dotted>` — refused with findings
    if taken. One word means one thing; a dotted code lives inside the word
    owning its prefix (`har.cell` needs `har`).
+   **Correct it with `monty onto amend <name> --definition "<corrected>"
+   --why "<what changed>"`** (also `--test --note --code --owner`) when a
+   later ruling narrows a word or its test was written loosely: the name
+   and its history stay, the text it replaced is ledgered and recoverable,
+   and an unknown name or an amendment that changes nothing is refused.
+   Never `UPDATE` the database by hand — that is the drift the gate exists
+   to catch.
 3. **Let the code ask for words.** `monty scan --candidates` mines
    recurring declared names with no word — that is the raw material for
    building an ontology FROM a codebase instead of imposing one on it.
@@ -29,7 +36,7 @@ stays correct only as long as someone remembers it; this one has a gate.
    recorded in `.monty/montology.toml` `[scan] allow` — a decision, not
    a silence.
 5. **Never hand-edit the words skill.** It is GENERATED; `monty sync`
-   re-renders it after any change (onto add/rule do this themselves).
+   re-renders it after any change (onto add/amend/rule do this themselves).
 
 ## One ontology, every repo
 

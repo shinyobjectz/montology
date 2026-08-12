@@ -32,7 +32,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-onto_app = typer.Typer(help="The vocabulary: check, add, rule, list.", no_args_is_help=True)
+onto_app = typer.Typer(help="The vocabulary: check, add, amend, rule, list.", no_args_is_help=True)
 design_app = typer.Typer(help="Design values as vocabulary: tokens, drift, candidates.", no_args_is_help=True)
 app.add_typer(onto_app, name="onto")
 app.add_typer(design_app, name="design")
@@ -127,6 +127,31 @@ def onto_add(
     got = add(name, definition, test=test or None, note=note or None, kind=kind,
               owner=owner or None, code=code or None)
     emit(got)
+    if got.startswith("REFUSED"):
+        raise typer.Exit(1)
+    from montology_gen import sync as _sync
+
+    emit(_sync())
+
+
+@onto_app.command("amend")
+def onto_amend(
+    name: str,
+    definition: str | None = typer.Option(None, "--definition", help="What the word means, corrected."),
+    test: str | None = typer.Option(None, "--test", help="The one-line 'what is it' test, corrected."),
+    note: str | None = typer.Option(None, "--note", help="The kept context (pass \"\" to clear it)."),
+    code: str | None = typer.Option(None, "--code", help="Re-file under a dotted code (prefix must resolve)."),
+    owner: str | None = typer.Option(None, "--owner", help="Move it inside another word (must exist)."),
+    why: str = typer.Option("", "--why", help="Why the record changed — the ledger keeps it."),
+) -> None:
+    """Correct a word's recorded text — the name stays, the old text is ledgered."""
+    from montology_ontology import amend
+
+    from ._ui import emit, emit_all
+
+    got = amend(name, definition=definition, test=test, note=note, code=code,
+                owner=owner, why=why or None)
+    emit_all(got.splitlines())
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
     from montology_gen import sync as _sync
@@ -295,6 +320,143 @@ def lint() -> None:
     emit_all(lines)
     if any(line.startswith("FAIL") or line.endswith("FAILED") for line in lines):
         raise typer.Exit(1)
+
+
+@onto_app.command("route")
+def onto_route(
+    term: str = typer.Argument("", help="The term to route AWAY from."),
+    to: str = typer.Option("", "--to", help="The word to say instead."),
+    register: str = typer.Option("all", "--in", help="code | surface | prose | all."),
+    scope: str = typer.Option("", "--scope", help="Path glob, overriding the register."),
+    why: str = typer.Option("", "--why", help="Why the ruling exists."),
+    drafts: bool = typer.Option(False, "--drafts", help="What existing rulings imply, unwritten."),
+    adopt_all: bool = typer.Option(False, "--adopt-all", help="Write every draft, unconfirmed."),
+    drop: bool = typer.Option(False, "--drop", help="Remove the route."),
+) -> None:
+    """Say this, not that — HERE. The register is what makes a ruling enforceable."""
+    from montology_ontology import route_add, route_drafts, route_drop, routes
+
+    from ._ui import emit_all
+
+    if drafts or adopt_all:
+        ds = route_drafts()
+        if not ds:
+            typer.echo("no drafts — every ruling is already routed.")
+            raise typer.Exit(0)
+        if adopt_all:
+            for d in ds:
+                typer.echo(route_add(d["from_term"], d["to_word"],
+                                     register=d["register"], why=d.get("why"),
+                                     ruled_on=d.get("ruled_on"), origin=d["source"]))
+            typer.echo(f"\nadopted {len(ds)} draft(s). The ones left at register "
+                       "'all' cannot gate until you scope them — `monty onto stale` "
+                       "lists them.")
+            raise typer.Exit(0)
+        lines = [f"{len(ds)} draft route(s) from your existing rulings — "
+                 "confirm the ones that are right:", ""]
+        for d in ds:
+            mark = "" if d["known_target"] else "  [target is not a word yet]"
+            hint = f"  (from: {d['hint']})" if d["hint"] else ""
+            lines.append(f"  {d['from_term']!r} → {d['to_word']!r} in {d['register']}{hint}{mark}")
+            lines.append(f"      monty onto route {d['from_term']!r} --to {d['to_word']!r} "
+                         f"--in {d['register']}")
+        lines += ["", "Adopt them all with --adopt-all, then scope the ones "
+                  "that landed on 'all'."]
+        emit_all(lines)
+        raise typer.Exit(0)
+
+    if not term:
+        rs = routes()
+        if not rs:
+            typer.echo("no routes yet — `monty onto route --drafts` reads what your "
+                       "existing rulings already imply.")
+            raise typer.Exit(0)
+        emit_all([f"  {r['from_term']!r} → {r['to_word']!r}  in {r['register']}"
+                  + (f" ({r['scope']})" if r["scope"] else "") for r in rs])
+        raise typer.Exit(0)
+
+    if not to:
+        typer.echo("REFUSED — say where it goes: --to WORD")
+        raise typer.Exit(1)
+    if drop:
+        typer.echo(route_drop(term, to, register))
+        raise typer.Exit(0)
+    line = route_add(term, to, register=register, scope=scope or None, why=why or None)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("routes")
+def onto_routes() -> None:
+    """Where terms land: chains, orphans, and rulings that contradict."""
+    from montology_ontology import render_routes, route_analyse
+
+    from ._ui import emit_all
+
+    lines = render_routes(route_analyse())
+    emit_all(lines)
+    if any(line.startswith("FAIL") for line in lines):
+        raise typer.Exit(1)
+
+
+@onto_app.command("stale")
+def onto_stale(
+    strict: bool = typer.Option(False, "--strict", help="Exit 1 on any live stale term."),
+) -> None:
+    """Deprecated terms still in use, searched only where the ruling applies."""
+    from montology_scan import render_stale, stale_terms
+
+    from ._ui import emit_all
+
+    r = stale_terms()
+    emit_all(render_stale(r))
+    if strict and r["findings"]:
+        raise typer.Exit(1)
+
+
+@onto_app.command("health")
+def onto_health(
+    verbose: bool = typer.Option(False, "--verbose", help="Every unnamed word, not the first few."),
+) -> None:
+    """Is each word carried by anything — or is it a name alone?"""
+    from montology_scan import render_health, word_health
+
+    from ._ui import emit_all
+
+    emit_all(render_health(word_health(), verbose=verbose))
+
+
+@app.command()
+def surface(
+    word: str = typer.Argument("", help="Show what bears this word (what implements the term)."),
+    record: bool = typer.Option(False, "--record", help="Run the probes and write what they find."),
+    phantoms: bool = typer.Option(False, "--phantoms", help="Only what nothing touches."),
+    on: str = typer.Option("", "--on", help="A surface id: its seams and the words it bears on."),
+    bear: str = typer.Option("", "--bear", help="A surface id: record that WORD is borne by it."),
+    note: str = typer.Option("", "--note", help="Why, for the bearing."),
+) -> None:
+    """What this repo stands on: surfaces, seams, phantoms — and which words they bear."""
+    from montology_scan import record_surfaces, surface_report
+    from montology_scan.surf import bear as bear_word
+
+    from ._ui import emit_all
+
+    if bear:
+        if not word:
+            typer.echo("REFUSED — say which word: monty surface WORD --bear SURFACE_ID")
+            raise typer.Exit(1)
+        line = bear_word(word, bear, note or None)
+        typer.echo(line)
+        raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+    if record:
+        r = record_surfaces()
+        typer.echo(f"recorded {r['surfaces']} surface(s), {r['seams']} seam(s) "
+                   f"via {', '.join(r['probes'])}")
+        for s in r["skipped"]:
+            typer.echo(f"  skipped {s}")
+
+    emit_all(surface_report(only_phantoms=phantoms, word=word or None, on=on or None))
 
 
 @app.command()
