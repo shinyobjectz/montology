@@ -21,7 +21,7 @@ from montology_ontology import record_run
 
 from ._session import gen_session, tiny_session
 from .instruments import fingerprint, vocabulary
-from .laws import STRUCTURAL, Law, provenance_current, word_laws
+from .laws import BODY_CAP, STRUCTURAL, Law, body_cap, provenance_current, word_laws
 
 SKILL_REL = Path(".claude") / "skills" / "words" / "SKILL.md"
 
@@ -194,6 +194,12 @@ def lint() -> list[str]:
         for bad in re.findall(r'"(You are[^"]{0,60}|Please [^"]{0,60})"', py.read_text()):
             failed = True
             report.append(f"FAIL {py.name}: prompt-shaped string {bad!r} — specs, not prompts")
+
+    # Said every time. A budget raised once and then never mentioned is a budget
+    # nobody weighs again, which is the same as not having one.
+    cap, why = body_cap()
+    if cap != BODY_CAP and why:
+        report.append(f"note: disclosure budget raised to {cap} from {BODY_CAP} — {why}")
 
     report.append("gen lint: " + ("FAILED" if failed else "ok"))
     return report

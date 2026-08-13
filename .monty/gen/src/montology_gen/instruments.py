@@ -41,6 +41,28 @@ def code_surface() -> dict:
     return declarations(workspace_root())
 
 
+def read_settings() -> dict:
+    """`.monty/montology.toml`, as a dict. Absent or unreadable is empty.
+
+    An instrument, so it follows the rule the others do: what cannot be measured
+    is absent rather than invented. A repo with no settings file is a repo whose
+    every setting is the default, which is a fact and not a failure.
+    """
+    import tomllib
+
+    from montology_core import workspace_root
+
+    path = workspace_root() / ".monty" / "montology.toml"
+
+    if not path.exists():
+        return {}
+
+    try:
+        return tomllib.loads(path.read_text())
+    except Exception:
+        return {}
+
+
 def parse_frontmatter(text: str) -> tuple[dict, str]:
     """Frontmatter dict + body. No fence parses as all-body — never an error."""
     m = re.match(r"^---\s*\n(.*?)\n---\s*\n(.*)$", text, re.DOTALL)

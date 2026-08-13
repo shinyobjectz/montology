@@ -19,7 +19,7 @@ import re
 from dataclasses import dataclass
 from typing import Callable
 
-from .instruments import parse_frontmatter
+from .instruments import parse_frontmatter, read_settings
 
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 DESCRIPTION_CAP = 1024      # Agent Skills std: metadata stays ~100 tokens
@@ -68,12 +68,43 @@ def _description_fits(text: str) -> str | None:
     return None
 
 
+def body_cap() -> tuple[int, str | None]:
+    """The disclosure budget here, and the reason if it is not the std's.
+
+    A vocabulary large enough to matter can outgrow ~5k tokens, and when it does
+    there are only bad answers: delete doctrine to fit a number, or let the gate
+    fail until nobody reads it. Both end with the budget meaning nothing.
+
+    So it is raisable and the raise must say why. `body_cap` alone is refused —
+    a repo that has decided its words are worth more than the budget has made a
+    real decision, and a number with no reason beside it is indistinguishable
+    from one somebody edited to make a build go green. The reason is reported on
+    every lint, so the gap stays carried rather than becoming invisible.
+    """
+    settings = read_settings().get("gen", {})
+    cap = settings.get("body_cap")
+
+    if cap is None:
+        return BODY_CAP, None
+
+    return int(cap), str(settings.get("body_cap_why", "")).strip() or None
+
+
 def _body_fits(text: str) -> str | None:
     _, body = parse_frontmatter(text)
-    if len(body) > BODY_CAP:
-        return f"body is {len(body)} chars; the disclosure budget is {BODY_CAP} (~5k tokens)"
+    cap, why = body_cap()
+
+    if cap != BODY_CAP and not why:
+        return (f"[gen] body_cap is {cap} and body_cap_why is missing. Raising the "
+                f"disclosure budget is a decision; say what makes these words worth "
+                f"more than {BODY_CAP} chars (~5k tokens) of every agent's context.")
+
+    if len(body) > cap:
+        return f"body is {len(body)} chars; the disclosure budget is {cap} (~5k tokens at {BODY_CAP})"
+
     if not body.strip():
         return "the body is empty"
+
     return None
 
 
