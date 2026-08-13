@@ -29,7 +29,9 @@ Config, montology.toml::
 from __future__ import annotations
 
 import json
+import sqlite3
 import sys
+from fnmatch import fnmatch
 from pathlib import Path
 
 from montology_core import find_root
@@ -106,6 +108,18 @@ def check_text(root: Path, path: str, text: str) -> tuple[list[str], list[str]]:
         retired = {r["was"].lower(): dict(r) for r in conn.execute("SELECT * FROM renamed")}
         enforced_kinds = set(cfg_scan.get("enforced_kinds", ["core", "inner"]))
         allow = {a.lower() for a in cfg_scan.get("allow", [])}
+        # The recorded exceptions bind here too: a firewall that denies what
+        # the gate allows teaches an agent to stop reading either one.
+        try:
+            rel = str(Path(path).resolve().relative_to(root))
+        except ValueError:
+            rel = path
+        try:
+            for e in conn.execute("SELECT word, scope FROM exception"):
+                if e["scope"] == "**" or fnmatch(rel, e["scope"]):
+                    allow.add(e["word"].lower())
+        except sqlite3.OperationalError:
+            pass  # a database older than the table — nothing excepted yet
         enforce_collisions = cfg_scan.get("collisions", "advisory") == "enforce"
         words = {w["name"].lower(): dict(w) for w in conn.execute(
             "SELECT name, kind, definition FROM word") if w["kind"] in enforced_kinds}
@@ -121,7 +135,8 @@ def check_text(root: Path, path: str, text: str) -> tuple[list[str], list[str]]:
                 w = words[low]
                 msg = (f"{kind} {name!r} collides with the word {w['name']!r} — "
                        f"\"{w['definition'][:80]}\". Pick a different name, or the "
-                       f"human records an exception in montology.toml [scan] allow.")
+                       f"human records the exception with its reason: monty onto "
+                       f"except {w['name']} --where \"…\" --why \"…\".")
                 (blocking if (enforce_collisions and names_mode == "block")
                  else advisory).append(msg)
 

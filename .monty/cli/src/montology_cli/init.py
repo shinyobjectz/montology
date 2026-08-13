@@ -65,7 +65,9 @@ design = "block"   # rogue values vs tokens — only fires when tokens exist
 [scan]
 # which word kinds a code declaration may NOT be named after
 enforced_kinds = ["core", "inner"]
-# symbols allowed to share a word's name (each entry is a recorded decision)
+# A symbol may share a word's name — but the reason and the place live in the
+# database, not here: `monty onto except WORD --where "lib/**" --why "…"`.
+# This list is the old reasonless form, still honoured, still reported.
 allow = []
 """
 

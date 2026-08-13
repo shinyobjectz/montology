@@ -97,7 +97,8 @@ def render_words_skill(repo_name: str) -> str:
         for w in words:
             code = f"`{w['code']}`" if w["code"] else "—"
             owner = f" (inside **{w['owner']}**)" if w["owner"] else ""
-            lines.append(f"| **{w['name']}**{owner} | {code} | {w['kind']} | "
+            kind = w["kind"] + (f" · {w['pos']}" if w.get("pos") else "")
+            lines.append(f"| **{w['name']}**{owner} | {code} | {kind} | "
                          f"{w['definition']} | {w['test'] or '—'} |")
         lines.append("")
     if rulings:
@@ -122,6 +123,16 @@ def render_words_skill(repo_name: str) -> str:
             lines += [f"**`{c['term']}`** ({c['theirs']}) — their meaning: "
                       f"{c['their_meaning']}", "",
                       f"{c['ruling']} *(decided {c['decided']})*", ""]
+    if vocab.get("exceptions"):
+        lines += ["## Excepted — symbols that may share a word's name", "",
+                  "A recorded decision, not a loophole: the reason and the place are "
+                  "the whole point. An exception says a SYMBOL may share the name; it "
+                  "never says the name may mean two things.", "",
+                  "| word | where | as | why |", "|---|---|---|---|"]
+        for e in vocab["exceptions"]:
+            where = "tree-wide" if e["scope"] == "**" else f"`{e['scope']}`"
+            lines.append(f"| **{e['word']}** | {where} | {e['judged'] or '—'} | {e['why']} |")
+        lines.append("")
     if vocab["renames"]:
         lines += ["## Renamed — what older material means", "",
                   "| was | is | when | why |", "|---|---|---|---|"]
@@ -138,6 +149,10 @@ def render_words_skill(repo_name: str) -> str:
         "3. Vendors are not vocabulary — tools you buy belong in code, never in a",
         "   sentence about what the system means.",
         "4. A dotted code lives inside the word owning its prefix.",
+        "5. A collision is judged on what the word NAMES. A verb doing ordinary work",
+        "   below the surface is not a second meaning; a noun or a value type answering",
+        "   for a second thing is the defect. Keep one deliberately with",
+        "   `monty onto except WORD --where \"…\" --why \"…\"`.",
         "",
     ]
     return "\n".join(lines)

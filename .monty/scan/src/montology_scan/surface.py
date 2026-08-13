@@ -99,6 +99,41 @@ DECL_QUERIES: dict[str, str] = {
     """,
 }
 
+# What a name is DECLARED TO BE, where the language says so out loud.
+#
+# A declaration query answers "what is named here"; this answers "and what
+# does that name hold". Two type declarations of one name that do not say
+# the same thing are two things wearing one noun — the only mechanical
+# evidence available for the interchangeability test, and the reason the
+# value-type guard is more than a promise. Languages absent here are absent
+# on purpose: Python's `name: str` annotations are not declarations of a
+# named type, and inferring one would be guessing.
+TYPE_QUERIES: dict[str, str] = {
+    "elixir": """
+        (unary_operator
+          operand: (call target: (identifier) @_kw
+            (arguments (binary_operator
+              left: (identifier) @type.name
+              right: (_) @type.value)))
+          (#match? @_kw "^(type|typep|opaque)$"))
+    """,
+    "typescript": """
+        (type_alias_declaration name: (type_identifier) @type.name value: (_) @type.value)
+        (interface_declaration name: (type_identifier) @type.name body: (_) @type.value)
+    """,
+    "tsx": """
+        (type_alias_declaration name: (type_identifier) @type.name value: (_) @type.value)
+        (interface_declaration name: (type_identifier) @type.name body: (_) @type.value)
+    """,
+    "go": """
+        (type_spec name: (type_identifier) @type.name type: (_) @type.value)
+    """,
+    "rust": """
+        (type_item name: (type_identifier) @type.name type: (_) @type.value)
+        (struct_item name: (type_identifier) @type.name body: (_) @type.value)
+    """,
+}
+
 EXCLUDE_DIRS = {".git", ".hg", "node_modules", ".venv", "venv", "__pycache__",
                 "dist", "build", "target", ".next", ".turbo", "vendor",
                 ".monty", ".claude", ".cursor", "deps", "_build", ".pytest_cache"}
@@ -196,3 +231,52 @@ def declarations(root: Path) -> dict:
             errors += 1
     return {"decls": decls, "files": len(files),
             "skipped_langs": skipped, "errors": errors}
+
+
+def _normalised(text: str) -> str:
+    """One declaration's right-hand side, comparable: whitespace collapsed.
+    Nothing cleverer — a difference montology cannot see it does not claim
+    to have checked, and formatting is the only difference it may erase."""
+    return " ".join(text.split())
+
+
+def type_declarations(root: Path) -> list[dict]:
+    """Every declared type and what it holds: [{name, value, file, line, lang}].
+
+    Pairs each name with its right-hand side per MATCH, never by position in
+    two capture lists — an interface with no body would otherwise shift every
+    later pair and invent divergences that are not there.
+    """
+    from tree_sitter_language_pack import get_language, get_parser
+
+    out: list[dict] = []
+    parsers: dict[str, tuple] = {}
+    for f in _iter_files(root):
+        lang = LANG_BY_EXT[f.suffix]
+        query_src = TYPE_QUERIES.get(lang)
+        if query_src is None:
+            continue
+        try:
+            if lang not in parsers:
+                language = get_language(lang)
+                from tree_sitter import Query, QueryCursor
+
+                parsers[lang] = (get_parser(lang), QueryCursor(Query(language, query_src)))
+            parser, cursor = parsers[lang]
+            if f.stat().st_size > MAX_BYTES:
+                continue
+            tree = parser.parse(f.read_bytes())
+            for _pattern, caps in cursor.matches(tree.root_node):
+                names, values = caps.get("type.name", []), caps.get("type.value", [])
+                if not names or not values:
+                    continue
+                out.append({
+                    "name": names[0].text.decode(errors="replace"),
+                    "value": _normalised(values[0].text.decode(errors="replace")),
+                    "lang": lang,
+                    "file": str(f.relative_to(root)),
+                    "line": names[0].start_point[0] + 1,
+                })
+        except Exception:  # noqa: BLE001 — one broken file is silence, not a crash
+            continue
+    return out

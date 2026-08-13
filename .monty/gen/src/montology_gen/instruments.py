@@ -25,11 +25,12 @@ KNOWN_ENV = (
 def vocabulary() -> dict:
     """The ontology as facts: words, doctrine, rulings — what sync renders
     and what a word draft must not collide with."""
-    from montology_ontology import (collisions, doctrines, overloads, renames,
-                                    tokens, words)
+    from montology_ontology import (collisions, doctrines, exceptions,
+                                    overloads, renames, tokens, words)
 
     return {"words": words(), "doctrine": doctrines(), "overloads": overloads(),
-            "collisions": collisions(), "renames": renames(), "tokens": tokens()}
+            "collisions": collisions(), "renames": renames(), "tokens": tokens(),
+            "exceptions": exceptions()}
 
 
 def code_surface() -> dict:

@@ -101,11 +101,30 @@ ts/tsx, js, go, rust, elixir, ruby, java, c, c++):
 ```sh
 monty onto check thread        # FREE / TAKEN / RULED — before naming ANYTHING
 monty scan --candidates        # the words your codebase is asking for
-monty onto add thread "a stateful user↔agent session" --code atl.thread
+monty onto add thread "a stateful user↔agent session" --code atl.thread --pos noun
 monty onto amend thread --definition "…" --why "a later ruling narrowed it"
 monty lint                     # collisions (advisory by default), code-tree
                                # integrity, stale prose — each with its repair
 ```
+
+Not every symbol sharing a word's name is drift, and treating them alike
+produces a list nobody reads. A word carries **what it names** — verb,
+noun, or value type — and the judgment follows from it: `Store.open` is
+English doing ordinary work below the surface, while a noun answering for
+a second thing is the failure a vocabulary exists to prevent. A collision
+you keep is a recorded decision, in the database with the rest of the
+vocabulary:
+
+```sh
+monty onto except open --where "lib/**" --why "ordinary work below the surface"
+monty onto except --drafts     # what an old [scan] allow list would become
+```
+
+What an exception can never do is silence a **divergence** — one
+value-typed word declared as two different values (`@type name :: term()`
+in one module, `@type name :: %{…}` in another). That is a separate law
+with a separate line: an exception says a *symbol* may share the name, not
+that the *name* may mean two things.
 
 Rulings end arguments permanently: **overloads** ("say cell, not
 sandbox"), **collisions** with frameworks (whose word it is, who moved),

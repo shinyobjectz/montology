@@ -31,6 +31,11 @@ One SQLite file inside the `.monty/` marker. The tables:
   * ``bearing`` — the edge between a word and a surface: what actually
     implements this term. An edge between two things that already have
     words earns no word of its own.
+  * ``exception`` — a symbol may share a word's name, HERE, for this
+    reason. The reason and the scope are the whole point: a bare
+    allow-list carries neither, so nobody can tell a decision from a
+    shrug. An exception never says the NAME may mean two things — that
+    is the divergence law, and no exception silences it.
   * ``route`` — the edge between a word and a WORD: say this, not that,
     HERE. The register and scope are the whole point: `workspace` is a
     correct word in code and a wrong one on the surface, and a ruling
@@ -54,6 +59,21 @@ DB_PATH: Path | None = None
 
 CODE_RE = re.compile(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)*$")
 
+# What a word NAMES — the dimension a collision is judged on. Deliberately
+# three, not a grammar:
+#
+#   verb  — an action. English has one word for opening a thing, and a
+#           symbol doing that ordinary work below the surface is not a
+#           second meaning. At the surface the verb IS the operation.
+#   noun  — a thing. Two things with one name is the failure a vocabulary
+#           exists to prevent, so a colliding noun answers for itself: does
+#           this symbol denote the word's thing, or a second thing?
+#   value — a noun whose whole promise is interchangeability: the same
+#           value wears the same name everywhere. The test is "could you
+#           pass one where the other is expected?" — and where the code
+#           declares its types, montology can ask it (see `divergence`).
+POS = ("verb", "noun", "value")
+
 
 def db_path() -> Path:
     if DB_PATH is not None:
@@ -70,7 +90,12 @@ CREATE TABLE IF NOT EXISTS word (
   test        TEXT,                   -- the one-line "what is it" test
   note        TEXT,
   code        TEXT UNIQUE,            -- dotted, socialite-style: har, har.cell
-  origin      TEXT                    -- NULL = this repo's own; else the upstream source
+  origin      TEXT,                   -- NULL = this repo's own; else the upstream source
+  pos         TEXT                    -- verb | noun | value: what KIND of thing the
+                                      -- word is, which is how a collision is judged.
+                                      -- `kind` is provenance (whose word it is); this
+                                      -- is part of speech (what it names), and the two
+                                      -- answer different questions.
 );
 
 CREATE TABLE IF NOT EXISTS doctrine (
@@ -184,6 +209,18 @@ CREATE TABLE IF NOT EXISTS bearing (
   note        TEXT,
   PRIMARY KEY (word_name, surface_id)
 );
+
+CREATE TABLE IF NOT EXISTS exception (
+  word        TEXT NOT NULL,          -- the word a symbol may share the name of
+  scope       TEXT NOT NULL,          -- path glob; '**' = tree-wide, and SAID to be
+  why         TEXT NOT NULL,          -- required: a reasonless exception is a shrug
+  judged      TEXT,                   -- the case it was granted under: verb|noun|value
+  checked     TEXT,                   -- what the divergence probe saw at grant time:
+                                      -- consistent | unchecked (nothing comparable)
+  granted_on  TEXT,
+  origin      TEXT,
+  PRIMARY KEY (word, scope)
+);
 """
 
 
@@ -206,6 +243,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
         if cols and "origin" not in cols:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN origin TEXT")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(word)")}
+    if cols and "pos" not in cols:
+        conn.execute("ALTER TABLE word ADD COLUMN pos TEXT")
 
 
 def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
@@ -221,7 +261,20 @@ def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
     w = conn.execute("SELECT * FROM word WHERE lower(name)=?", (low,)).fetchone()
     if w:
         code = f" [{w['code']}]" if w["code"] else ""
-        findings.append(f"TAKEN  {w['name']} ({w['kind']}){code} — {w['definition']}")
+        pos = f", {w['pos']}" if "pos" in w.keys() and w["pos"] else ""
+        findings.append(f"TAKEN  {w['name']} ({w['kind']}{pos}){code} — {w['definition']}")
+    # An exception is the answer to "may I name something this?", so it
+    # belongs in the same finding list as the refusals — otherwise the
+    # recorded decision is invisible exactly where it would be read.
+    try:
+        excepted = conn.execute("SELECT * FROM exception WHERE lower(word)=? ORDER BY scope",
+                                (low,)).fetchall()
+    except sqlite3.OperationalError:
+        excepted = []
+    for e in excepted:
+        where = "tree-wide" if e["scope"] == TREE_WIDE else e["scope"]
+        findings.append(f"EXCEPTED  a symbol may share {e['word']!r} in {where} "
+                        f"({e['judged'] or 'unjudged'}) — {e['why']}")
     cw = conn.execute("SELECT name, code FROM word WHERE code=?", (low,)).fetchone()
     if cw and not w:
         findings.append(f"CODE   {cw['code']} belongs to {cw['name']!r}")
@@ -257,9 +310,13 @@ def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
 
 def add(name: str, definition: str, *, test: str | None = None,
         note: str | None = None, kind: str = "custom",
-        owner: str | None = None, code: str | None = None) -> str:
+        owner: str | None = None, code: str | None = None,
+        pos: str | None = None) -> str:
     """Author a word — check-first is the contract: a taken name is refused
     WITH its findings, because one word means one thing."""
+    if pos and pos not in POS:
+        return (f"REFUSED — pos {pos!r} is not one of {', '.join(POS)}. It is what a "
+                "word NAMES, not whose it is: `kind` already carries provenance.")
     findings = check(name)
     if findings:
         return ("REFUSED — the name is spoken for:\n" + "\n".join(findings)
@@ -281,12 +338,17 @@ def add(name: str, definition: str, *, test: str | None = None,
             if not conn.execute("SELECT 1 FROM word WHERE code=?", (prefix,)).fetchone():
                 return (f"REFUSED — code prefix {prefix!r} resolves to no word. "
                         "Dotted codes live INSIDE a word that holds the prefix.")
-    conn.execute("INSERT INTO word (name, kind, owner, definition, test, note, code) "
-                 "VALUES (?,?,?,?,?,?,?)",
-                 (name.strip(), kind, owner, definition.strip(), test, note, code))
+    conn.execute("INSERT INTO word (name, kind, owner, definition, test, note, code, pos) "
+                 "VALUES (?,?,?,?,?,?,?,?)",
+                 (name.strip(), kind, owner, definition.strip(), test, note, code, pos))
     conn.commit()
     tail = f" [{code}]" if code else ""
-    return f"added  {name} ({kind}{', inside ' + owner if owner else ''}){tail} — {definition.strip()}"
+    said = f"{kind}{', ' + pos if pos else ''}{', inside ' + owner if owner else ''}"
+    out = f"added  {name} ({said}){tail} — {definition.strip()}"
+    if not pos:
+        out += ("\n  note: no part of speech — a collision on this word cannot be "
+                f"judged until it has one: monty onto amend {name} --pos noun|verb|value")
+    return out
 
 
 def rule(dont_say: str, say: str, why: str | None = None) -> str:
@@ -441,12 +503,16 @@ def words(kind: str | None = None) -> list[dict]:
     if DB_PATH is None and not db_path().exists():
         return []
     conn = connect(readonly=db_path().exists())
-    sql = "SELECT name, kind, owner, definition, test, code FROM word"
+    cols = "name, kind, owner, definition, test, code, pos"
+    if "pos" not in {r[1] for r in conn.execute("PRAGMA table_info(word)")}:
+        cols = cols.replace(", pos", "")   # a db older than the column, read-only
+    sql = f"SELECT {cols} FROM word"  # noqa: S608 — the columns are ours, not a caller's
     args: list = []
     if kind:
         sql += " WHERE kind=?"
         args.append(kind)
-    return [dict(r) for r in conn.execute(sql + " ORDER BY kind, name", args)]
+    return [{"pos": None, **dict(r)}
+            for r in conn.execute(sql + " ORDER BY kind, name", args)]
 
 
 def overloads() -> list[dict]:
@@ -543,7 +609,12 @@ def rename_word(was: str, now: str, why: str) -> str:
 # and is read through its own ledger, so it stays `rename`, and NOT the
 # kind, which decides whether the word is enforced at the gate — that is a
 # ruling about the vocabulary, not a correction of one word's text.
-AMENDABLE = ("definition", "test", "note", "code", "owner")
+#
+# `pos` IS amendable, on the other side of that same line: it decides how a
+# collision is JUDGED, never whether the word is gated, and a word recorded
+# as a noun that is plainly a verb is a mistake in the record — exactly what
+# amend is for.
+AMENDABLE = ("definition", "test", "note", "code", "owner", "pos")
 
 
 def _shown(value: str | None) -> str:
@@ -583,7 +654,8 @@ def _nothing_to_amend(conn: sqlite3.Connection, word: str) -> str:
 
 def amend(name: str, *, definition: str | None = None, test: str | None = None,
           note: str | None = None, code: str | None = None,
-          owner: str | None = None, why: str | None = None) -> str:
+          owner: str | None = None, pos: str | None = None,
+          why: str | None = None) -> str:
     """Correct what a word already says — the counterpart to `add`.
 
     A recorded meaning goes wrong on its own: a later ruling narrows it,
@@ -609,11 +681,15 @@ def amend(name: str, *, definition: str | None = None, test: str | None = None,
         return _no_word_to_amend(conn, name)
 
     given = {f: v for f, v in (("definition", definition), ("test", test), ("note", note),
-                               ("code", code), ("owner", owner)) if v is not None}
+                               ("code", code), ("owner", owner), ("pos", pos))
+             if v is not None}
     if not given:
         return _nothing_to_amend(conn, row["name"])
     proposed = {f: (v.strip() or None) for f, v in given.items()}
 
+    if "pos" in proposed and proposed["pos"] and proposed["pos"] not in POS:
+        return (f"REFUSED — pos {proposed['pos']!r} is not one of {', '.join(POS)}. "
+                "It is what the word NAMES; `kind` already carries whose it is.")
     if "definition" in proposed and proposed["definition"] is None:
         return (f"REFUSED — {row['name']!r} cannot be left without a definition: that is "
                 "a name squatting on meaning, and the lint fails on it. Amend it to "
@@ -684,6 +760,131 @@ def amend(name: str, *, definition: str | None = None, test: str | None = None,
         out.append(f"  note: inherited from {row['origin']} — `monty onto pull` "
                    "replaces it wholesale. Amend it upstream too, or this is temporary.")
     return "\n".join(out)
+
+
+# ── exceptions: a symbol may share a word's name, HERE, for this reason ───
+
+TREE_WIDE = "**"
+
+
+def _shapes(rows: list[dict] | None) -> dict[str, list[dict]]:
+    """Declared types of one name, grouped by what they say. Two groups is
+    two things wearing one noun; the caller decides what that costs."""
+    out: dict[str, list[dict]] = {}
+    for r in rows or []:
+        out.setdefault(r["value"], []).append(r)
+    return out
+
+
+def _divergence_lines(word: str, shapes: dict[str, list[dict]]) -> list[str]:
+    lines = [f"  {word!r} is declared as {len(shapes)} different values:"]
+    for value, rows in shapes.items():
+        at = ", ".join(f"{r['file']}:{r['line']}" for r in rows[:3])
+        lines.append(f"    {value}\n      {at}")
+    return lines
+
+
+def except_add(word: str, why: str, *, scope: str | None = None,
+               types: list[dict] | None = None, origin: str | None = None) -> str:
+    """Record that a symbol may share this word's name — with its reason and
+    the place it holds.
+
+    The four cases turn on the word's part of speech, so a word without one
+    cannot be judged and is refused with the repair. `types` is what the
+    scan measured about this name where the language declares its types; it
+    is passed IN because measuring code is the scan's job, not the
+    database's. Passing nothing means nothing was comparable, which is
+    recorded as `unchecked` rather than read as agreement.
+    """
+    from datetime import UTC, datetime
+
+    if not why.strip():
+        return ("REFUSED — an exception needs its why. A reasonless allow-list is how "
+                "a gate stops being read: six months on, nobody can tell a decision "
+                "from a shrug, and the entry outlives the reason it was granted for.")
+    conn = connect()
+    row = conn.execute("SELECT * FROM word WHERE lower(name)=?",
+                       (word.strip().lower(),)).fetchone()
+    if row is None:
+        return (f"REFUSED — {word!r} is not a word, so nothing collides with it and "
+                "there is nothing to except. Check what you meant: "
+                f"monty onto check {word.strip()}")
+    pos = row["pos"] if "pos" in row.keys() else None
+    if not pos:
+        return (f"REFUSED — {row['name']!r} has no part of speech, and the four cases "
+                "turn on it: a verb below the surface is ordinary, a noun answering "
+                "for a second thing is the defect this gate exists for, and a value "
+                "type promises interchangeability. Repair: "
+                f"monty onto amend {row['name']} --pos verb|noun|value --why "
+                "\"what it names\"")
+
+    shapes = _shapes(types)
+    checked = "consistent" if len(shapes) == 1 else ("unchecked" if not shapes else "diverged")
+    notes: list[str] = []
+    if len(shapes) > 1:
+        # THE VALUE-TYPE GUARD. A value type's whole content is that one name
+        # holds one value; two declared shapes contradict the word itself, so
+        # there is nothing to except yet — the word or the code is wrong.
+        if pos == "value":
+            return "\n".join([
+                f"REFUSED — {row['name']!r} is a value type, and the code already "
+                "declares it as more than one value. An exception says a SYMBOL may "
+                "share the name; it cannot say the NAME may mean two values.",
+                *_divergence_lines(row["name"], shapes),
+                "  Could you pass one where the other is expected? If not, two things "
+                "are wearing one noun: rename one of them, or amend the word if it is "
+                "the definition that is wrong. `monty lint` fails on this either way — "
+                "no exception silences it.",
+            ])
+        notes += ["  warn: the code declares this name as more than one value —"]
+        notes += ["  " + line for line in _divergence_lines(row["name"], shapes)[1:]]
+        notes += ["  a noun may have two renderings of one thing; if these are two "
+                  "THINGS, the exception is the wrong repair and a rename is the right "
+                  "one. `monty lint` keeps reporting it."]
+
+    scope = (scope or TREE_WIDE).strip() or TREE_WIDE
+    conn.execute(
+        "INSERT OR REPLACE INTO exception (word, scope, why, judged, checked, granted_on, origin) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (row["name"], scope, why.strip(), pos, checked,
+         str(datetime.now(UTC).date()), origin))
+    conn.commit()
+    where = "tree-wide" if scope == TREE_WIDE else scope
+    out = [f"excepted  {row['name']!r} ({pos}) in {where} — {why.strip()}"]
+    if scope == TREE_WIDE:
+        out.append("  note: tree-wide. Shane's `open` case is not \"open is always "
+                   "fine\" but \"open is fine BELOW the surface\" — a scope is what "
+                   "makes that difference sayable: --where \"lib/**\"")
+    if checked == "unchecked":
+        out.append("  note: unchecked — nothing declared this name as a type in a "
+                   "language montology can compare, so nothing verified that these "
+                   "two are the same thing. The reason above is the only evidence.")
+    return "\n".join(out + notes)
+
+
+def exceptions(word: str | None = None) -> list[dict]:
+    if DB_PATH is None and not db_path().exists():
+        return []
+    conn = connect(readonly=db_path().exists())
+    sql = "SELECT * FROM exception"
+    args: list = []
+    if word:
+        sql += " WHERE lower(word)=?"
+        args.append(word.strip().lower())
+    try:
+        return [dict(r) for r in conn.execute(sql + " ORDER BY word, scope", args)]
+    except sqlite3.OperationalError:
+        return []
+
+
+def except_drop(word: str, scope: str | None = None) -> str:
+    conn = connect()
+    scope = (scope or TREE_WIDE).strip() or TREE_WIDE
+    cur = conn.execute("DELETE FROM exception WHERE lower(word)=? AND scope=?",
+                       (word.strip().lower(), scope))
+    conn.commit()
+    return (f"dropped  the exception on {word!r} in {scope}" if cur.rowcount
+            else f"no exception on {word!r} in {scope}")
 
 
 def collisions() -> list[dict]:

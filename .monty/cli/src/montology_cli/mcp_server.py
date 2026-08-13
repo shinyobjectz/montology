@@ -46,14 +46,16 @@ def ontology_words(kind: str = "") -> str:
 
 @mcp.tool
 def ontology_add(name: str, definition: str, test: str = "", kind: str = "custom",
-                 owner: str = "", code: str = "") -> str:
+                 owner: str = "", code: str = "", pos: str = "") -> str:
     """Author a word — check-first: a taken name is refused with findings.
-    Re-renders the words skill on success."""
+    `pos` is what the word NAMES (verb | noun | value), which is how a
+    collision on it is judged; `kind` is whose word it is. Re-renders the
+    words skill on success."""
     from montology_gen import sync
     from montology_ontology import add
 
     got = add(name, definition, test=test or None, kind=kind,
-              owner=owner or None, code=code or None)
+              owner=owner or None, code=code or None, pos=pos or None)
     if got.startswith("REFUSED"):
         return got
     return got + "\n" + sync()
@@ -61,7 +63,7 @@ def ontology_add(name: str, definition: str, test: str = "", kind: str = "custom
 
 @mcp.tool
 def ontology_amend(name: str, definition: str = "", test: str = "", note: str = "",
-                   code: str = "", owner: str = "", why: str = "") -> str:
+                   code: str = "", owner: str = "", pos: str = "", why: str = "") -> str:
     """Correct what a word already says — a later ruling narrowed it, the
     test was loose, the code was filed wrong. The name stays; the text it
     replaces is ledgered. An unknown name is refused (that is ontology_add),
@@ -73,7 +75,7 @@ def ontology_amend(name: str, definition: str = "", test: str = "", note: str = 
     # with an explicit empty string, which no tool call can express.
     got = amend(name, definition=definition or None, test=test or None,
                 note=note or None, code=code or None, owner=owner or None,
-                why=why or None)
+                pos=pos or None, why=why or None)
     if got.startswith("REFUSED"):
         return got
     return got + "\n" + sync()

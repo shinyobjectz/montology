@@ -32,7 +32,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-onto_app = typer.Typer(help="The vocabulary: check, add, amend, rule, list.", no_args_is_help=True)
+onto_app = typer.Typer(help="The vocabulary: check, add, amend, rule, except, list.", no_args_is_help=True)
 design_app = typer.Typer(help="Design values as vocabulary: tokens, drift, candidates.", no_args_is_help=True)
 app.add_typer(onto_app, name="onto")
 app.add_typer(design_app, name="design")
@@ -118,6 +118,7 @@ def onto_add(
     kind: str = typer.Option("custom", help="core | inner | adopted | custom."),
     owner: str = typer.Option("", help="The word this one lives inside (must exist)."),
     code: str = typer.Option("", help="A dotted code (prefix must resolve)."),
+    pos: str = typer.Option("", "--pos", help="What it NAMES: verb | noun | value — how a collision is judged."),
 ) -> None:
     """Author a word — check-first; a taken name is refused with findings."""
     from montology_ontology import add
@@ -125,7 +126,7 @@ def onto_add(
     from ._ui import emit
 
     got = add(name, definition, test=test or None, note=note or None, kind=kind,
-              owner=owner or None, code=code or None)
+              owner=owner or None, code=code or None, pos=pos or None)
     emit(got)
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
@@ -142,6 +143,7 @@ def onto_amend(
     note: str | None = typer.Option(None, "--note", help="The kept context (pass \"\" to clear it)."),
     code: str | None = typer.Option(None, "--code", help="Re-file under a dotted code (prefix must resolve)."),
     owner: str | None = typer.Option(None, "--owner", help="Move it inside another word (must exist)."),
+    pos: str | None = typer.Option(None, "--pos", help="What it NAMES: verb | noun | value."),
     why: str = typer.Option("", "--why", help="Why the record changed — the ledger keeps it."),
 ) -> None:
     """Correct a word's recorded text — the name stays, the old text is ledgered."""
@@ -150,7 +152,7 @@ def onto_amend(
     from ._ui import emit, emit_all
 
     got = amend(name, definition=definition, test=test, note=note, code=code,
-                owner=owner, why=why or None)
+                owner=owner, pos=pos, why=why or None)
     emit_all(got.splitlines())
     if got.startswith("REFUSED"):
         raise typer.Exit(1)
@@ -184,6 +186,76 @@ def onto_collide(term: str, theirs: str = typer.Argument(..., help="Whose word c
 
     emit(collide(term, theirs, meaning, ruling))
     emit(_sync())
+
+
+@onto_app.command("except")
+def onto_except(
+    word: str = typer.Argument("", help="The word a symbol may share the name of."),
+    where: str = typer.Option("", "--where", help="Path glob it holds in (default: tree-wide, and said so)."),
+    why: str = typer.Option("", "--why", help="Required — a reasonless exception is a shrug."),
+    drafts: bool = typer.Option(False, "--drafts", help="What montology.toml [scan] allow would become."),
+    drop: bool = typer.Option(False, "--drop", help="Remove the exception."),
+) -> None:
+    """A symbol may share this word's name, HERE, for this reason — ledgered.
+
+    Judged on what the word NAMES: a verb doing ordinary work below the
+    surface is not a second meaning; a noun answering for a second thing is
+    the defect; a value type declared as two values is refused outright.
+    """
+    from montology_ontology import except_add, except_drop, exceptions
+
+    from ._ui import emit_all
+
+    if drafts:
+        from montology_scan import except_drafts
+
+        ds = except_drafts()
+        if not ds:
+            typer.echo("no drafts — montology.toml [scan] allow is empty or already ledgered.")
+            raise typer.Exit(0)
+        lines = [f"{len(ds)} entry(ies) in montology.toml [scan] allow, unledgered. "
+                 "Each needs the one thing the list never carried — its reason:", ""]
+        for d in ds:
+            mark = "" if d["is_word"] else "   [not a word — nothing collides with it]"
+            mark += "" if d["pos"] else "   [no part of speech yet]"
+            lines.append(f"  {d['word']}{mark}")
+            lines.append(f'      monty onto except {d["word"]} --where "…" --why "…"')
+        lines += ["", "Then empty the list: [scan] allow = []. Nothing is adopted "
+                  "automatically — the reason is the feature, and montology will not "
+                  "invent one."]
+        emit_all(lines)
+        raise typer.Exit(0)
+
+    if not word:
+        rows = exceptions()
+        if not rows:
+            typer.echo("no exceptions — `monty lint` reports collisions with the four "
+                       "cases; record the ones you keep with `monty onto except`.")
+            raise typer.Exit(0)
+        emit_all([f"  {r['word']!r} in {'tree-wide' if r['scope'] == '**' else r['scope']}"
+                  f"  ({r['judged'] or 'unjudged'}, {r['checked'] or '—'})  {r['why']}"
+                  for r in rows])
+        raise typer.Exit(0)
+
+    if drop:
+        typer.echo(except_drop(word, where or None))
+        raise typer.Exit(0)
+
+    from montology_core import workspace_root
+    from montology_scan import type_declarations
+
+    try:
+        types = [t for t in type_declarations(workspace_root())
+                 if t["name"].lower() == word.strip().lower()]
+    except Exception:  # noqa: BLE001 — an unmeasurable tree is `unchecked`, not a crash
+        types = []
+    got = except_add(word, why, scope=where or None, types=types)
+    emit_all(got.splitlines())
+    if got.startswith("REFUSED"):
+        raise typer.Exit(1)
+    from montology_gen import sync as _sync
+
+    typer.echo(_sync())
 
 
 @onto_app.command("rename")

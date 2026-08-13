@@ -13,8 +13,8 @@ after a word that means something else is a COLLISION and fails the
 build, with the repair attached.
 """
 
-from .surface import declarations, languages_covered
-from .lint import lint, candidates
+from .surface import declarations, languages_covered, type_declarations
+from .lint import lint, candidates, divergence, except_drafts, legacy_allow
 from .astgrep import sg
 from .drift import csv as drift_csv
 from .drift import measure_history, render as render_drift
@@ -31,5 +31,5 @@ from .stale import stale as stale_terms
 from .surf import (bear, phantoms, record as record_surfaces, report as surface_report,
                    seams, surfaces, unbearing_phantoms)
 
-__all__ = ["bear", "candidates", "word_health", "render_health", "render_stale", "stale_terms", "declarations", "languages_covered", "design_candidates", "design_lint", "drift_csv", "explain", "guard_hook", "build_vitals", "measure_history", "phantoms", "record_surfaces", "seams", "surface_report", "surfaces", "unbearing_phantoms", "vitals", "vitals_json", "ingest_theme", "lint", "migrate",
+__all__ = ["bear", "candidates", "divergence", "except_drafts", "legacy_allow", "type_declarations", "word_health", "render_health", "render_stale", "stale_terms", "declarations", "languages_covered", "design_candidates", "design_lint", "drift_csv", "explain", "guard_hook", "build_vitals", "measure_history", "phantoms", "record_surfaces", "seams", "surface_report", "surfaces", "unbearing_phantoms", "vitals", "vitals_json", "ingest_theme", "lint", "migrate",
            "recipe_candidates", "sg", "style_surface", "tailwind_theme"]

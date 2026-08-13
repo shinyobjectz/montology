@@ -1,11 +1,17 @@
 """Where the ontology bites the codebase. Every FAIL carries its repair.
 
-Three laws, in the order they earn their keep:
+Four laws, in the order they earn their keep:
 
-  * **collision** — a declaration whose name is an enforced word. The
-    vocabulary says the word means one thing; a class by that name now
-    means another. Rename the symbol, or re-rule the word (an `allow`
-    entry in montology.toml records the exception AS A DECISION).
+  * **collision** — a declaration whose name is an enforced word. What that
+    costs depends on what the word NAMES, which is why `pos` exists: a verb
+    doing ordinary work below the surface is not a second meaning, while a
+    noun answering for a second thing is the failure a vocabulary exists to
+    prevent. A collision judged and kept is an `exception` — recorded in
+    the database, with its reason and the paths it holds in.
+  * **divergence** — one value-typed word declared as more than one value.
+    This is the law an exception CANNOT silence, and the two are different
+    findings on purpose: an exception says a symbol may share the name; it
+    never says the name may mean two things.
   * **code-resolution** — every dotted code prefix resolves to a word, so
     the namespace stays a tree and a tag like `har.cell` can never point
     at nothing.
@@ -21,12 +27,13 @@ from __future__ import annotations
 
 import tomllib
 from collections import Counter
+from fnmatch import fnmatch
 from pathlib import Path
 
 from montology_core import workspace_root
-from montology_ontology import words
+from montology_ontology import TREE_WIDE, exceptions, words
 
-from .surface import declarations
+from .surface import declarations, type_declarations
 
 # generic programming names never make good vocabulary candidates
 _NOISE = {
@@ -51,6 +58,109 @@ def _config(root: Path) -> dict:
         return tomllib.loads(f.read_text())
     except tomllib.TOMLDecodeError:
         return {}
+
+
+def _suggested_scope(file: str) -> str:
+    """The glob to offer with an exception: the directory the collision is
+    in, not the file. `open` is fine BELOW the surface, and a scope of one
+    file cannot say that — while tree-wide says nothing at all."""
+    parent = Path(file).parent
+    return f"{parent}/**" if str(parent) not in (".", "") else TREE_WIDE
+
+
+def _repair(w: dict, d: dict) -> str:
+    """The four cases, as the repair. The old text prescribed a rename for
+    all of them, which is wrong three times out of four and is how an
+    advisory list becomes something nobody reads."""
+    name, kind, pos = w["name"], d["kind"], w.get("pos")
+    keep = f'monty onto except {name} --where "{_suggested_scope(d["file"])}" --why "…"'
+    if pos == "verb":
+        return (f"{name!r} is a verb. If this {kind} does the work the word names — at "
+                f"the surface it IS the operation, below it English simply has one word "
+                f"for the job — keep it and record why: {keep}. If it names some other "
+                f"action, rename it.")
+    if pos == "noun":
+        return (f"{name!r} is a noun, and a noun names a thing: two things with one name "
+                f"is the failure the vocabulary exists to prevent. If this {kind} denotes "
+                f"exactly what the word denotes, keep it and say so: {keep}. If it denotes "
+                f"a second thing, rename it — that one IS the defect.")
+    if pos == "value":
+        return (f"{name!r} is a value type: the same value wears the same name everywhere. "
+                f"Could you pass this {kind}'s value where the word's is expected? If yes, "
+                f"one name is right — record it: {keep}. If no, two things are wearing one "
+                f"noun and renaming is the only repair.")
+    return (f"{name!r} has no part of speech, so this collision cannot be judged — a verb "
+            f"below the surface is ordinary, a noun answering for a second thing is a "
+            f"defect. Say which it is (monty onto amend {name} --pos verb|noun|value), "
+            f"then rename the {kind} or except it.")
+
+
+def divergence(root: Path | None = None) -> list[str]:
+    """One word, two declared values — the law no exception can silence.
+
+    It fires only on words that CLAIM to name a thing (`pos` noun or value),
+    because without that claim there is nothing to violate: two modules
+    declaring their own `option` type are not drift, they are two modules.
+    A value type FAILS — interchangeability is the whole of what the word
+    promises. A noun WARNS: two declarations may be two renderings of one
+    thing (a wire form and a struct), and only a human can say.
+    """
+    root = root or workspace_root()
+    denoting = {w["name"].lower(): w for w in words()
+                if (w.get("pos") or "") in ("noun", "value")}
+    if not denoting:
+        return []
+    seen: dict[str, dict[str, list[dict]]] = {}
+    for t in type_declarations(root):
+        low = t["name"].lower()
+        if low in denoting:
+            seen.setdefault(low, {}).setdefault(t["value"], []).append(t)
+
+    out: list[str] = []
+    for low, shapes in sorted(seen.items()):
+        if len(shapes) < 2:
+            continue
+        w = denoting[low]
+        tag = "FAIL" if w["pos"] == "value" else "warn"
+        sites = "; ".join(
+            f"{rows[0]['file']}:{rows[0]['line']} {value}"
+            for value, rows in shapes.items())
+        out.append(
+            f"{tag} word {w['name']!r} is a {w['pos']} and the code declares it as "
+            f"{len(shapes)} different values — {sites}. Could you pass one where the "
+            f"other is expected? If not, two things are wearing one noun. Repair: rename "
+            f"one of them, or amend the word if the definition is what is wrong. No "
+            f"exception silences this: an exception says a SYMBOL may share the name, "
+            f"never that the NAME may mean two values.")
+    return out
+
+
+def legacy_allow(root: Path | None = None) -> list[str]:
+    """`[scan] allow` in montology.toml: the reasonless list this replaces.
+    Still honoured — an upgrade that fails a build nobody changed is not an
+    upgrade — and still reported, because the whole complaint against it is
+    that it is invisible."""
+    root = root or workspace_root()
+    return [str(a) for a in _config(root).get("scan", {}).get("allow", [])]
+
+
+def except_drafts(root: Path | None = None) -> list[dict]:
+    """What `[scan] allow` would become, one row per entry, so the migration
+    is a review rather than a rewrite. The `why` is deliberately not
+    invented: it is the thing the old list never had."""
+    root = root or workspace_root()
+    have = {e["word"].lower() for e in exceptions()}
+    known = {w["name"].lower(): w for w in words()}
+    out = []
+    for name in legacy_allow(root):
+        low = name.lower()
+        if low in have:
+            continue
+        w = known.get(low)
+        out.append({"word": w["name"] if w else name,
+                    "pos": (w or {}).get("pos"),
+                    "is_word": w is not None})
+    return out
 
 
 def lint(root: Path | None = None) -> list[str]:
@@ -84,19 +194,51 @@ def lint(root: Path | None = None) -> list[str]:
 
     # collision: the scan against enforced words
     enforced = {w["name"].lower(): w for w in vocab if w["kind"] in enforced_kinds}
+    granted = exceptions()
+    covered: dict[tuple[str, str], int] = {}
     surface = declarations(root)
     for d in surface["decls"]:
         low = d["name"].lower()
-        if low in enforced and low not in allow:
-            w = enforced[low]
-            hint = ("" if collisions_mode == "enforce"
-                    else " (advisory — promote with [scan] collisions = \"enforce\")")
-            report.append(
-                f"{ctag} {d['file']}:{d['line']}: {d['kind']} {d['name']!r} collides with "
-                f"the word {w['name']!r} ({w['kind']}) — \"{w['definition'][:80]}\". "
-                f"Repair: rename the {d['kind']}, or record the exception in "
-                f"montology.toml [scan] allow." + hint
-            )
+        if low not in enforced:
+            continue
+        hit = next((e for e in granted if e["word"].lower() == low
+                    and (e["scope"] == TREE_WIDE or fnmatch(d["file"], e["scope"]))), None)
+        if hit:
+            covered[(hit["word"], hit["scope"])] = covered.get((hit["word"], hit["scope"]), 0) + 1
+            continue
+        if low in allow:
+            continue
+        w = enforced[low]
+        pos = f", {w['pos']}" if w.get("pos") else ""
+        hint = ("" if collisions_mode == "enforce"
+                else " (advisory — promote with [scan] collisions = \"enforce\")")
+        report.append(
+            f"{ctag} {d['file']}:{d['line']}: {d['kind']} {d['name']!r} collides with "
+            f"the word {w['name']!r} ({w['kind']}{pos}) — \"{w['definition'][:80]}\". "
+            f"Repair: {_repair(w, d)}" + hint
+        )
+
+    # Every exception, SHOWN. One nobody ever sees again is how a stale one
+    # survives for years — the same reason the surface gate prints its own.
+    for e in granted:
+        n = covered.get((e["word"], e["scope"]), 0)
+        where = "tree-wide" if e["scope"] == TREE_WIDE else e["scope"]
+        if n:
+            report.append(f"note except {e['word']!r} ({e['judged'] or 'unjudged'}) covers "
+                          f"{n} declaration(s) in {where} — {e['why']}")
+        else:
+            report.append(f"note except {e['word']!r} covers nothing in {where} — the "
+                          f"exception may be stale. Repair: monty onto except "
+                          f"{e['word']} --drop, or re-scope it.")
+    if allow:
+        report.append(
+            f"note: {len(allow)} exception(s) still live in montology.toml [scan] allow — "
+            "unledgered, reasonless, and unjudged (the four cases turn on a word's part "
+            "of speech, which a list of strings cannot carry). Repair: monty onto except "
+            "--drafts")
+
+    # divergence: the law an exception cannot silence
+    report.extend(divergence(root))
 
     # phantoms: the other direction. A collision is the vocabulary and the
     # code meaning different things by one name; a phantom a word bears on

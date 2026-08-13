@@ -7,6 +7,8 @@ engine = "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty
 include = [".monty"]
 enforced_kinds = ["core", "inner"]
 collisions = "enforce"  # the socialite culture — strangers default to advisory
-# `words`/`word`/`check`/`add` etc. are the ontology package's OWN functions —
-# a system may declare the words it is the system FOR
-allow = ["ontology", "word", "code", "doctrine", "scan", "collision", "candidate", "workspace", "sync", "drift", "migration", "token", "recipe", "ruling", "vitals", "convergence", "surface"]
+# The exceptions moved into the database on 2026-08-13 (`monty onto except`),
+# where they carry the reason and the paths they hold in. They are seeded with
+# the words — see EXCEPTIONS in .monty/onto/src/montology_ontology/seed.py —
+# and read with `monty onto except`. This list is the old reasonless form.
+allow = []

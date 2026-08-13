@@ -30,11 +30,16 @@ stays correct only as long as someone remembers it; this one has a gate.
    building an ontology FROM a codebase instead of imposing one on it.
    Define the load-bearing ones; skip the noise.
 4. **The gate runs in CI.** `monty lint` fails on: a declaration named
-   after a word that means something else (collision), a code prefix that
+   after a word that means something else (collision), one value-typed
+   word declared as two different values (divergence), a code prefix that
    resolves to nothing, and generated prose gone stale behind the db.
-   Every FAIL carries its repair. An exception you decide to keep is
-   recorded in `.monty/montology.toml` `[scan] allow` — a decision, not
-   a silence.
+   Every FAIL carries its repair. A collision is judged on what the word
+   NAMES (`--pos verb|noun|value`): a verb doing ordinary work below the
+   surface is not a second meaning, while a noun answering for a second
+   thing is the defect. One you decide to keep is `monty onto except WORD
+   --where "lib/**" --why "…"` — ledgered, scoped, and reasoned. It never
+   silences a divergence: sharing a name is a decision, meaning two things
+   is not.
 5. **Never hand-edit the words skill.** It is GENERATED; `monty sync`
    re-renders it after any change (onto add/amend/rule do this themselves).
 
