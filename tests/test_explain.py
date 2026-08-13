@@ -18,7 +18,7 @@ def repo(tmp_path, onto_db, monkeypatch):
         "interface InvoiceRow { id: string }\nfunction renderInvoice(): void {}\n")
     (tmp_path / "web" / "app.css").write_text(
         ".x { color: #061a1c; } .y { color: #06191b; }")
-    onto_db.add("invoice", "a bill issued to a client", kind="core")
+    onto_db.add("invoice", "a bill issued to a client", kind="core", pos="noun")
     onto_db.token_add("brand", "color", "#061a1c")
 
     def embed(texts):

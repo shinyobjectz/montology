@@ -319,45 +319,70 @@ Montology's own repo: 17 reasonless allow entries → 6 reasoned exceptions, and
 6. Montology's own migration, in `seed.py`, twelve dead entries lighter — plus
    the doctrine block that states the rule where the vocabulary lives.
 
-## Open questions — Shane's, not the implementation's
+## Answered — 2026-08-13
 
-1. **Should `pos` be required for new words?** Today it is optional, and a word
-   without one gets an advisory that cannot be judged or excepted. Requiring it
-   would make every collision judgeable and would break `monty onto add` for
-   every existing script and the `gen` path. *Recommendation: leave optional
-   for now, and revisit once a repo other than montology and lazyriver has
-   authored with it.* The trade is completeness against an upgrade that
-   refuses work it used to accept.
+Decided against the real tree rather than in the abstract: lazyriver's fourteen
+words were given a `pos`, and the checker was run against them.
 
-2. **Is `value` a third `pos`, or a flag on `noun`?** Shipped as a third value
-   because the divergence law treats them differently (FAIL vs warn) and a
-   flag would make that a two-field lookup. The counter-argument is that a
-   value type IS a noun, and a vocabulary that says otherwise is teaching bad
-   grammar. *Recommendation: keep three; the field is called `pos` and it is
-   already documented as a judging dimension rather than a grammar lesson.*
+**1. Is `pos` required for new words? — Yes, where the word can gate.**
 
-3. **Should a noun divergence FAIL rather than warn?** Shane's rule says a
-   colliding noun is the real defect, which argues for FAIL. The
-   implementation warns, because two type declarations of one noun can be two
-   renderings of one thing. *Recommendation: leave at warn until a second repo
-   has been measured; promoting it later is a one-word change, demoting it
-   after a build breaks is an argument.*
+Three things were being conflated. The *column* stays nullable, because an
+upgrade that fails a build nobody changed is not an upgrade and every database
+predates it. A word of an *enforced kind* must say what it names, because a
+collision on it cannot otherwise be judged — measured in lazyriver, where
+fourteen words authored without one produced eighteen advisories nobody could
+rule on. A word of an *unenforced kind* never raises a collision, so demanding
+the dimension that judges one is asking for an answer nothing will read.
 
-4. **Should an agent be able to grant an exception?** `monty onto except` is
-   CLI-only; it is deliberately NOT an MCP tool, because the guard's own
-   refusal already says *"the human records the exception"*, and an agent that
-   can silence the gate that constrains it is not constrained. *Recommendation:
-   keep it human-only.* An agent can read every exception (`ontology_check`,
-   `ontology_lint`), which is what it needs to comply.
+Requiring it of everything was tried first and broke twenty tests that author
+throwaway vocabulary. That is the cost of asking a question where there is no
+decision to make.
 
-5. **Should `monty onto except` be able to amend the word's `pos` inline?**
-   Today a missing `pos` is a refusal carrying the exact repair command, which
-   costs one extra step. Doing both in one call is friendlier and makes a
-   single command do two ledgered things. *Recommendation: keep the refusal;
-   `add` and `amend` set the same precedent, and the second step is one line.*
+**2. Is `value` a third `pos` or a flag on `noun`? — Keep three.**
 
-6. **Should `pos` be suggested from the definition?** A definition beginning
-   with a gerund ("naming the ledgers to read…") reads as a verb; a noun
-   phrase reads as a noun. Cheap to offer as a *proposal* in `monty onto
-   audit`, alongside the semantic duplicates it already reports. It must never
-   be written without confirmation — the gate turns on this column.
+The counter-argument is right in principle and does not pay for itself. What
+settled it: `value` is not "a noun, stricter" in practice — it is the claim
+that one shape holds everywhere, and question 3 shows that claim is the thing
+most likely to be *wrong*, not merely strict.
+
+**3. Should a noun divergence FAIL rather than warn? — No. Warn, and this
+nearly went the other way.**
+
+The case for FAIL looked overwhelming: `name` diverged in lazyriver, warned for
+the project's whole life, and the bug it described crashed `watch` on every
+real push. A warning nobody acted on while production fell over is a warning
+that does not work.
+
+Then the fix landed and the checker still fired. `Ledger.name` is `term()`;
+`Snapshot.name` is `%{Ledger.name() => non_neg_integer()}`. Both are correct,
+and they still differ — because a name is *what a thing is called*, and
+different things are called different kinds of thing. FAIL would have broken
+the build with no correct remedy, since no exception may silence a divergence.
+
+The real repair was upstream of the severity: `name` is a **noun**, not a
+value type. A value type promises one shape; "name" has no single shape to
+promise. Reclassified, the finding drops to `warn` and reads correctly — two
+renderings of one concept, with the composition now explicit in the type.
+
+So the lesson is not that nouns should fail. It is that **a word wrongly
+declared a value type produces a FAIL that cannot be repaired**, and the
+pressure that creates is to weaken the law rather than fix the word. Warn stays.
+
+**4. May an agent grant an exception? — No, and this session is the argument.**
+
+Two subagents wrote outside their briefs while this was being decided. An agent
+that can silence the gate constraining it is not constrained. Reading every
+exception is what an agent needs in order to comply, and it has that.
+
+**5. Should `except` set a missing `pos` inline? — No.**
+
+One command doing two ledgered things obscures which decision was taken. The
+refusal already carries the exact repair, and `add`/`amend` set the precedent.
+
+**6. Should `pos` be proposed from the definition? — Yes, in `audit`, never
+written without confirmation.**
+
+It pairs with answer 1: a requirement is only reasonable if choosing is cheap.
+A definition opening with a gerund reads as a verb; a noun phrase reads as a
+noun; the value claim is the one a human must always make, because it is the
+one that FAILs when it is wrong.

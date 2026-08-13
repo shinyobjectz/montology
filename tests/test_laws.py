@@ -51,7 +51,7 @@ def test_word_laws_catch_the_bare_word():
 def test_word_laws_respect_the_check(onto_db):
     from montology_ontology import check
 
-    onto_db.add("cell", "the sandbox", kind="core")
+    onto_db.add("cell", "the sandbox", kind="core", pos="noun")
     laws = word_laws(check)
     got = [w for l in laws if (w := l.check("cell: something else entirely here"))]
     assert got and "spoken for" in got[0]

@@ -29,9 +29,9 @@ def fake_embedder(monkeypatch):
 
 
 def test_two_words_one_meaning_is_heard(onto_db, fake_embedder):
-    onto_db.add("thread", "a stateful session between user and agent", kind="core")
-    onto_db.add("conversation", "the ongoing session a user holds", kind="core")
-    onto_db.add("cell", "the network-blocked sandbox", kind="core")
+    onto_db.add("thread", "a stateful session between user and agent", kind="core", pos="noun")
+    onto_db.add("conversation", "the ongoing session a user holds", kind="core", pos="noun")
+    onto_db.add("cell", "the network-blocked sandbox", kind="core", pos="noun")
     report = semantics.audit()
     assert "'conversation' ~ 'thread'" in report or "'thread' ~ 'conversation'" in report
     assert "two words, one meaning?" in report
@@ -49,21 +49,21 @@ def test_local_double_of_inherited_word_is_flagged(onto_db, fake_embedder):
 
 
 def test_candidate_that_already_exists_is_mapped_not_minted(onto_db, fake_embedder):
-    onto_db.add("holding", "one thing this org acquired as a holding", kind="core")
+    onto_db.add("holding", "one thing this org acquired as a holding", kind="core", pos="noun")
     report = semantics.audit(candidates=[{"name": "holdings", "count": 7}])
     assert "candidate 'holdings'" in report and "semantically 'holding'" in report
 
 
 def test_similar_ranks_by_meaning(onto_db, fake_embedder):
-    onto_db.add("thread", "a stateful session between user and agent", kind="core")
-    onto_db.add("cell", "the network-blocked sandbox", kind="core")
+    onto_db.add("thread", "a stateful session between user and agent", kind="core", pos="noun")
+    onto_db.add("cell", "the network-blocked sandbox", kind="core", pos="noun")
     got = semantics.similar("the session a user keeps open")
     assert got.splitlines()[0].split()[1] == "thread"
 
 
 def test_missing_extra_carries_repair(onto_db, monkeypatch):
-    onto_db.add("thread", "a stateful session", kind="core")
-    onto_db.add("cell", "the sandbox", kind="core")
+    onto_db.add("thread", "a stateful session", kind="core", pos="noun")
+    onto_db.add("cell", "the sandbox", kind="core", pos="noun")
     monkeypatch.setattr(semantics, "EMBEDDER", None)
     import builtins
     real_import = builtins.__import__
@@ -80,8 +80,8 @@ def test_missing_extra_carries_repair(onto_db, monkeypatch):
 @pytest.mark.integration
 def test_potion_hears_real_meaning(onto_db):
     semantics.EMBEDDER = None
-    onto_db.add("thread", "a stateful conversation session between a user and an agent", kind="core")
-    onto_db.add("dialogue", "an ongoing conversational session a user holds with the agent", kind="core")
-    onto_db.add("cell", "a network-blocked sandbox that executes untrusted code", kind="core")
+    onto_db.add("thread", "a stateful conversation session between a user and an agent", kind="core", pos="noun")
+    onto_db.add("dialogue", "an ongoing conversational session a user holds with the agent", kind="core", pos="noun")
+    onto_db.add("cell", "a network-blocked sandbox that executes untrusted code", kind="core", pos="noun")
     report = semantics.audit(dup_threshold=0.70)
     assert "dialogue" in report and "thread" in report

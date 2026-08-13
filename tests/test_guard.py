@@ -12,8 +12,8 @@ def ws(tmp_path, onto_db, monkeypatch):
     monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
     (tmp_path / ".monty").mkdir()
     monkeypatch.setattr(onto_db, "DB_PATH", tmp_path / ".monty" / "ontology.db")
-    onto_db.add("cell", "the network-blocked sandbox", kind="core")
-    onto_db.add("dossier", "what a task produces", kind="core")
+    onto_db.add("cell", "the network-blocked sandbox", kind="core", pos="noun")
+    onto_db.add("dossier", "what a task produces", kind="core", pos="noun")
     onto_db.rename_word("artifact", "dossier2", "x") if False else None
     conn = onto_db.connect()
     conn.execute("INSERT INTO renamed (was, now, renamed_on, why) "

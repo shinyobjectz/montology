@@ -46,7 +46,7 @@ def test_drifting_names_every_leak(ws, onto_db):
 
 
 def test_tended_when_nothing_leaks(ws, onto_db):
-    onto_db.add("ledger", "the append-only record", kind="core")
+    onto_db.add("ledger", "the append-only record", kind="core", pos="noun")
     onto_db.token_add("brand", "color", "#061a1c")
     (ws / "app.css").write_text(".a { color: #061a1c; }")
     r = build_vitals(ws)
@@ -67,7 +67,7 @@ def test_untended_outranks_drifting(ws, onto_db):
 
 
 def test_enforce_culture_failures_count_as_drifting(ws, onto_db):
-    onto_db.add("ledger", "the record", kind="core")
+    onto_db.add("ledger", "the record", kind="core", pos="noun")
     (ws / "a.py").write_text("class Ledger:\n    pass\n")
     (ws / ".monty" / "montology.toml").write_text('[scan]\ncollisions = "enforce"\n')
     r = build_vitals(ws)
@@ -75,7 +75,7 @@ def test_enforce_culture_failures_count_as_drifting(ws, onto_db):
 
 
 def test_advisory_collisions_count_without_failing_the_gate(ws, onto_db):
-    onto_db.add("ledger", "the record", kind="core")
+    onto_db.add("ledger", "the record", kind="core", pos="noun")
     (ws / "a.py").write_text("class Ledger:\n    pass\n")
     r = build_vitals(ws)
     assert r["gate"]["ok"] is True            # advisory culture: gate green…
@@ -93,8 +93,8 @@ def test_duplicate_meanings_reach_the_verdict(ws, onto_db, monkeypatch):
         return out
 
     monkeypatch.setattr(semantics, "EMBEDDER", embed)
-    onto_db.add("thread", "a stateful session", kind="core")
-    onto_db.add("convo", "the user's session", kind="core")
+    onto_db.add("thread", "a stateful session", kind="core", pos="noun")
+    onto_db.add("convo", "the user's session", kind="core", pos="noun")
     r = build_vitals(ws)
     assert r["semantics"]["colliding_meanings"] == 1
     assert any("duplicate meaning" in x for x in r["reasons"])

@@ -40,7 +40,7 @@ def test_collision_ruling_surfaces_in_check(onto_db):
 
 
 def test_rename_moves_the_row_and_retires_the_old_name(onto_db):
-    onto_db.add("artifact", "what a task produces", kind="core")
+    onto_db.add("artifact", "what a task produces", kind="core", pos="noun")
     got = onto_db.rename_word("artifact", "dossier", "mellea's field name cannot be aliased")
     assert got.startswith("renamed") and "row moved" in got
     assert any(w["name"] == "dossier" for w in onto_db.words())

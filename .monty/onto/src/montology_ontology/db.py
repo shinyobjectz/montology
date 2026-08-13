@@ -81,6 +81,21 @@ def db_path() -> Path:
     return workspace_root() / ".monty" / "ontology.db"
 
 
+def _enforced_kinds() -> set[str]:
+    """Which kinds a code declaration may not be named after — the same list
+    the scanner gates on, read here so `add` can ask for what a collision on
+    this word will need and nothing more. Read rather than imported: the
+    vocabulary must not depend on the scanner."""
+    import tomllib
+
+    try:
+        with (workspace_root() / ".monty" / "montology.toml").open("rb") as fh:
+            scan = tomllib.load(fh).get("scan", {})
+        return set(scan.get("enforced_kinds", ["core", "inner"]))
+    except (OSError, ValueError):
+        return {"core", "inner"}
+
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS word (
   name        TEXT PRIMARY KEY,
@@ -317,6 +332,33 @@ def add(name: str, definition: str, *, test: str | None = None,
     if pos and pos not in POS:
         return (f"REFUSED — pos {pos!r} is not one of {', '.join(POS)}. It is what a "
                 "word NAMES, not whose it is: `kind` already carries provenance.")
+    # Required for a NEW word that can actually gate, and optional for one that
+    # cannot. Three things were being conflated:
+    #
+    #   the COLUMN is nullable, because an upgrade that fails a build nobody
+    #   changed is not an upgrade, and every database predates it;
+    #
+    #   a word of an ENFORCED kind must say what it names, because a collision
+    #   on it cannot otherwise be judged and will sit in an advisory list until
+    #   somebody happens to read one — measured in lazyriver, where fourteen
+    #   such words produced eighteen unjudgeable advisories;
+    #
+    #   a word of an unenforced kind never raises a collision, so demanding the
+    #   dimension that judges one is asking for an answer nothing will read.
+    #
+    # Requiring it of everything was tried first and broke twenty tests that
+    # author throwaway vocabulary. That is the cost of asking a question where
+    # there is no decision to make.
+    if not pos and kind in _enforced_kinds():
+        return ("REFUSED — say what this word NAMES: --pos verb | noun | value.\n"
+                "  verb   an action. At a surface it IS the operation; below one,\n"
+                "         ordinary work sharing the word is not a second meaning.\n"
+                "  noun   a thing. Two things wearing it is the defect — though two\n"
+                "         declarations may be two renderings of one thing.\n"
+                "  value  a noun promising ONE shape everywhere it appears. Pick this\n"
+                "         only if you could pass any one where any other is expected.\n"
+                "Without it a collision on this word cannot be judged, so the gate\n"
+                "cannot do its job and the exception cannot be recorded either.")
     findings = check(name)
     if findings:
         return ("REFUSED — the name is spoken for:\n" + "\n".join(findings)

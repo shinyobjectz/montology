@@ -39,6 +39,15 @@ def vocab(onto_db):
     return onto_db
 
 
+
+def _unjudged(onto_db, name, definition, kind="core"):
+    """A word from before `pos` existed. It cannot be authored any more, so a
+    test that needs one makes it the way reality does: an older row."""
+    onto_db.add(name, definition, kind=kind, pos="noun")
+    conn = onto_db.connect()
+    conn.execute("UPDATE word SET pos = NULL WHERE lower(name) = ?", (name.lower(),))
+    conn.commit()
+
 # ── part of speech: a dimension of the word, not of the exception ─────────
 
 def test_pos_is_recorded_and_validated(onto_db):
@@ -47,13 +56,44 @@ def test_pos_is_recorded_and_validated(onto_db):
     assert [w["pos"] for w in onto_db.words()] == ["verb"]
 
 
-def test_a_word_without_pos_says_so(onto_db):
+def test_a_new_word_must_say_what_it_names(onto_db):
+    """Required for a NEW word, though the column stays nullable for the ones
+    authored before it existed. Those are separable, and conflating them is
+    what makes 'nullable' sound like 'optional forever'. A word authored
+    without one is a collision nobody can judge — measured in lazyriver, where
+    fourteen such words produced eighteen unjudgeable advisories."""
+    got = onto_db.add("ledger", "the append-only sequence", kind="core")
+    assert got.startswith("REFUSED")
+    assert "--pos" in got
+    # The refusal carries how to choose, not just that a choice is missing.
+    assert "verb" in got and "noun" in got and "value" in got
+    assert onto_db.words() == []
+
+
+def test_a_word_that_cannot_collide_is_not_asked_what_it_names(onto_db):
+    """Asked only where there is a decision to make. An unenforced kind never
+    raises a collision, so demanding the dimension that judges one would be
+    asking for an answer nothing will read. Requiring it of everything was
+    tried first and broke twenty tests that author throwaway vocabulary."""
     got = onto_db.add("ledger", "the append-only sequence")
-    assert "no part of speech" in got and "--pos" in got
+
+    assert got.startswith("added")
+    # Still said, because a word nobody can judge is worth mentioning once.
+    assert "no part of speech" in got
+
+
+def test_a_word_authored_before_pos_existed_is_left_alone(onto_db):
+    """The column is nullable and stays that way: an upgrade that fails a
+    build nobody changed is not an upgrade."""
+    onto_db.add("ledger", "the append-only sequence", kind="core", pos="noun")
+    _c = onto_db.connect(); _c.execute("UPDATE word SET pos = NULL WHERE name = 'ledger'"); _c.commit()
+
+    assert [w["pos"] for w in onto_db.words()] == [None]
+    assert onto_db.check("ledger")  # still a word, still found
 
 
 def test_pos_is_amendable_and_ledgered(onto_db):
-    onto_db.add("ledger", "the append-only sequence", kind="core")
+    _unjudged(onto_db, "ledger", "the append-only sequence")
     got = onto_db.amend("ledger", pos="noun", why="it names a thing")
     assert got.startswith("amended") and "pos" in got
     assert [a["field"] for a in onto_db.amendments("ledger")] == ["pos"]
@@ -68,7 +108,7 @@ def test_an_exception_needs_its_why(onto_db, vocab):
 
 
 def test_an_exception_needs_a_part_of_speech(onto_db):
-    onto_db.add("ledger", "the append-only sequence", kind="core")
+    _unjudged(onto_db, "ledger", "the append-only sequence")
     got = onto_db.except_add("ledger", "the module is the ledger")
     assert got.startswith("REFUSED") and "no part of speech" in got
     assert "monty onto amend ledger --pos" in got
@@ -184,7 +224,7 @@ def test_the_repair_speaks_the_case(repo, onto_db, vocab):
 def test_an_unjudged_word_asks_for_its_pos_before_anything_else(repo, onto_db):
     from montology_scan import lint
 
-    onto_db.add("open", "naming the ledgers to read", kind="core")
+    _unjudged(onto_db, "open", "naming the ledgers to read")
     warned = next(r for r in lint(repo) if "'open'" in r)
     assert "has no part of speech" in warned and "--pos verb|noun|value" in warned
 

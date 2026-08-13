@@ -16,14 +16,14 @@ def ws(tmp_path, onto_db, monkeypatch):
 def test_sync_renders_and_drift_fails(ws, onto_db):
     from montology_gen import lint, sync
 
-    onto_db.add("thread", "a stateful session", kind="core", test="what a session is")
+    onto_db.add("thread", "a stateful session", kind="core", test="what a session is", pos="noun")
     assert sync().startswith("synced")
     skill = ws / ".claude" / "skills" / "words" / "SKILL.md"
     text = skill.read_text()
     assert "GENERATED" in text and "thread" in text and "monty onto check" in text
     assert lint()[-1].endswith("ok")
 
-    onto_db.add("plan", "a proposal", kind="core")   # the db moves on…
+    onto_db.add("plan", "a proposal", kind="core", pos="noun")   # the db moves on…
     report = lint()
     assert any("STALE" in r and "monty sync" in r for r in report)  # …the gate bites
     sync()
@@ -35,7 +35,7 @@ def test_sync_renders_collisions_and_renames(ws, onto_db):
 
     onto_db.collide("Artifact", "mellea", "a file out of the sandbox",
                     "WE MOVED — ours became Dossier")
-    onto_db.add("output", "what a task produces", kind="core")
+    onto_db.add("output", "what a task produces", kind="core", pos="noun")
     onto_db.rename_word("output", "dossier", "one word for the deliverable")
     text = render_words_skill("t")
     assert "Collisions, ruled on" in text and "WE MOVED" in text
