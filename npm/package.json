@@ -12,10 +12,10 @@
     "node": ">=18"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/socialite-ml/montology",
+  "homepage": "https://github.com/shinyobjectz/montology",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/socialite-ml/montology.git"
+    "url": "git+https://github.com/shinyobjectz/montology.git"
   },
   "keywords": [
     "ontology",
@@ -28,6 +28,6 @@
     "claude"
   ],
   "montology": {
-    "engine": "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli"
+    "engine": "git+https://github.com/shinyobjectz/montology@main#subdirectory=.monty/cli"
   }
 }

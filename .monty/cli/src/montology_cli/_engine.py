@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 
-ENGINE_SPEC = "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli"
+ENGINE_SPEC = "git+https://github.com/shinyobjectz/montology@main#subdirectory=.monty/cli"
 
 
 def engine_spec() -> str:

@@ -1,6 +1,6 @@
 name = "montology"
 created = "2026-08-10"
-engine = "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli"
+engine = "git+https://github.com/shinyobjectz/montology@main#subdirectory=.monty/cli"
 
 [scan]
 # montology's own source lives under the (hidden) marker — include it

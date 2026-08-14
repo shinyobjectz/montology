@@ -4,7 +4,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/socialite-ml/montology@main#subdirectory=.monty/cli",
+        "git+https://github.com/shinyobjectz/montology@main#subdirectory=.monty/cli",
         "montology-mcp"
       ]
     }

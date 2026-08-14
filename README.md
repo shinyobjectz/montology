@@ -7,10 +7,10 @@ corrects your coding agent before drift ever lands.
 
 ```sh
 # the CLI, works today
-uvx --from "git+https://github.com/socialite-ml/montology#subdirectory=.monty/cli" monty init
+uvx --from "git+https://github.com/shinyobjectz/montology#subdirectory=.monty/cli" monty init
 
 # the agent skill (Claude Code, Cursor, and friends)
-npx skills add socialite-ml/montology
+npx skills add shinyobjectz/montology
 
 # npm (the launcher)
 npm install -g montology
@@ -27,7 +27,7 @@ with the file, the line, and the repair.
 ![monty init + lint: theme adopted, drift receipted](docs/demo.gif)
 
 ```sh
-uvx --from "git+https://github.com/socialite-ml/montology#subdirectory=.monty/cli" monty init
+uvx --from "git+https://github.com/shinyobjectz/montology#subdirectory=.monty/cli" monty init
 ```
 
 *(that one-liner works today, from nothing but `uv`; `npm install -g
@@ -235,7 +235,7 @@ truthful collision reporting, and lossless migrate round-trips.
 ## Contributors
 
 ```sh
-git clone https://github.com/socialite-ml/montology && cd montology
+git clone https://github.com/shinyobjectz/montology && cd montology
 uv sync && just              # the action surface
 just check                   # the gate (montology lints itself, strictly:
                              # its own toml sets collisions = "enforce")

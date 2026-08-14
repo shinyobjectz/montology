@@ -1,6 +1,6 @@
 # montology — repo instructions
 
-Public repo, `socialite-ml/montology`. Also mounted as a submodule of the
+Public repo, `shinyobjectz/montology`. Also mounted as a submodule of the
 private `socialite` repo — never assume socialite's code or vocabulary is
 reachable from here; this repo stands alone.
 

@@ -43,5 +43,5 @@ build-backend = "hatchling.build"
 packages = ["src/montology_cli"]
 
 [project.urls]
-Homepage = "https://github.com/socialite-ml/montology"
-Repository = "https://github.com/socialite-ml/montology"
+Homepage = "https://github.com/shinyobjectz/montology"
+Repository = "https://github.com/shinyobjectz/montology"

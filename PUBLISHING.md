@@ -12,8 +12,8 @@ public registry (verified with a clean global install). The token in
 
 ## skills.sh — DONE (2026-08-10)
 
-Auto-indexed: https://skills.sh/socialite-ml/montology (2 skills, the
-`npx skills add socialite-ml/montology` command shown on-page). The
+Auto-indexed: https://skills.sh/shinyobjectz/montology (2 skills, the
+`npx skills add shinyobjectz/montology` command shown on-page). The
 top-level `skills/` mirror is what the installer discovers; the gate
 diffs it against `.plugin/skills/` so it cannot drift.
 

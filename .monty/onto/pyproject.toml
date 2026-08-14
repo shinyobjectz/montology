@@ -22,8 +22,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.urls]
-Homepage = "https://github.com/socialite-ml/montology"
-Repository = "https://github.com/socialite-ml/montology"
+Homepage = "https://github.com/shinyobjectz/montology"
+Repository = "https://github.com/shinyobjectz/montology"
 
 [tool.uv.sources]
 montology-core = { workspace = true }

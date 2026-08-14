@@ -3,5 +3,5 @@
   "name": "montology",
   "description": "Design-system and vocabulary drift, enforced: the Tailwind theme becomes tokens in one command, rogue values get receipts with the nearest token, and a repo's words live in a database rendered to agent context \u2014 one org ontology inheritable across every repo.",
   "version": "0.2.0",
-  "homepage": "https://github.com/socialite-ml/montology"
+  "homepage": "https://github.com/shinyobjectz/montology"
 }
