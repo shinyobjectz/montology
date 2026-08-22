@@ -10,12 +10,16 @@ public registry (verified with a clean global install). The token in
 ~/.npmrc has publish rights; future releases are `cd npm && npm version
 <x.y.z> && npm publish`.
 
-## skills.sh — DONE (2026-08-10)
+## skills.sh — DONE (2026-08-10; verified 2026-08-22)
 
-Auto-indexed: https://skills.sh/shinyobjectz/montology (2 skills, the
-`npx skills add shinyobjectz/montology` command shown on-page). The
-top-level `skills/` mirror is what the installer discovers; the gate
-diffs it against `.plugin/skills/` so it cannot drift.
+Indexed per SKILL: https://skills.sh/shinyobjectz/montology/montology,
+/words and /intake all render, and `npx skills add shinyobjectz/montology
+--list` discovers every skill in the top-level `skills/` mirror (the
+gate diffs it against `.plugin/skills/` so it cannot drift). The bare
+repo URL (skills.sh/shinyobjectz/montology) 404s until the repo has
+recorded installs — skills.sh is an install leaderboard, and the repo
+listing page exists only for repos on it. Link the skill pages, not the
+repo page.
 
 ## PyPI (uvx montology without git)
 
