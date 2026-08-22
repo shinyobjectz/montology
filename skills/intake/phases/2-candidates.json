@@ -1,0 +1,14 @@
+{
+  "_note": "TEMPLATE — rewrite every question from `monty scan --candidates` and the phase 1 answers before serving. Placeholders in {braces} must not reach the person answering.",
+  "phase": "2-candidates",
+  "title": "What the code is asking for",
+  "intro": "The scan found names the code declares again and again with no definition. Tell us what each one means — or that it is noise.",
+  "questions": [
+    {"id": "cand_{name_1}", "type": "long", "label": "The code declares \"{name_1}\" {count_1} times. What is a {name_1}?", "help": "Found in {example_path_1}. One sentence; or 'noise' if it is not a real concept."},
+    {"id": "cand_{name_2}", "type": "long", "label": "\"{name_2}\" appears {count_2} times. What is it?", "help": "Found in {example_path_2}."},
+    {"id": "same_thing", "type": "choice", "label": "\"{name_3}\" and \"{name_4}\" look like the same idea. Are they?", "options": ["Yes — one thing, two names", "No — different things", "One is a kind of the other", "Other / not sure"]},
+    {"id": "cand_{name_5}", "type": "long", "label": "\"{name_5}\" appears {count_5} times. What is it?", "required": false},
+    {"id": "owner_{name_1}", "type": "choice", "label": "Does a {name_1} live inside something bigger?", "help": "Words can own words: a cell lives inside a harness.", "options": ["{central_thing_1}", "{central_thing_2}", "{central_thing_3}", "No — it stands alone", "Other / not sure"]},
+    {"id": "missing", "type": "long", "label": "Is there a concept you talk about every day that the code never names?", "required": false}
+  ]
+}

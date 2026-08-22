@@ -1,0 +1,14 @@
+{
+  "_note": "TEMPLATE — one question per word, drafted from phases 1-2 and checked with `monty onto check` / `monty onto similar` first. Placeholders in {braces} must not reach the person answering.",
+  "phase": "3-definitions",
+  "title": "The words, settled",
+  "intro": "Every definition below was drafted from your answers. Confirm each, or correct it in your own words — this is what the gate will enforce.",
+  "questions": [
+    {"id": "def_{word_1}", "type": "long", "label": "{word_1}: \"{definition_draft_1}\" — correct?", "help": "Edit freely — your version wins.", "placeholder": "Yes, or: a {word_1} is…"},
+    {"id": "pos_{word_1}", "type": "choice", "label": "Is \"{word_1}\" a thing, an action, or a value that must look the same everywhere?", "help": "This decides how a name clash on it is judged.", "options": ["A thing (noun)", "An action (verb)", "A value — same shape everywhere", "Not sure"]},
+    {"id": "def_{word_2}", "type": "long", "label": "{word_2}: \"{definition_draft_2}\" — correct?", "placeholder": "Yes, or rewrite it…"},
+    {"id": "collision_{word_3}", "type": "choice", "label": "\"{word_3}\" already means \"{existing_definition}\" here. Which should we use for yours?", "help": "One word means one thing, so one of these needs a different name.", "options": ["{alternative_1}", "{alternative_2}", "Keep \"{word_3}\" and rename the other", "Other / let me type one"]},
+    {"id": "test_{word_1}", "type": "text", "label": "In five words: how do you know something is a {word_1}?", "help": "The one-line test that goes next to the definition.", "required": false},
+    {"id": "rulings", "type": "long", "label": "Anything we should rule on now — 'say X, never Y'?", "required": false}
+  ]
+}

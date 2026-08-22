@@ -13,6 +13,7 @@ members = [
     "montology",
     "montology-core",
     "montology-gen",
+    "montology-intake",
     "montology-ontology",
     "montology-scan",
     "montology-workspace",
@@ -1047,6 +1048,7 @@ dependencies = [
     { name = "fastmcp" },
     { name = "montology-core" },
     { name = "montology-gen" },
+    { name = "montology-intake" },
     { name = "montology-ontology" },
     { name = "montology-scan" },
     { name = "rich" },
@@ -1063,6 +1065,7 @@ requires-dist = [
     { name = "fastmcp" },
     { name = "montology-core", editable = ".monty/core" },
     { name = "montology-gen", editable = ".monty/gen" },
+    { name = "montology-intake", editable = ".monty/intake" },
     { name = "montology-ontology", editable = ".monty/onto" },
     { name = "montology-ontology", extras = ["semantics"], marker = "extra == 'semantics'", editable = ".monty/onto" },
     { name = "montology-scan", editable = ".monty/scan" },
@@ -1095,6 +1098,21 @@ requires-dist = [
     { name = "montology-ontology", editable = ".monty/onto" },
     { name = "montology-scan", editable = ".monty/scan" },
     { name = "pyyaml" },
+]
+
+[[package]]
+name = "montology-intake"
+version = "0.2.0"
+source = { editable = ".monty/intake" }
+dependencies = [
+    { name = "montology-core" },
+    { name = "montology-ontology" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "montology-core", editable = ".monty/core" },
+    { name = "montology-ontology", editable = ".monty/onto" },
 ]
 
 [[package]]
@@ -1144,6 +1162,7 @@ dependencies = [
     { name = "montology" },
     { name = "montology-core" },
     { name = "montology-gen" },
+    { name = "montology-intake" },
     { name = "montology-ontology" },
     { name = "montology-scan" },
 ]
@@ -1163,6 +1182,7 @@ requires-dist = [
     { name = "montology", editable = ".monty/cli" },
     { name = "montology-core", editable = ".monty/core" },
     { name = "montology-gen", editable = ".monty/gen" },
+    { name = "montology-intake", editable = ".monty/intake" },
     { name = "montology-ontology", editable = ".monty/onto" },
     { name = "montology-ontology", extras = ["semantics"], marker = "extra == 'semantics'", editable = ".monty/onto" },
     { name = "montology-scan", editable = ".monty/scan" },

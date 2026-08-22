@@ -40,6 +40,8 @@ cd your-repo
 monty init            # .monty/, agent wiring — and your Tailwind theme
                       # auto-adopted as design tokens (the theme is the law)
 monty lint
+monty intake ask …    # no words yet? the agent's `intake` skill asks the team
+                      # in a form, round by round, and ends in a glossary
 ```
 
 ```

@@ -77,6 +77,12 @@ WORDS = [
     ("divergence", "core", "scan", "scan.divergence",
      "one word declared as more than one value — the finding no exception silences, because sharing a name is a decision and meaning two things is not",
      "where one noun holds two things"),
+    ("intake", "core", "workspace", "ws.intake",
+     "the phased questions a workspace starts with — asked in a form, answered on disk, each round written from the last — before any word is authored",
+     "what was asked, what they said"),
+    ("glossary", "core", "ontology", "onto.glossary",
+     "the whole ontology rendered to one page — every word, ruling and doctrine block, from the database, with the intake it grew from as appendix",
+     "what our words mean, on one page"),
 ]
 
 # What each word NAMES. Almost every term montology has is a NOUN, which is
@@ -90,6 +96,7 @@ POS_OF = {
     "vitals": "noun", "convergence": "noun", "sync": "verb",
     "surface": "noun", "seam": "noun", "phantom": "noun",
     "exception": "noun", "divergence": "noun",
+    "intake": "noun", "glossary": "noun",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and
@@ -122,6 +129,8 @@ EXCEPTIONS = [
     ("divergence", ".monty/scan/**", "`divergence()` in the lint returns divergences; below "
      "the surface, a function that hands back exactly what the word names and is called "
      "anything else would be the drift"),
+    ("glossary", ".monty/**", "`monty intake glossary` and `glossary()` hand back the glossary — "
+     "the surface being literal"),
 ]
 
 DOCTRINE = [

@@ -17,7 +17,7 @@ setup:
 check:
     uv run python -m compileall -q .monty && echo "syntax ok"
     uv run python -c "import json; json.load(open('.plugin/plugin.json')); json.load(open('.plugin/mcp.json')); print('plugin manifests parse')"
-    diff -q .plugin/skills/montology/SKILL.md skills/montology/SKILL.md > /dev/null && echo "skills/ mirror in sync"
+    diff -rq .plugin/skills skills > /dev/null && echo "skills/ mirror in sync"
     uv run monty lint
     uv run pytest tests -q
 
@@ -35,3 +35,7 @@ serve:
 
 doctor:
     uv run monty doctor
+
+# Start the intake: the first question round opens in the browser (blocks until answered)
+intake:
+    uv run monty intake ask .plugin/skills/intake/phases/1-domain.json

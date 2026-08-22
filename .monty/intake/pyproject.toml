@@ -1,0 +1,19 @@
+[project]
+name = "montology-intake"
+version = "0.2.0"
+description = "The questions a workspace starts with: phased forms served as local HTML, answers written to .monty/intake as JSON for the agent, closing with a glossary rendered from the ontology."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+readme = "README.md"
+dependencies = ["montology-core", "montology-ontology"]
+
+[tool.uv.sources]
+montology-core = { workspace = true }
+montology-ontology = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/shinyobjectz/montology"

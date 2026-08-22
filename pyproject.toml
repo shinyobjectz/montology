@@ -9,6 +9,7 @@ dependencies = [
     "montology-ontology",
     "montology-scan",
     "montology-gen",
+    "montology-intake",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +22,7 @@ members = [
     ".monty/onto",
     ".monty/scan",
     ".monty/gen",
+    ".monty/intake",
 ]
 
 [tool.uv.sources]
@@ -29,6 +31,7 @@ montology-core = { workspace = true }
 montology-ontology = { workspace = true }
 montology-scan = { workspace = true }
 montology-gen = { workspace = true }
+montology-intake = { workspace = true }
 
 [dependency-groups]
 dev = ["pytest"]

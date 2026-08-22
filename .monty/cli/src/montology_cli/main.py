@@ -33,9 +33,11 @@ app = typer.Typer(
 )
 
 onto_app = typer.Typer(help="The vocabulary: check, add, amend, rule, except, list.", no_args_is_help=True)
+intake_app = typer.Typer(help="The questions a workspace starts with: phased forms, answers on disk, the glossary.", no_args_is_help=True)
 design_app = typer.Typer(help="Design values as vocabulary: tokens, drift, candidates.", no_args_is_help=True)
 app.add_typer(onto_app, name="onto")
 app.add_typer(design_app, name="design")
+app.add_typer(intake_app, name="intake")
 
 
 @app.command()
@@ -716,3 +718,48 @@ def serve(http: bool = typer.Option(False, help="Streamable HTTP instead of stdi
 
     sys.argv = ["montology-mcp"] + (["--http"] if http else [])
     serve_main()
+
+
+@intake_app.command("ask")
+def intake_ask_cmd(spec: str = typer.Argument(..., help="Phase spec: a JSON file path, JSON text, or - for stdin."),
+                   no_open: bool = typer.Option(False, "--no-open", help="Print the URL only; do not open a browser."),
+                   timeout: float = typer.Option(0, "--timeout", help="Seconds to wait for the submit (0 = forever).")) -> None:
+    """Serve one phase as a form, wait for the submit, write .monty/answers/<phase>.answers.json, exit."""
+    from montology_intake import ask
+
+    got = ask(spec, open_browser=not no_open, timeout=timeout)
+    typer.echo(got)
+    raise typer.Exit(0 if got.startswith("answered") else 1)
+
+
+@intake_app.command("answers")
+def intake_answers_cmd() -> None:
+    """Every answered phase, merged, as JSON — what the next phase is written from."""
+    import json as _json
+
+    from montology_intake import merged_answers
+
+    typer.echo(_json.dumps(merged_answers(), indent=2, ensure_ascii=False))
+
+
+@intake_app.command("status")
+def intake_status_cmd() -> None:
+    """Phases open and answered; whether the glossary is rendered."""
+    from montology_intake import status
+
+    for line in status():
+        typer.echo(line)
+
+
+@intake_app.command("glossary")
+def intake_glossary_cmd(open_: bool = typer.Option(False, "--open", help="Open the page when rendered.")) -> None:
+    """The closing page: the whole ontology as a glossary, rendered from the database."""
+    from montology_intake import glossary
+
+    got = glossary()
+    typer.echo(got)
+    if got.startswith("glossary") and open_:
+        import webbrowser
+
+        webbrowser.open("file://" + got.split()[1])
+    raise typer.Exit(0 if got.startswith("glossary") else 1)

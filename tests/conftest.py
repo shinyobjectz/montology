@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for member in ("core", "onto", "scan", "gen", "cli"):
+for member in ("core", "onto", "scan", "gen", "intake", "cli"):
     sys.path.insert(0, str(ROOT / ".monty" / member / "src"))
 
 

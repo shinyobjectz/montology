@@ -9,3 +9,11 @@ dist/
 .env
 .env.*
 !.env.example
+
+# the engine cache: weights, browsers — refetchable, never tracked
+.monty/cache/
+.monty/answers/
+
+# marketing-era leftovers on dev machines (not part of this repo)
+projects/
+design/node_modules/

@@ -1,0 +1,15 @@
+{
+  "phase": "1-domain",
+  "title": "Let's start with what this system is",
+  "intro": "Eight questions, a few minutes. Answer the way you would explain it to a new engineer on day one — your words, not the framework's.",
+  "questions": [
+    {"id": "system", "type": "long", "label": "What does this system do, in one or two sentences?", "placeholder": "It takes… and turns it into… for…"},
+    {"id": "users", "type": "long", "label": "Who uses it — and what do you call them?", "help": "The words matter: users, members, tenants, accounts, operators, customers…"},
+    {"id": "central_things", "type": "long", "label": "Name the three to five things the system is really about.", "help": "The nouns that show up in every conversation: an order, a run, a workspace, a harness…", "placeholder": "Order, Shipment, Carrier…"},
+    {"id": "argued_word", "type": "long", "label": "Which word causes the most arguments or confusion on the team?", "help": "The one that means two things depending on who says it.", "required": false},
+    {"id": "boundary_frameworks", "type": "multi", "label": "Whose words do you speak at the edges?", "help": "Frameworks and platforms whose vocabulary leaks into yours.", "options": ["React / a UI framework", "Django / Rails / a web framework", "Kubernetes / cloud infra", "A database or ORM", "A payments or auth provider", "A design system (Tailwind, MUI…)", "Other / none of these"]},
+    {"id": "banned_words", "type": "long", "label": "Any words you have decided NOT to use — and what to say instead?", "placeholder": "We say 'workspace', never 'project'…", "required": false},
+    {"id": "design_system", "type": "yesno", "label": "Is there a design system or token set the UI is supposed to follow?"},
+    {"id": "strictness", "type": "scale", "label": "How strict should the vocabulary gate be?", "min": 1, "max": 5, "labels": ["advisory — warn me", "enforced — fail the build"]}
+  ]
+}
