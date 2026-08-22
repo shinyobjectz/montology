@@ -10,16 +10,18 @@ public registry (verified with a clean global install). The token in
 ~/.npmrc has publish rights; future releases are `cd npm && npm version
 <x.y.z> && npm publish`.
 
-## skills.sh — DONE (2026-08-10; verified 2026-08-22)
+## skills.sh — DONE under the OLD name; the new name is catching up
 
-Indexed per SKILL: https://skills.sh/shinyobjectz/montology/montology,
-/words and /intake all render, and `npx skills add shinyobjectz/montology
---list` discovers every skill in the top-level `skills/` mirror (the
-gate diffs it against `.plugin/skills/` so it cannot drift). The bare
-repo URL (skills.sh/shinyobjectz/montology) 404s until the repo has
-recorded installs — skills.sh is an install leaderboard, and the repo
-listing page exists only for repos on it. Link the skill pages, not the
-repo page.
+skills.sh keys its repo page to the slug people INSTALL with, and the
+first installs used `socialite-ml/montology`. So the live repo page is
+https://skills.sh/socialite-ml/montology (GitHub 301-redirects the old
+name, so every skill — montology, words, intake — renders there), while
+https://skills.sh/shinyobjectz/montology 404s until installs under the
+new slug are aggregated (one was recorded 2026-08-22; the leaderboard
+refreshes in batches). Per-skill pages work under BOTH names today:
+https://skills.sh/shinyobjectz/montology/intake etc. `npx skills add
+shinyobjectz/montology --list` discovers every skill in the top-level
+`skills/` mirror (the gate diffs it against `.plugin/skills/`).
 
 ## PyPI (uvx montology without git)
 
