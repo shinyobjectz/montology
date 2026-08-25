@@ -257,3 +257,108 @@ def test_serving_without_a_bundle_says_how_to_get_one(ws, onto_db, monkeypatch):
     monkeypatch.setattr(serve_mod, "STATIC", ws / "nothing-here")
     got = serve(open_browser=False)
     assert "not in this install" in got and "just canvas" in got
+
+
+# ── writing: a face on the engine, never a second writer ───────────────────
+
+def test_every_intent_names_a_function_the_cli_already_calls(ws, onto_db):
+    """THE CANVAS HAS NO SQL. If an intent could do something no CLI command
+    can, there would be two gates, and the second would drift from the first."""
+    from montology_canvas.intents import _intents, catalogue
+
+    for name, (fn, required, _) in _intents().items():
+        assert callable(fn), name
+        assert required, f"{name} takes nothing — nothing to author"
+    assert {c["intent"] for c in catalogue()} == set(_intents())
+
+
+def test_a_refusal_comes_back_in_the_engine_s_own_words(ws, onto_db):
+    """Errors are data with the repair attached — that already works, and
+    re-wording it in the browser would be a second gate."""
+    from montology_canvas.intents import apply
+
+    onto_db.add("cell", "the box a run executes in", kind="core", pos="noun")
+    got = apply("word.add", {"name": "cell", "definition": "something else entirely"})
+    assert got["ok"] is False
+    assert got["line"].startswith("REFUSED") and "spoken for" in got["line"]
+    assert "one word means one thing" in got["line"]
+
+
+def test_the_laws_apply_identically_whichever_face_was_used(ws, onto_db):
+    """A word authored on the canvas must be indistinguishable in the database
+    from the same word authored at the CLI."""
+    from montology_canvas.intents import apply
+    from montology_ontology import words
+
+    apply("word.add", {"name": "dossier", "definition": "what a run hands back",
+                       "kind": "core", "pos": "noun", "test": "what came out"})
+    onto_db.add("parcel", "what a run hands back", kind="core", pos="noun",
+                test="what came out")
+
+    rows = {w["name"]: w for w in words()}
+    a, b = rows["dossier"], rows["parcel"]
+    assert {k: a[k] for k in ("kind", "pos", "test")} == {k: b[k] for k in ("kind", "pos", "test")}
+
+
+def test_an_unknown_intent_is_refused_with_the_known_ones(ws, onto_db):
+    from montology_canvas.intents import apply
+
+    got = apply("word.delete", {"name": "cell"})
+    assert got["ok"] is False and "not an intent" in got["line"]
+    assert "word.add" in got["line"]
+
+
+def test_a_missing_required_field_never_reaches_the_engine(ws, onto_db):
+    from montology_canvas.intents import apply
+
+    got = apply("route.add", {"from_term": "output"})
+    assert got["ok"] is False and "to_word" in got["line"]
+
+
+def test_writes_need_the_token_the_page_alone_can_read(ws, onto_db, monkeypatch):
+    """A cross-origin page can POST to loopback; it cannot READ the response
+    that carries the token, because no CORS headers are sent. That is the whole
+    CSRF story and it needs no cookie."""
+    import json
+    import threading
+    import urllib.request
+
+    import importlib
+
+    from montology_canvas import serve
+
+    serve_mod = importlib.import_module("montology_canvas.serve")
+
+    static = ws / "static"
+    static.mkdir()
+    (static / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(serve_mod, "STATIC", static)
+    onto_db.add("cell", "the box a run executes in", kind="core", pos="noun")
+
+    url, ready = {}, threading.Event()
+    threading.Thread(target=lambda: serve(open_browser=False, with_scan=False,
+                                          _ready=lambda u: (url.setdefault("at", u), ready.set())),
+                     daemon=True).start()
+    assert ready.wait(10)
+    base = url["at"]
+
+    token = json.loads(urllib.request.urlopen(base + "api/graph").read())["token"]
+    assert token
+
+    def post(payload, headers):
+        req = urllib.request.Request(base + "api/intent", data=json.dumps(payload).encode(),
+                                     headers=headers, method="POST")
+        try:
+            return urllib.request.urlopen(req).status, ""
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode()
+
+    body = {"intent": "word.add", "fields": {"name": "run", "definition": "one execution"}}
+    assert post(body, {"Content-Type": "application/json"})[0] == 403
+    # a form POST needs no preflight, so the content type is checked too
+    assert post(body, {"Content-Type": "application/x-www-form-urlencoded",
+                       "X-Monty-Token": token})[0] == 415
+    assert post(body, {"Content-Type": "application/json", "X-Monty-Token": token})[0] == 200
+
+    findings = json.loads(urllib.request.urlopen(base + "api/check?name=cell").read())
+    assert findings["findings"] and "TAKEN" in findings["findings"][0]

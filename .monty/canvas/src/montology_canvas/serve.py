@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import secrets
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -44,13 +45,57 @@ def _handler(state: dict):
             path = self.path.split("?", 1)[0]
             if path in ("/api/graph", "/api/graph/"):
                 from .graph import graph
+                from .intents import catalogue
 
                 try:
-                    self._json(200, graph(with_scan=state["with_scan"]))
+                    payload = graph(with_scan=state["with_scan"])
+                    # The token rides here and nowhere else. A cross-origin page
+                    # can POST to loopback, but it cannot READ this response —
+                    # no CORS headers are sent — so it never learns the token.
+                    # That is the whole CSRF story, and it needs no cookie.
+                    payload["token"] = state["token"]
+                    payload["intents"] = catalogue()
+                    self._json(200, payload)
                 except Exception as e:  # noqa: BLE001 — the page must say why
                     self._json(500, {"error": f"{type(e).__name__}: {e}"})
                 return
+            if path in ("/api/check", "/api/check/"):
+                from urllib.parse import parse_qs, urlparse
+
+                from montology_ontology import check
+
+                name = (parse_qs(urlparse(self.path).query).get("name") or [""])[0]
+                if not name.strip():
+                    self._json(200, {"name": name, "findings": []})
+                    return
+                self._json(200, {"name": name, "findings": check(name)})
+                return
             self._static(path)
+
+        def do_POST(self) -> None:  # noqa: N802
+            path = self.path.split("?", 1)[0]
+            if path not in ("/api/intent", "/api/intent/"):
+                self._json(404, {"error": f"no {path!r}"})
+                return
+            if self.headers.get("X-Monty-Token") != state["token"]:
+                self._json(403, {"error": "this request did not come from the canvas"})
+                return
+            if "json" not in (self.headers.get("Content-Type") or ""):
+                self._json(415, {"error": "intents are JSON"})
+                return
+            try:
+                size = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(size) or b"{}")
+            except (ValueError, OSError) as e:
+                self._json(400, {"error": f"unreadable intent: {e}"})
+                return
+
+            from .intents import apply
+
+            # The engine's own answer, verbatim — including its refusal text.
+            # Errors are data with the repair attached; re-wording one here
+            # would be a second gate, and it would drift from the first.
+            self._json(200, apply(str(body.get("intent", "")), body.get("fields") or {}))
 
         def _static(self, path: str) -> None:
             rel = "index.html" if path in ("/", "") else path.lstrip("/")
@@ -75,7 +120,9 @@ def serve(*, open_browser: bool = True, port: int = 0, with_scan: bool = True,
                 "`just canvas` in the montology repo, or reinstall a release "
                 "that ships it.")
 
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), _handler({"with_scan": with_scan}))
+    httpd = ThreadingHTTPServer(
+        ("127.0.0.1", port),
+        _handler({"with_scan": with_scan, "token": secrets.token_urlsafe(24)}))
     url = f"http://127.0.0.1:{httpd.server_address[1]}/"
     if _ready:
         _ready(url)

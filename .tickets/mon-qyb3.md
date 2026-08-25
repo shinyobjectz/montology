@@ -1,6 +1,6 @@
 ---
 id: mon-qyb3
-status: in_progress
+status: closed
 deps: [mon-ll1c]
 links: []
 created: 2026-08-25T19:38:08Z
@@ -34,3 +34,9 @@ Competency questions belong here eventually — the ontology is correct if it an
 
 `monty onto review` runs on qubie and montology and names findings with the anti-pattern they instantiate, the evidence, and a repair. Skipped checks are listed as skipped with the reason. Nothing it reports fails a build. The canvas surfaces the same findings on the nodes they concern.
 
+
+## Notes
+
+**2026-08-25T20:12:10Z**
+
+Landed. montology: 1 finding. qubie: 18 across five patterns, including 5 vendor leaks (mellea, openai) in definitions and acp-agent ~ subagent at 0.79 similarity. The Misnomer needed three calibration passes against real vocabularies — short-name (three-quarters noise on qubie), then name-anywhere-in-definition (46 of 99 words), then name-in-the-GENUS-position (3, all defensible). Worth recording as method: every threshold here was set by running it against montology and qubie and reading the output, not by reasoning about what ought to work. The first run also caught montology defining `scan` as 'the tree-sitter sweep of a codebase' — the word laws only checked generated definitions, so a seeded vendor walked past them for the life of the repo.

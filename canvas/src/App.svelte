@@ -3,6 +3,7 @@
   import GraphNode from './lib/GraphNode.svelte';
   import Detail from './lib/Detail.svelte';
   import Spine from './lib/Spine.svelte';
+  import Compose from './lib/Compose.svelte';
   import { index, edgeLook, elbow } from './lib/util.js';
   import { focusLayout, overviewLayout } from './lib/layout.js';
 
@@ -14,13 +15,21 @@
   let error = $state('');
   let focus = $state(null);      // the node the canvas is answering about
   let selected = $state(null);   // what the detail rail is showing
+  let authoring = $state(false);
 
-  $effect(() => {
-    fetch('./api/graph')
+  function load() {
+    return fetch('./api/graph')
       .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e.error ?? r.statusText))))
-      .then((g) => { graph = index(g); })
+      .then((g) => {
+        graph = index(g);
+        // a node the write may have replaced must not stay on screen stale
+        if (focus) focus = graph.byId.get(focus.id) ?? null;
+        if (selected) selected = graph.byId.get(selected.id) ?? null;
+      })
       .catch((e) => { error = String(e); });
-  });
+  }
+
+  $effect(() => { load(); });
 
   const view = $derived.by(() => {
     if (!graph) return { pos: new Map(), shown: new Set() };
@@ -84,6 +93,8 @@
           all {graph.stats.words} words
         </button>
         {#if focus}<span class="sep">›</span><span class="crumb on mono">{focus.label}</span>{/if}
+        <button class="author mono" class:on={authoring}
+                onclick={() => (authoring = !authoring)}>{authoring ? '× close' : '+ author'}</button>
         <span class="vitals mono">
           {#each Object.entries(graph.stats) as [k, v]}<span>{v} {k}</span>{/each}
         </span>
@@ -140,7 +151,13 @@
   </main>
 
   <aside class="rail right">
-    {#if graph}<Detail node={selected} {graph} onpick={pick} />{/if}
+    {#if graph}
+      {#if authoring}
+        <Compose intents={graph.intents ?? []} token={graph.token} onwrote={load} />
+      {:else}
+        <Detail node={selected} {graph} onpick={pick} />
+      {/if}
+    {/if}
   </aside>
 </div>
 
@@ -158,6 +175,9 @@
   .crumb { font-size: .72rem; background: none; border: 0; color: var(--dim); cursor: pointer; padding: 0; }
   .crumb.on { color: var(--ink); font-weight: 600; }
   .sep { color: var(--dim); font-size: .72rem; }
+  .author { font-size: .68rem; margin-left: .6rem; padding: .1rem .4rem; cursor: pointer;
+            border-radius: 4px; border: 1px solid var(--line); background: none; color: var(--dim); }
+  .author.on { color: var(--accent); border-color: var(--accent); }
   .vitals { margin-left: auto; display: flex; gap: .7rem; font-size: .64rem; color: var(--dim); }
   .wires { position: absolute; left: calc(var(--span) * -1px); top: calc(var(--span) * -1px);
            pointer-events: none; }
