@@ -1,35 +1,35 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { verbColor } from './lib.js';
 
-/** The one figure, laid out as the sentences it encodes.
+/** The one figure: an inset canvas you can move around in.
  *
- *  Rings put a hub in the middle and every edge crossed the centre, so nothing
- *  could be followed. But every relation here IS a sentence — subject, verb,
- *  object — so the graph is layered LEFT TO RIGHT: a thing that only acts sits
- *  on the left, a thing only acted on sits on the right, and an edge never
- *  doubles back. Following one is then just reading.
+ *  Three things it learned the hard way. Curves cannot be followed once more
+ *  than two leave the same node, so the routing is ORTHOGONAL with generous
+ *  corners — the shape every graph tool settled on, because a right angle tells
+ *  you where a line is going and a bezier does not. Each edge gets its OWN
+ *  vertical channel in the gap between layers, so two lines never lie on each
+ *  other. And the label sits in a real BREAK in the line rather than on top of
+ *  it: a halo over a wire still reads as two things fighting.
  *
- *  Deterministic throughout — layers by longest path, order within a layer by
- *  barycentre. A picture that moves when nothing moved cannot be trusted.
+ *  It is inset rather than page-sized because a diagram that pushes the text
+ *  off the screen has stopped being a figure and become a detour.
  */
-const NODE_W = 116;
-const NODE_H = 26;
-const ROW = 42;
-const COL = 268;
+const NODE_W = 132;
+const NODE_H = 30;
+const ROW = 52;
+const COL = 440;
+const R = 14;               // corner radius — large on purpose, this is a map
+const BOX_H = 540;          // the inset
 
-function layout(rel, ids) {
-  const outs = new Map();
-  const ins = new Map();
-  for (const id of ids) { outs.set(id, []); ins.set(id, []); }
+function layers(rel, ids) {
+  const outs = new Map(ids.map((i) => [i, []]));
+  const ins = new Map(ids.map((i) => [i, []]));
   for (const e of rel) {
     if (!outs.has(e.source) || !ins.has(e.target)) continue;
     outs.get(e.source).push(e.target);
     ins.get(e.target).push(e.source);
   }
-
-  // Layer = longest path from a source. Cycles are broken by the visit guard
-  // rather than by refusing to draw: a vocabulary may contain one.
-  const layer = new Map(ids.map((id) => [id, 0]));
+  const layer = new Map(ids.map((i) => [i, 0]));
   const order = [...ids].sort((a, b) => ins.get(a).length - ins.get(b).length);
   for (let pass = 0; pass < ids.length; pass++) {
     let moved = false;
@@ -40,7 +40,6 @@ function layout(rel, ids) {
     }
     if (!moved) break;
   }
-
   const cols = new Map();
   for (const id of ids) {
     const l = layer.get(id);
@@ -48,15 +47,12 @@ function layout(rel, ids) {
     cols.get(l).push(id);
   }
   const keys = [...cols.keys()].sort((a, b) => a - b);
-
-  // Barycentre ordering: a node sits opposite the average of its neighbours,
-  // which is the cheap half of crossing reduction and enough at this size.
   const row = new Map();
   for (const k of keys) cols.get(k).forEach((id, i) => row.set(id, i));
   for (let sweep = 0; sweep < 4; sweep++) {
-    const forward = sweep % 2 === 0;
-    for (const k of forward ? keys : [...keys].reverse()) {
-      const near = (id) => (forward ? ins.get(id) : outs.get(id));
+    const fwd = sweep % 2 === 0;
+    for (const k of fwd ? keys : [...keys].reverse()) {
+      const near = (id) => (fwd ? ins.get(id) : outs.get(id));
       cols.get(k).sort((a, b) => {
         const mean = (id) => {
           const n = near(id);
@@ -67,16 +63,62 @@ function layout(rel, ids) {
       cols.get(k).forEach((id, i) => row.set(id, i));
     }
   }
-
   const pos = new Map();
   let height = 0;
   for (const k of keys) {
     const here = cols.get(k);
     const top = -((here.length - 1) * ROW) / 2;
     here.forEach((id, i) => pos.set(id, { x: k * COL, y: top + i * ROW }));
-    height = Math.max(height, here.length * ROW);
+    height = Math.max(height, (here.length - 1) * ROW + NODE_H);
   }
-  return { pos, width: (keys.length - 1) * COL, height };
+  return { pos, layer, width: (keys.length - 1) * COL, height };
+}
+
+/** Out right, down its own channel, in from the left — with a real BREAK in the
+ *  line where the label goes.
+ *
+ *  The break is put on the vertical run when there is room for it and on the
+ *  horizontal run out of the source when there is not. Every edge gets a label
+ *  either way: an unlabelled edge in a graph of verbs is a line that says
+ *  nothing, and the first version dropped eight of seventeen that way.
+ */
+function route(a, b, channelX, label) {
+  const x1 = a.x + NODE_W / 2;
+  const x2 = b.x - NODE_W / 2;
+  const dy = b.y - a.y;
+  const s = Math.sign(dy) || 1;
+
+  if (Math.abs(dy) < 2) {
+    const mid = (x1 + x2) / 2;
+    return { parts: [`M${x1},${a.y} L${mid - label.w / 2},${a.y}`,
+                     `M${mid + label.w / 2},${b.y} L${x2},${b.y}`],
+             at: { x: mid, y: a.y }, along: 'x', range: [x1 + label.w / 2, x2 - label.w / 2] };
+  }
+
+  const r = Math.max(4, Math.min(R, Math.abs(dy) / 2, (channelX - x1) / 2, (x2 - channelX) / 2));
+  const head = `M${x1},${a.y} L${channelX - r},${a.y} Q${channelX},${a.y} ${channelX},${a.y + r * s}`;
+  const tail = `M${channelX},${b.y - r * s} Q${channelX},${b.y} ${channelX + r},${b.y} L${x2},${b.y}`;
+  const from = a.y + r * s;
+  const to = b.y - r * s;
+
+  // room on the vertical run? put it there — text is horizontal, so a gap in a
+  // vertical line reads as cleanly as a guard on a flowchart
+  if (Math.abs(to - from) > label.h + 14) {
+    const mid = (from + to) / 2;
+    return { parts: [`${head} L${channelX},${mid - (label.h / 2) * s}`,
+                     `M${channelX},${mid + (label.h / 2) * s} L${channelX},${to}`,
+                     tail],
+             at: { x: channelX, y: mid }, along: 'y',
+             range: [Math.min(from, to) + label.h, Math.max(from, to) - label.h] };
+  }
+  // otherwise break the run OUT of the source, which is always long enough
+  const cut = Math.min(x1 + 26 + label.w / 2, channelX - r - 6);
+  return { parts: [`M${x1},${a.y} L${cut - label.w / 2},${a.y}`,
+                   `M${cut + label.w / 2},${a.y} L${channelX - r},${a.y} `
+                   + `Q${channelX},${a.y} ${channelX},${a.y + r * s} L${channelX},${to}`,
+                   tail],
+           at: { x: cut, y: a.y }, along: 'x',
+           range: [x1 + label.w / 2 + 4, channelX - r - label.w / 2 - 4] };
 }
 
 export default function Relations({ g, onPick }) {
@@ -84,115 +126,164 @@ export default function Relations({ g, onPick }) {
     () => g.edges.filter((e) => e.kind === 'relation' || e.kind === 'act'), [g]);
 
   const view = useMemo(() => {
-    const ids = [...new Set(rel.flatMap((e) => [e.source, e.target]))]
-      .filter((id) => g.byId.has(id));
-    const { pos, width, height } = layout(rel, ids);
+    const ids = [...new Set(rel.flatMap((e) => [e.source, e.target]))].filter((id) => g.byId.has(id));
+    const { pos, layer, width, height } = layers(rel, ids);
 
-    // Parallel relations between one pair fan apart, and every label is pushed
-    // clear of any it would sit on — a label you cannot read is an edge you
-    // cannot follow.
-    const seen = new Map();
-    const slot = new Map();     // how many labels this subject has placed
-    const drawn = [];
-    const taken = [];
+    // One channel per edge in the gap it crosses, ordered by where it lands, so
+    // channels do not cross each other on their way down.
+    const gaps = new Map();
     for (const e of rel) {
+      if (!pos.has(e.source) || !pos.has(e.target)) continue;
+      const k = layer.get(e.source);
+      if (!gaps.has(k)) gaps.set(k, []);
+      gaps.get(k).push(e);
+    }
+    const channel = new Map();
+    for (const [k, here] of gaps) {
+      here.sort((p, q) => (pos.get(p.target).y - pos.get(q.target).y)
+                       || (pos.get(p.source).y - pos.get(q.source).y));
+      const from = k * COL + NODE_W / 2;
+      const to = (k + 1) * COL - NODE_W / 2;
+      here.forEach((e, i) => channel.set(e.id, from + ((to - from) * (i + 1)) / (here.length + 1)));
+    }
+
+    const drawn = rel.map((e) => {
       const a = pos.get(e.source);
       const b = pos.get(e.target);
-      if (!a || !b) continue;
-      const key = `${e.source}|${e.target}`;
-      const n = seen.get(key) ?? 0;
-      seen.set(key, n + 1);
-      const lift = (n - 0.5 * ((rel.filter((x) => `${x.source}|${x.target}` === key).length) - 1)) * 15;
-
-      const x1 = a.x + NODE_W / 2;
-      const x2 = b.x - NODE_W / 2;
-      const back = x2 < x1;                       // same layer, or a cycle
-      const cx = (x1 + x2) / 2;
-      const d = back
-        ? `M${x1},${a.y} C${x1 + 70},${a.y + 46 + lift} ${x2 - 70},${b.y + 46 + lift} ${x2},${b.y}`
-        : `M${x1},${a.y} C${cx},${a.y + lift} ${cx},${b.y + lift} ${x2},${b.y}`;
-
-      // Every label at the curve's midpoint put twelve of them in one narrow
-      // band. Each now rides its OWN curve at its own fraction, so they spread
-      // along the span instead of stacking — and a label beside the line it
-      // belongs to is a label you can attribute without counting.
-      const spread = (slot.get(`${e.source}`) ?? 0);
-      slot.set(`${e.source}`, spread + 1);
-      const tt = 0.3 + ((spread * 0.17) % 0.42);
-      const P = [{ x: x1, y: a.y }, { x: cx, y: a.y + lift },
-                 { x: cx, y: b.y + lift }, { x: x2, y: b.y }];
-      const u = 1 - tt;
-      let lx = u * u * u * P[0].x + 3 * u * u * tt * P[1].x
-             + 3 * u * tt * tt * P[2].x + tt * tt * tt * P[3].x;
-      let ly = u * u * u * P[0].y + 3 * u * u * tt * P[1].y
-             + 3 * u * tt * tt * P[2].y + tt * tt * tt * P[3].y - 6;
-      if (back) { lx = cx; ly = (a.y + b.y) / 2 + 40 + lift; }
-      // A verb mined from code can be `predictionfromfeatures_error_`, which
-      // is wider than the gap between two layers and ran off the frame. Shown
-      // short, with the whole of it on hover — the label has to fit the picture
-      // or it stops being one.
+      if (!a || !b) return null;
       const full = e.data.verb;
-      const short = full.length > 17 ? `${full.slice(0, 16)}…` : full;
-      const w = short.length * 6;
-      for (let guard = 0; guard < 40; guard++) {
-        const clash = taken.find((t) => Math.abs(t.x - lx) * 2 < t.w + w + 10
-                                     && Math.abs(t.y - ly) < 12);
-        if (!clash) break;
-        ly = clash.y + 12;
+      const short = full.length > 18 ? `${full.slice(0, 17)}…` : full;
+      const cx = channel.get(e.id) ?? (a.x + b.x) / 2;
+      const { parts, at, along, range } = route(a, b, cx, { w: short.length * 6.4 + 10, h: 17 });
+      return { e, parts, at, along, range, short, full,
+               color: verbColor(full, e.data.defined !== false) };
+    }).filter(Boolean);
+
+    // Two labels that land on each other are two edges nobody can tell apart —
+    // and one that lands on a NODE is worse, because it reads as that node's.
+    // Both are the same problem, so the nodes go in the same list.
+    // Each obstacle carries its own HEIGHT. A flat threshold let a label clear
+    // another label and still sit on a node, which is twice as tall.
+    const taken = [...pos.values()].map((p) => ({ x: p.x, y: p.y, w: NODE_W + 10, h: NODE_H + 6 }));
+    for (const d of drawn) {
+      const w = d.short.length * 6.4 + 8;
+      const h = 16;
+      // Slide the label ALONG its own line, never away from it. Pushing
+      // perpendicular cleared the overlap and left a column of verbs floating
+      // beside the edges they belonged to — which is worse than touching, since
+      // a label you cannot attribute is a label that says nothing.
+      const [lo, hi] = d.range ?? [d.at.x, d.at.x];
+      const step = (d.along === 'x' ? w : h) * 0.55 + 4;
+      const start = d.along === 'x' ? d.at.x : d.at.y;
+      const free = (at) => !taken.find((t) => Math.abs(t.x - at.x) * 2 < t.w + w
+                                           && Math.abs(t.y - at.y) * 2 < t.h + h);
+      const put = (v) => (d.along === 'x' ? { x: v, y: d.at.y } : { x: d.at.x, y: v });
+      let placed = null;
+      for (let i = 0; i < 26 && !placed; i++) {
+        // walk outward from where it wants to be, both ways
+        const cand = start + (i % 2 ? -1 : 1) * Math.ceil(i / 2) * step;
+        if (cand < lo || cand > hi) continue;
+        if (free(put(cand))) placed = put(cand);
       }
-      taken.push({ x: lx, y: ly, w });
-      drawn.push({ e, d, lx, ly, short, full,
-                   color: verbColor(full, e.data.defined !== false) });
+      // A run with no free slot on it at all — a short one carrying two long
+      // verbs. Then and only then, step off the line: still beside its own
+      // edge, and legible, which beats two words printed on each other.
+      if (!placed) {
+        for (const dy of [h + 2, -(h + 2), 2 * h + 4, -(2 * h + 4)]) {
+          const at = { x: d.at.x, y: d.at.y + dy };
+          if (free(at)) { placed = at; break; }
+        }
+      }
+      d.at = placed ?? d.at;
+      taken.push({ x: d.at.x, y: d.at.y, w, h });
     }
-    return { pos, drawn, width, height, ids };
+
+    return { pos, drawn, ids, width, height };
   }, [rel, g]);
+
+  // pan and zoom, inside the inset only
+  const box = useRef(null);
+  const [t, setT] = useState({ x: 0, y: 0, k: 1 });
+  const drag = useRef(null);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !view.ids.length) return;
+    const r = el.getBoundingClientRect();
+    const w = view.width + NODE_W + 60;
+    const h = view.height + 60;
+    const k = Math.min(1.35, r.width / w, r.height / h);
+    setT({ k, x: r.width / 2 - (view.width / 2) * k, y: r.height / 2 * 1 });
+  }, [view]);
 
   if (!rel.length) return null;
 
-  // Rendered 1:1. Letting the viewBox scale to the container blew the whole
-  // figure up to twice size and took the 10px labels with it — a diagram that
-  // resizes its own typography is a diagram you cannot set.
-  const padY = 54;
-  const w = view.width + NODE_W + 40;
-  const h = view.height + padY * 2;
-  const vb = `${-NODE_W / 2 - 20} ${-view.height / 2 - padY} ${w} ${h}`;
+  const wheel = (ev) => {
+    ev.preventDefault();
+    const r = box.current.getBoundingClientRect();
+    const mx = ev.clientX - r.left;
+    const my = ev.clientY - r.top;
+    const k = Math.min(3, Math.max(0.3, t.k * Math.exp(-ev.deltaY * 0.002)));
+    setT({ k, x: mx - ((mx - t.x) * k) / t.k, y: my - ((my - t.y) * k) / t.k });
+  };
+  const down = (ev) => {
+    if (ev.target.closest('.n')) return;
+    drag.current = { x: ev.clientX, y: ev.clientY, tx: t.x, ty: t.y };
+    box.current.setPointerCapture(ev.pointerId);
+  };
+  const move = (ev) => {
+    if (!drag.current) return;
+    setT((p) => ({ ...p, x: drag.current.tx + (ev.clientX - drag.current.x),
+                          y: drag.current.ty + (ev.clientY - drag.current.y) }));
+  };
+  const up = () => { drag.current = null; };
 
   return (
     <figure className="relations">
       <figcaption>
         What acts on what — {rel.length} over {view.ids.length} words, read left to right.
-        Every other edge this vocabulary holds reads better as a sentence than as a line.
+        Drag to move, scroll to zoom. Every other edge this vocabulary holds reads
+        better as a sentence than as a line.
       </figcaption>
-      <div className="scroller">
-      <svg viewBox={vb} width={w} height={h} role="img" aria-label="what acts on what">
-        {view.drawn.map(({ e, d, color }) => (
-          <path key={e.id} d={d} fill="none" stroke={color} strokeWidth="1.4"
-                opacity=".75" markerEnd={`url(#tip)`} />
-        ))}
-        <defs>
-          <marker id="tip" viewBox="0 0 8 8" refX="7" refY="4"
-                  markerWidth="5" markerHeight="5" orient="auto">
-            <path d="M0,1 L7,4 L0,7" fill="none" stroke="currentColor" strokeWidth="1.2" />
-          </marker>
-        </defs>
-        {view.drawn.map(({ e, lx, ly, color, short, full }) => (
-          <text key={`${e.id}t`} x={lx} y={ly} fill={color} textAnchor="middle">
-            {short}<title>{full}</title>
-          </text>
-        ))}
-        {view.ids.map((id) => {
-          const p = view.pos.get(id);
-          const node = g.byId.get(id);
-          if (!p || !node) return null;
-          return (
-            <g key={id} className="n" onClick={() => onPick(node)}>
-              <rect x={p.x - NODE_W / 2} y={p.y - NODE_H / 2}
-                    width={NODE_W} height={NODE_H} rx="5" />
-              <text className="lbl" x={p.x} y={p.y + 4} textAnchor="middle">{node.label}</text>
-            </g>
-          );
-        })}
-      </svg>
+      <div ref={box} className="inset" style={{ height: BOX_H }}
+           onWheel={wheel} onPointerDown={down} onPointerMove={move}
+           onPointerUp={up} onPointerCancel={up}>
+        <svg width="100%" height="100%" role="img" aria-label="what acts on what">
+          <g transform={`translate(${t.x},${t.y}) scale(${t.k})`}>
+            {view.drawn.map(({ e, parts, color }) => (
+              <g key={e.id} style={{ color }}>
+                {parts.map((d, i) => (
+                  <path key={i} d={d} fill="none" stroke={color} strokeWidth="1.6"
+                        strokeLinecap="round"
+                        markerEnd={i === parts.length - 1 ? 'url(#tip)' : undefined} />
+                ))}
+              </g>
+            ))}
+            <defs>
+              <marker id="tip" viewBox="0 0 8 8" refX="7" refY="4"
+                      markerWidth="5.5" markerHeight="5.5" orient="auto">
+                <path d="M0.5,1 L7,4 L0.5,7" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </marker>
+            </defs>
+            {view.drawn.map(({ e, at, short, full, color }) => (
+              <text key={`${e.id}t`} x={at.x} y={at.y + 4} fill={color} textAnchor="middle">
+                {short}<title>{full}</title>
+              </text>
+            ))}
+            {view.ids.map((id) => {
+              const p = view.pos.get(id);
+              const node = g.byId.get(id);
+              if (!p || !node) return null;
+              return (
+                <g key={id} className="n" onClick={() => onPick(node)}>
+                  <rect x={p.x - NODE_W / 2} y={p.y - NODE_H / 2}
+                        width={NODE_W} height={NODE_H} rx="7" />
+                  <text className="lbl" x={p.x} y={p.y + 4} textAnchor="middle">{node.label}</text>
+                </g>
+              );
+            })}
+          </g>
+        </svg>
       </div>
     </figure>
   );

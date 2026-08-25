@@ -70,18 +70,22 @@ code.mono { font-size: .84em; }
 .relations { margin: 2.2rem 0; }
 .relations figcaption { font-size: .78rem; color: var(--dim); line-height: 1.55;
                         max-width: var(--measure); margin-bottom: .4rem; }
-.relations .scroller { overflow-x: auto; padding-bottom: .3rem; }
-.relations svg { display: block; margin: 0 auto; max-width: none; }
+.relations .inset { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
+                    background: var(--panel); cursor: grab; touch-action: none;
+                    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+                    background-size: 20px 20px; }
+.relations .inset:active { cursor: grabbing; }
+.relations svg { display: block; }
 /* the figure is allowed out of the text measure — it is a picture, and a
    picture squeezed to a paragraph's width is a picture nobody can follow */
-.relations { width: min(1240px, 94vw); margin-left: 50%; transform: translateX(-50%); }
+.relations { width: min(1120px, 92vw); margin-left: 50%; transform: translateX(-50%); }
 .relations figcaption { margin-left: auto; margin-right: auto; }
-.relations text { font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+.relations text { font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
                   paint-order: stroke; stroke: var(--bg); stroke-width: 3.5px; stroke-linejoin: round; }
 .relations .n { cursor: pointer; }
-.relations .n rect { fill: var(--panel); stroke: var(--rule); }
+.relations .n rect { fill: var(--bg); stroke: var(--rule); }
 .relations .n:hover rect { stroke: var(--accent); }
-.relations .lbl { fill: var(--ink); stroke: var(--panel); font-weight: 600; }
+.relations .lbl { fill: var(--ink); stroke: none; font-size: 12px; font-weight: 600; }
 .relations path { color: var(--dim); }
 
 /* ── areas ───────────────────────────────────────────────────────────────── */
