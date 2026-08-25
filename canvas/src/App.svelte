@@ -16,7 +16,9 @@
   let focus = $state(null);      // the node the canvas is answering about
   let selected = $state(null);   // what the detail rail is showing
   let authoring = $state(false);
-  let mode = $state('core');   // core | all — see the disclosure note in layout.js
+  const DEPTHS = ['areas', 'core', 'all'];
+  const DEPTH_LABEL = { areas: 'the areas', core: 'the core', all: 'everything' };
+  let mode = $state('areas');   // see the disclosure note in layout.js
   // What each node measured. Collected once per render; the layout uses it on
   // the next pass, which settles immediately because a size does not depend on
   // a position.
@@ -133,11 +135,15 @@
         </button>
         {#if focus}<span class="sep">›</span><span class="crumb on mono">{focus.label}</span>{/if}
         {#if !focus}
-          <button class="mode mono" onclick={() => (mode = mode === 'core' ? 'all' : 'core')}>
-            {mode === 'core' ? 'the core' : 'everything'}
+          <button class="mode mono"
+                  title="how much of the vocabulary to draw"
+                  onclick={() => (mode = DEPTHS[(DEPTHS.indexOf(mode) + 1) % DEPTHS.length])}>
+            {DEPTH_LABEL[mode]}
           </button>
-          {#if mode === 'core' && view.quiet}
-            <span class="quietnote mono">{view.quiet} word(s) in no relation — hidden</span>
+          {#if view.quiet}
+            <span class="quietnote mono">
+              {view.quiet} more word{view.quiet > 1 ? 's' : ''} — in the list, not on the canvas
+            </span>
           {/if}
         {/if}
         {#if graph.proposals?.length}

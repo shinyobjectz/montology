@@ -92,20 +92,28 @@ export function focusLayout(graph, focusId, measured) {
   return { pos, shown: seen };
 }
 
-/** The overview: the SHAPE of the vocabulary, not all of it.
+/** The overview, at three depths. The default is the shallowest, on purpose.
  *
  *  Drawing all 192 of qubie's nodes produced a hairball that taught nobody
- *  anything — 35 of its 110 words connect to nothing at all and only 16 have
- *  more than two edges, so "everything" is mostly disconnected dots around a
- *  small core that they hide.
+ *  anything. Laying it out perfectly did not help: 118 nodes at 34% zoom is not
+ *  a comprehension aid however tidy it is. The problem was never the layout, it
+ *  was answering "show me the ontology" with "here is all of it".
  *
- *  This is montology's own disclosure doctrine, which the words skill already
- *  follows and this view did not: the resident surface is a ROUTING TABLE, not
- *  the vocabulary. So the default is the core — the groups, and the flat words
- *  that are actually in a relation — and what is left out is COUNTED and said,
- *  never silently dropped. `all` is one click away for when you want it.
+ *  This is montology's own disclosure doctrine, which the words skill follows
+ *  and this view did not: the resident surface is a ROUTING TABLE, not the
+ *  vocabulary. So —
+ *
+ *    areas       the words that OWN other words, and what they own. qubie: 12
+ *                areas over 45 words, and they are the architecture — engram,
+ *                orchestration, inference, core-loop, surface, brain. This is
+ *                what someone opening the repo needs first.
+ *    core        + the flat words that are in some relation.
+ *    everything  + the 35 that connect to nothing.
+ *
+ *  What each depth leaves out is COUNTED and said in the header. A view that
+ *  hides things silently is worse than one that shows too much.
  */
-export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'core' } = {}) {
+export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'areas' } = {}) {
   const words = graph.nodes.filter((n) => n.kind === 'word');
   const kids = new Map();
   for (const w of words) {
@@ -128,9 +136,11 @@ export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'c
   }
 
   const grouped = tops.filter((t) => (kids.get(t.label) || []).length);
-  let flat = tops.filter((t) => !(kids.get(t.label) || []).length);
-  const quiet = mode === 'core' ? flat.filter((w) => !related.has(w.id)) : [];
-  if (mode === 'core') flat = flat.filter((w) => related.has(w.id));
+  const allFlat = tops.filter((t) => !(kids.get(t.label) || []).length);
+  const flat = mode === 'areas' ? []
+    : mode === 'core' ? allFlat.filter((w) => related.has(w.id))
+    : allFlat;
+  const quiet = allFlat.length - flat.length;
 
   const COL_W = NODE_GAP_X + 3 * (240 + NODE_GAP_X);
   const SAT = 240 + NODE_GAP_X;
@@ -208,5 +218,5 @@ export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'c
     place(node, x, claim(x, at.y, nodeHeight(node, measured)));
   }
 
-  return { pos, shown, quiet: quiet.length };
+  return { pos, shown, quiet };
 }
