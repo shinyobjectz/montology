@@ -70,13 +70,19 @@ code.mono { font-size: .84em; }
 .relations { margin: 2.2rem 0; }
 .relations figcaption { font-size: .78rem; color: var(--dim); line-height: 1.55;
                         max-width: var(--measure); margin-bottom: .4rem; }
-.relations svg { width: 100%; max-width: 640px; height: auto; display: block; }
-.relations text { font: 600 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+.relations .scroller { overflow-x: auto; padding-bottom: .3rem; }
+.relations svg { display: block; margin: 0 auto; max-width: none; }
+/* the figure is allowed out of the text measure — it is a picture, and a
+   picture squeezed to a paragraph's width is a picture nobody can follow */
+.relations { width: min(1240px, 94vw); margin-left: 50%; transform: translateX(-50%); }
+.relations figcaption { margin-left: auto; margin-right: auto; }
+.relations text { font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace;
                   paint-order: stroke; stroke: var(--bg); stroke-width: 3.5px; stroke-linejoin: round; }
 .relations .n { cursor: pointer; }
 .relations .n rect { fill: var(--panel); stroke: var(--rule); }
 .relations .n:hover rect { stroke: var(--accent); }
-.relations .lbl { fill: var(--ink); stroke: var(--panel); }
+.relations .lbl { fill: var(--ink); stroke: var(--panel); font-weight: 600; }
+.relations path { color: var(--dim); }
 
 /* ── areas ───────────────────────────────────────────────────────────────── */
 .areas { display: flex; flex-wrap: wrap; gap: .3rem; margin: 2rem 0 .5rem;
