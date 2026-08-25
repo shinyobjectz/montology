@@ -1,6 +1,6 @@
 ---
 id: mon-cx1a
-status: open
+status: in_progress
 deps: [mon-mamk]
 links: []
 created: 2026-08-25T19:38:08Z

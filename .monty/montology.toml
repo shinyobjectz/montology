@@ -12,3 +12,15 @@ collisions = "enforce"  # the socialite culture — strangers default to advisor
 # the words — see EXCEPTIONS in .monty/onto/src/montology_ontology/seed.py —
 # and read with `monty onto except`. This list is the old reasonless form.
 allow = []
+
+# WHAT THE SCAN MUST NOT READ. The canvas bundle is GENERATED, minified build
+# output — its identifiers are the compiler's, not ours, and a minifier will
+# happily name a method after any word we have. The sources it is built from
+# (canvas/src) ARE read, which is where a real collision would live. Generated
+# output is not vocabulary, for the same reason vendors are not.
+exclude = [
+  ".monty/canvas/src/montology_canvas/static/**",
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/*.min.js",
+]

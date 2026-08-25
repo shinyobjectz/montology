@@ -144,3 +144,39 @@ def test_drift_measures_history(tmp_path):
     assert rows[0]["colors"] == 0 and rows[1]["colors"] == 2
     out = "\n".join(render_drift(rows))
     assert "drift:" in out and "lexicon 1" in out
+
+
+def test_exclude_matches_the_globs_it_documents(tmp_path, monkeypatch):
+    """Every workspace writes `exclude` in globs — `**/dist/**`, `_archive/**`
+    — and for a long time only a BARE NAME did anything, so every glob matched
+    nothing. The worst way for a filter to fail: the scan reported a confident
+    count over files nobody meant to include. qubie's config claimed to drop
+    2,159 vendor declarations and dropped none of them.
+    """
+    from montology_scan.surface import _iter_files
+
+    (tmp_path / ".monty").mkdir()
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "real.py").write_text("class Real: pass")
+    (tmp_path / "build" / "dist").mkdir(parents=True)
+    (tmp_path / "build" / "dist" / "bundle.py").write_text("class Bundled: pass")
+    (tmp_path / "_archive").mkdir()
+    (tmp_path / "_archive" / "old.py").write_text("class Old: pass")
+    (tmp_path / "vendored.min.js").write_text("var a=1")
+    (tmp_path / ".monty" / "montology.toml").write_text(
+        'name = "t"\n[scan]\nexclude = ["**/dist/**", "_archive/**", "**/*.min.js"]\n')
+
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    got = {p.name for p in _iter_files(tmp_path)}
+    assert got == {"real.py"}
+
+
+def test_no_exclude_reads_everything(tmp_path, monkeypatch):
+    from montology_scan.surface import _iter_files
+
+    (tmp_path / ".monty").mkdir()
+    (tmp_path / "a.py").write_text("class A: pass")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "b.py").write_text("class B: pass")
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    assert {p.name for p in _iter_files(tmp_path)} == {"a.py", "b.py"}

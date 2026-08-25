@@ -8,6 +8,7 @@ would read as "covered" when it was not.
 
 from __future__ import annotations
 
+from fnmatch import fnmatch
 from pathlib import Path
 
 # extension -> tree-sitter-language-pack language name
@@ -158,9 +159,35 @@ def _scan_config(root: Path) -> dict:
         return {}
 
 
+def _excluded(rel: Path, name: str, patterns: list[str]) -> bool:
+    """Does this path match anything the workspace asked us not to read?
+
+    Matched as a GLOB against the path from the root, and as a bare name, and
+    against every parent directory of the path. All three, because the config
+    is written in globs — `**/dist/**`, `_archive/**` — and for a long time
+    only the bare-name form did anything. Every glob in every workspace
+    silently matched nothing, which is the worst way for a filter to fail: the
+    scan reported a confident count over files nobody meant to include.
+    """
+    text = str(rel)
+    for pattern in patterns:
+        # `**/*.min.js` must also match a .min.js sitting at the root: fnmatch
+        # reads the `/` literally, so the anchored form alone never fires there.
+        loose = pattern[3:] if pattern.startswith("**/") else pattern
+        if (fnmatch(text, pattern) or fnmatch(name, pattern)
+                or fnmatch(text, loose) or fnmatch(name, loose)):
+            return True
+        # `**/dist/**` should exclude the directory itself, not only what is
+        # under it — otherwise the walk descends before the pattern can bite.
+        bare = pattern.strip("*/")
+        if bare and bare in rel.parts:
+            return True
+    return False
+
+
 def _iter_files(root: Path) -> list[Path]:
     cfg = _scan_config(root)
-    exclude = EXCLUDE_DIRS | set(cfg.get("exclude", []))
+    patterns = list(cfg.get("exclude", []))
     out: list[Path] = []
     stack = [root] + [root / inc for inc in cfg.get("include", [])
                       if (root / inc).is_dir()]
@@ -171,7 +198,13 @@ def _iter_files(root: Path) -> list[Path]:
         except OSError:
             continue
         for e in entries:
-            if e.name in exclude or e.name.startswith("."):
+            if e.name in EXCLUDE_DIRS or e.name.startswith("."):
+                continue
+            try:
+                rel = e.relative_to(root)
+            except ValueError:
+                continue
+            if _excluded(rel, e.name, patterns):
                 continue
             if e.is_dir():
                 stack.append(e)
