@@ -237,6 +237,16 @@ CREATE TABLE IF NOT EXISTS change (
   PRIMARY KEY (proposal_id, ord)
 );
 
+CREATE TABLE IF NOT EXISTS relation (
+  subject     TEXT NOT NULL,          -- a word: the thing that acts
+  verb        TEXT NOT NULL,          -- what it does — ideally a word itself
+  object      TEXT NOT NULL,          -- a word: the thing acted on
+  why         TEXT,
+  at          TEXT,                   -- file:line, where the code does it
+  origin      TEXT,
+  PRIMARY KEY (subject, verb, object)
+);
+
 CREATE TABLE IF NOT EXISTS genus (
   word_name   TEXT NOT NULL,          -- the word that is a kind of something
   genus_name  TEXT NOT NULL,          -- the more general word it is a kind of

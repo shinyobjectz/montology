@@ -30,6 +30,9 @@ WORDS = [
     ("collision", "core", "scan", "scan.collision",
      "a declaration named after a word that means something else — the failure scan exists to catch",
      "where code and vocabulary disagree"),
+    ("relation", "core", "ontology", "onto.relation",
+     "one word doing something to another, authored rather than mined — the ontology's own graph, which no amount of reading code will produce because code holds an implementation and not an ontology",
+     "what acts on what"),
     ("act", "core", "scan", "scan.act",
      "one thing the code does, read off the tree: a subject, a verb and an object at a place — the half of a codebase that declarations cannot see",
      "what the code does, not what it declares"),
@@ -122,6 +125,7 @@ WORDS = [
 POS_OF = {
     "ontology": "noun", "word": "noun", "code": "value", "doctrine": "noun",
     "scan": "noun", "collision": "noun", "candidate": "noun", "act": "noun",
+    "relation": "noun",
     "workspace": "noun", "migration": "noun", "ruling": "noun",
     "amendment": "noun", "token": "noun", "recipe": "noun", "drift": "noun",
     "vitals": "noun", "convergence": "noun", "sync": "verb",
@@ -194,6 +198,34 @@ RIGIDITY_OF = {
     "candidate": "anti-rigid", "phantom": "anti-rigid",
 }
 
+# The noun-verb-noun graph, AUTHORED. This is the one thing montology does not
+# mine, and the reason is measured: in qubie, a call whose receiver and argument
+# are both words occurs zero times, and typed fields forming one occur once. The
+# relations are not in the code to find — Palantir declares link types by hand
+# and DTDL writes relationships into the model, for exactly this reason.
+#
+# The verbs here are mostly NOT words, and that is the finding rather than an
+# oversight: the verbs are the half of a vocabulary that goes unnamed.
+RELATIONS = [
+    ("ontology", "holds", "word", "the vocabulary is what the database is FOR"),
+    ("ontology", "holds", "doctrine", "a decision written down is part of the vocabulary"),
+    ("ontology", "holds", "ruling", "an overload, a collision or a rename"),
+    ("scan", "finds", "candidate", "a recurring declared name with no word"),
+    ("scan", "catches", "collision", "the failure the gate exists for"),
+    ("scan", "measures", "act", "what the code does, read off the tree"),
+    ("scan", "reads", "surface", "what a dependency exposes"),
+    ("surface", "meets", "seam", "one point where two surfaces touch"),
+    ("sync", "renders", "glossary", "prose is output, never source"),
+    ("disclosure", "ranks", "gist", "what a resident page carries when the whole will not fit"),
+    ("intake", "asks", "question", "the questions a workspace starts with"),
+    ("coverage", "checks", "question", "both ways: a hole, and vocabulary nobody asked for"),
+    ("proposal", "changes", "word", "a set of intents, reviewed before it lands"),
+    ("proposal", "carries", "intent", "stored as intents, not as a second vocabulary"),
+    ("genus", "inherits", "ruling", "a word gets its genus's rulings — the reason it gates"),
+    ("exception", "permits", "collision", "a symbol may share a name, here, for this reason"),
+    ("migration", "propagates", "word", "a rename carried through the code by token"),
+]
+
 # What montology's vocabulary is ANSWERABLE TO. Written as the questions a
 # person actually arrives with — not as a summary of the words, which would
 # make the coverage check circular and therefore worthless.
@@ -208,6 +240,7 @@ QUESTIONS = [
      ["candidate", "scan", "collision", "divergence"]),
     ("What does the code DO to the things we name, and do we name any of it?",
      ["act"]),
+    ("What acts on what, in this system?", ["relation"]),
     ("Is the generated prose still true of the database it claims to render?",
      ["sync", "drift", "glossary"]),
     ("How much of the vocabulary does an agent carry on every single turn?",
@@ -332,6 +365,9 @@ def seed() -> str:
         )
     for name, value in RIGIDITY_OF.items():
         conn.execute("UPDATE word SET rigidity=? WHERE lower(name)=?", (value, name))
+    for subject, verb, obj, why in RELATIONS:
+        conn.execute("INSERT OR REPLACE INTO relation (subject, verb, object, why) "
+                     "VALUES (?,?,?,?)", (subject, verb, obj, why))
     for text, by in QUESTIONS:
         qid = _question_id(text)
         conn.execute("INSERT OR IGNORE INTO question (id, text, asked_in, asked_at) "
@@ -345,4 +381,5 @@ def seed() -> str:
     conn.commit()
     return (f"seeded {len(WORDS)} words, {len(DOCTRINE)} doctrine blocks, "
             f"{len(EXCEPTIONS)} exceptions, {len(GENERA)} genus, "
-            f"{len(RIGIDITY_OF)} rigidity judgements, {len(QUESTIONS)} questions")
+            f"{len(RIGIDITY_OF)} rigidity judgements, {len(QUESTIONS)} questions, "
+            f"{len(RELATIONS)} relations")

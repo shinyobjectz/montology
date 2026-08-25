@@ -217,8 +217,8 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
     """
     from montology_core import workspace_root
     from montology_ontology import (collisions, doctrines, exceptions, genera,
-                                    overloads, questions, renames, routes,
-                                    tokens, words)
+                                    overloads, questions, relations, renames,
+                                    routes, tokens, words)
 
     root = root or workspace_root()
     vocab = words()
@@ -235,6 +235,17 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                "label": "is a kind of", "data": {"why": g.get("why"), "gates": True}}
               for g in genera()
               if g["word_name"] in live and g["genus_name"] in live]
+
+    # The ontology's own noun-verb-noun graph — the only edges here that were
+    # AUTHORED rather than mined or ruled, which is why they carry a why and
+    # survive a refactor.
+    edges += [{"id": f"relation:{r['subject']}:{r['verb']}:{r['object']}",
+               "kind": "relation", "source": f"word:{r['subject']}",
+               "target": f"word:{r['object']}", "label": r["verb"],
+               "data": {"verb": r["verb"], "why": r.get("why"), "at": r.get("at"),
+                        "authored": True}}
+              for r in relations()
+              if r["subject"] in {w.lower() for w in live} and r["object"] in {w.lower() for w in live}]
 
     term_nodes, term_edges = _term_edges(routes(), renames(), overloads(), live)
     nodes += term_nodes
@@ -269,7 +280,7 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                       "data": {"category": t["category"], "value": t["value"]}})
 
     # ── the code side ────────────────────────────────────────────────────────
-    stats = {"words": len(vocab), "genus": len(genera()),
+    stats = {"words": len(vocab), "relations": len(relations()), "genus": len(genera()),
              "questions": len(questions()), "rulings": len(ruling_nodes),
              "terms": len(term_nodes), "doctrine": len(doctrines()),
              "tokens": len(tokens())}

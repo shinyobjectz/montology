@@ -16,9 +16,10 @@
   let focus = $state(null);      // the node the canvas is answering about
   let selected = $state(null);   // what the detail rail is showing
   let authoring = $state(false);
-  const DEPTHS = ['areas', 'core', 'all'];
-  const DEPTH_LABEL = { areas: 'the areas', core: 'the core', all: 'everything' };
-  let mode = $state('areas');   // see the disclosure note in layout.js
+  const DEPTHS = ['graph', 'areas', 'core', 'all'];
+  const DEPTH_LABEL = { graph: 'the graph', areas: 'the areas',
+                        core: 'the core', all: 'everything' };
+  let mode = $state('graph');   // see the disclosure note in layout.js
   // What each node measured. Collected once per render; the layout uses it on
   // the next pass, which settles immediately because a size does not depend on
   // a position.
@@ -140,9 +141,14 @@
                   onclick={() => (mode = DEPTHS[(DEPTHS.indexOf(mode) + 1) % DEPTHS.length])}>
             {DEPTH_LABEL[mode]}
           </button>
-          {#if view.quiet}
+          {#if view.empty}
             <span class="quietnote mono">
-              {view.quiet} more word{view.quiet > 1 ? 's' : ''} — in the list, not on the canvas
+              no relations yet — `monty onto relations --drafts` reads what the code suggests
+            </span>
+          {:else if view.quiet}
+            <span class="quietnote mono">
+              {view.quiet} more word{view.quiet > 1 ? 's' : ''} —
+              {mode === 'graph' ? 'in no relation' : 'in the list, not on the canvas'}
             </span>
           {/if}
         {/if}
@@ -261,8 +267,10 @@
   .vitals .bad b { color: var(--term); }
   .wires { position: absolute; left: calc(var(--span) * -1px); top: calc(var(--span) * -1px);
            pointer-events: none; }
-  .wirelabel { font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
-               paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  /* in the graph view the verb IS the content — a 9px label that needs zooming
+     to read makes the edges decorative, which is the opposite of the point */
+  .wirelabel { font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+               paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
   .loading, .error { padding: 1.4rem; font-size: .78rem; color: var(--dim); }
   .error { color: var(--term); }
 </style>

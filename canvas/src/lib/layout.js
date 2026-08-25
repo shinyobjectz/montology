@@ -114,6 +114,10 @@ export function focusLayout(graph, focusId, measured) {
  *  hides things silently is worse than one that shows too much.
  */
 export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'areas' } = {}) {
+  // `graph` mode is the ontology in the sense everyone else means it: nouns,
+  // and edges that are verbs. Only words that are IN a relation, so the view is
+  // the graph and nothing else.
+  if (mode === 'graph') return relationLayout(graph, measured);
   const words = graph.nodes.filter((n) => n.kind === 'word');
   const kids = new Map();
   for (const w of words) {
@@ -219,4 +223,42 @@ export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'a
   }
 
   return { pos, shown, quiet };
+}
+
+
+/** Nouns, and verbs between them. The view everyone means by "an ontology".
+ *
+ *  Laid out in rings around the busiest subject rather than in columns: this
+ *  graph is a real network — small, but a network — and columns are for trees.
+ */
+function relationLayout(graph, measured) {
+  const rel = graph.edges.filter((e) => e.kind === 'relation' || e.kind === 'act');
+  const degree = new Map();
+  for (const e of rel) {
+    degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
+    degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
+  }
+  const ids = [...degree.keys()].sort((a, b) => degree.get(b) - degree.get(a));
+  const pos = new Map();
+  const shown = new Set();
+  if (!ids.length) return { pos, shown, quiet: 0, empty: true };
+
+  // busiest in the middle, the rest on rings around it — placed by rule, so
+  // the same graph draws the same way every time
+  const R = [0, 420, 760, 1080];
+  let i = 0;
+  for (let ring = 0; ring < R.length && i < ids.length; ring++) {
+    const room = ring === 0 ? 1 : Math.max(6, Math.floor((2 * Math.PI * R[ring]) / 300));
+    const here = ids.slice(i, i + room);
+    here.forEach((id, k) => {
+      const a = (2 * Math.PI * k) / here.length - Math.PI / 2;
+      pos.set(id, ring === 0 ? { x: 0, y: 0 }
+                             : { x: Math.round(Math.cos(a) * R[ring]),
+                                 y: Math.round(Math.sin(a) * R[ring] * 0.72) });
+      shown.add(id);
+    });
+    i += here.length;
+  }
+  const words = graph.nodes.filter((n) => n.kind === 'word').length;
+  return { pos, shown, quiet: words - shown.size };
 }

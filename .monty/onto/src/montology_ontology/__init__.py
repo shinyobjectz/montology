@@ -9,6 +9,8 @@ from .db import (POS, RIGIDITY, TREE_WIDE, add, amend, amendments, check,
 from .proposals import (changes, close as close_proposal, decide, merge,
                         preview, proposals, propose)
 from .questions import answer, ask, coverage, harvest, questions
+from .relations import drafts as relation_drafts_from_code
+from .relations import relate, relations, render_drafts, unrelate
 from .intents import apply as apply_intent
 from .intents import catalogue as intent_catalogue
 from .chains import analyse as route_analyse
@@ -19,7 +21,8 @@ from .semantics import near_pairs
 from .semantics import similar as semantic_similar
 from .upstream import pinned_upstream, pull
 
-__all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "answer", "apply_intent", "ask", "changes", "coverage", "harvest", "questions", "close_proposal", "decide", "intent_catalogue",
+__all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "answer", "apply_intent", "ask", "relate", "relations", "unrelate",
+           "relation_drafts_from_code", "render_drafts", "changes", "coverage", "harvest", "questions", "close_proposal", "decide", "intent_catalogue",
            "merge", "preview", "proposals", "propose", "amend", "amendments", "check", "collide", "collisions", "connect", "db_path",
            "doctrines", "except_add", "except_drop", "exceptions", "genera", "genus_add", "genus_chain",
            "genus_drop", "inherited", "rigidity_set",

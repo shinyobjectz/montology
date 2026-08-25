@@ -647,6 +647,46 @@ def onto_close(pid: str) -> None:
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("relate")
+def onto_relate(subject: str, verb: str, object: str,
+                why: str = typer.Option("", "--why"),
+                drop: bool = typer.Option(False, "--drop")) -> None:
+    """Say that one word DOES something to another — the ontology's own graph.
+
+    This is the one thing montology does not mine. Palantir's link types are
+    declared by a person and DTDL's relationships are written into the model;
+    nobody finds them in code, because code holds an implementation and not an
+    ontology. `monty onto relations --drafts` shows what the scan suggests.
+    """
+    from montology_ontology import relate, unrelate
+
+    line = unrelate(subject, verb, object) if drop else relate(subject, verb, object, why=why or None)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("relations")
+def onto_relations(
+    drafts: bool = typer.Option(False, "--drafts", help="What the code suggests, unconfirmed."),
+    word: str = typer.Argument("", help="Only relations touching this word."),
+) -> None:
+    """The noun-verb-noun graph: what acts on what."""
+    from montology_ontology import relations, render_drafts
+
+    from ._ui import emit_all
+
+    if drafts:
+        emit_all(render_drafts())
+        raise typer.Exit(0)
+    rows = relations(word or None)
+    if not rows:
+        typer.echo("no relations yet — `monty onto relations --drafts` reads what "
+                   "the code suggests, and `monty onto relate A verb B` records one.")
+        raise typer.Exit(0)
+    emit_all([f"  {r['subject']} --{r['verb']}--> {r['object']}"
+              + (f"   ({r['why']})" if r["why"] else "") for r in rows])
+
+
 @onto_app.command("verbs")
 def onto_verbs(top: int = typer.Option(15, "--top", help="How many words to report.")) -> None:
     """What the code DOES to the things this vocabulary names — and does not name.

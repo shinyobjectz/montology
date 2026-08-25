@@ -27,6 +27,7 @@ def _intents() -> dict[str, tuple[Callable, tuple[str, ...], tuple[str, ...]]]:
     """
     from .db import (add, amend, collide, except_add, genus_add, rename_word,
                      rigidity_set, route_add, rule, token_add)
+    from .relations import relate
 
     return {
         "word.add":        (add,          ("name", "definition"),
@@ -41,6 +42,7 @@ def _intents() -> dict[str, tuple[Callable, tuple[str, ...], tuple[str, ...]]]:
         "route.add":       (route_add,    ("from_term", "to_word"),
                             ("register", "scope", "why")),
         "genus.add":       (genus_add,    ("word", "genus"), ("why",)),
+        "relation.add":    (relate,       ("subject", "verb", "object"), ("why", "at")),
         "rigidity.set":    (rigidity_set, ("word", "value"), ()),
         "token.add":       (token_add,    ("name", "category", "value"), ("note",)),
     }
