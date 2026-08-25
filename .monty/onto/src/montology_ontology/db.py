@@ -204,6 +204,26 @@ CREATE TABLE IF NOT EXISTS seam (
   PRIMARY KEY (from_id, to_id, kind, at)
 );
 
+CREATE TABLE IF NOT EXISTS proposal (
+  id          TEXT PRIMARY KEY,       -- short, quotable in a review
+  title       TEXT NOT NULL,
+  why         TEXT,                   -- the case for the change
+  author      TEXT,
+  status      TEXT NOT NULL,          -- open | merged | closed
+  opened_at   TEXT,
+  merged_at   TEXT
+);
+
+CREATE TABLE IF NOT EXISTS change (
+  proposal_id TEXT NOT NULL,
+  ord         INTEGER NOT NULL,
+  intent      TEXT NOT NULL,          -- word.add, route.add — an intent, never SQL
+  fields      TEXT NOT NULL,          -- JSON: what that intent takes
+  verdict     TEXT,                   -- approved | rejected | NULL (undecided)
+  note        TEXT,
+  PRIMARY KEY (proposal_id, ord)
+);
+
 CREATE TABLE IF NOT EXISTS genus (
   word_name   TEXT NOT NULL,          -- the word that is a kind of something
   genus_name  TEXT NOT NULL,          -- the more general word it is a kind of

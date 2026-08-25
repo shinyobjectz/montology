@@ -19,6 +19,8 @@
 
 <button
   class="node {node.kind}" class:focused class:selected
+  class:proposed={d.proposed} class:rejected={d.verdict === 'rejected'}
+  class:approved={d.verdict === 'approved'}
   style="--c:{look.color}"
   onclick={() => onpick?.(node)}
   title={d.definition ?? d.why ?? d.body ?? node.label}
@@ -26,6 +28,9 @@
   <span class="glyph mono" aria-hidden="true">{look.glyph}</span>
   <span class="body">
     <span class="label mono">{node.label}</span>
+    {#if d.proposed}
+      <span class="prop">proposed · {d.verdict ?? 'undecided'}</span>
+    {/if}
     {#if d.word_kind}<span class="sub">{d.word_kind}{d.pos ? ` · ${d.pos}` : ''}</span>{/if}
     {#if node.kind === 'ruling'}<span class="sub">{d.ruling_kind}</span>{/if}
     {#if node.kind === 'surface'}<span class="sub">{d.surface_kind}</span>{/if}
@@ -58,5 +63,11 @@
   .marks { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .15rem; }
   .mark { font-size: .6rem; padding: 0 .3rem; border-radius: 3px; border: 1px solid var(--line); color: var(--dim); }
   .mark.bad { color: var(--term); border-color: color-mix(in oklab, var(--term) 40%, transparent); }
+  /* not there yet, and never mistakable for something that is */
+  .node.proposed { border-style: dashed; background: transparent; }
+  .node.proposed .label { opacity: .85; }
+  .node.approved { border-left-color: var(--surface); }
+  .node.rejected { opacity: .45; text-decoration: line-through; }
+  .prop { font-size: .58rem; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
   .mark.ok { color: var(--surface); border-color: color-mix(in oklab, var(--surface) 40%, transparent); }
 </style>

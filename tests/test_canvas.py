@@ -264,7 +264,7 @@ def test_serving_without_a_bundle_says_how_to_get_one(ws, onto_db, monkeypatch):
 def test_every_intent_names_a_function_the_cli_already_calls(ws, onto_db):
     """THE CANVAS HAS NO SQL. If an intent could do something no CLI command
     can, there would be two gates, and the second would drift from the first."""
-    from montology_canvas.intents import _intents, catalogue
+    from montology_ontology.intents import _intents, catalogue
 
     for name, (fn, required, _) in _intents().items():
         assert callable(fn), name
@@ -275,7 +275,7 @@ def test_every_intent_names_a_function_the_cli_already_calls(ws, onto_db):
 def test_a_refusal_comes_back_in_the_engine_s_own_words(ws, onto_db):
     """Errors are data with the repair attached — that already works, and
     re-wording it in the browser would be a second gate."""
-    from montology_canvas.intents import apply
+    from montology_ontology.intents import apply
 
     onto_db.add("cell", "the box a run executes in", kind="core", pos="noun")
     got = apply("word.add", {"name": "cell", "definition": "something else entirely"})
@@ -287,7 +287,7 @@ def test_a_refusal_comes_back_in_the_engine_s_own_words(ws, onto_db):
 def test_the_laws_apply_identically_whichever_face_was_used(ws, onto_db):
     """A word authored on the canvas must be indistinguishable in the database
     from the same word authored at the CLI."""
-    from montology_canvas.intents import apply
+    from montology_ontology.intents import apply
     from montology_ontology import words
 
     apply("word.add", {"name": "dossier", "definition": "what a run hands back",
@@ -301,7 +301,7 @@ def test_the_laws_apply_identically_whichever_face_was_used(ws, onto_db):
 
 
 def test_an_unknown_intent_is_refused_with_the_known_ones(ws, onto_db):
-    from montology_canvas.intents import apply
+    from montology_ontology.intents import apply
 
     got = apply("word.delete", {"name": "cell"})
     assert got["ok"] is False and "not an intent" in got["line"]
@@ -309,7 +309,7 @@ def test_an_unknown_intent_is_refused_with_the_known_ones(ws, onto_db):
 
 
 def test_a_missing_required_field_never_reaches_the_engine(ws, onto_db):
-    from montology_canvas.intents import apply
+    from montology_ontology.intents import apply
 
     got = apply("route.add", {"from_term": "output"})
     assert got["ok"] is False and "to_word" in got["line"]

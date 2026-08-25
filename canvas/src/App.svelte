@@ -16,9 +16,10 @@
   let focus = $state(null);      // the node the canvas is answering about
   let selected = $state(null);   // what the detail rail is showing
   let authoring = $state(false);
+  let proposal = $state('');   // reviewing: the canvas shows what WOULD be
 
   function load() {
-    return fetch('./api/graph')
+    return fetch('./api/graph' + (proposal ? `?proposal=${encodeURIComponent(proposal)}` : ''))
       .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e.error ?? r.statusText))))
       .then((g) => {
         graph = index(g);
@@ -29,7 +30,7 @@
       .catch((e) => { error = String(e); });
   }
 
-  $effect(() => { load(); });
+  $effect(() => { proposal; load(); });
 
   const view = $derived.by(() => {
     if (!graph) return { pos: new Map(), shown: new Set() };
@@ -93,6 +94,14 @@
           all {graph.stats.words} words
         </button>
         {#if focus}<span class="sep">›</span><span class="crumb on mono">{focus.label}</span>{/if}
+        {#if graph.proposals?.length}
+          <select class="pick mono" bind:value={proposal}>
+            <option value="">the vocabulary as it is</option>
+            {#each graph.proposals as p}
+              <option value={p.id}>reviewing {p.id} — {p.title}</option>
+            {/each}
+          </select>
+        {/if}
         <button class="author mono" class:on={authoring}
                 onclick={() => (authoring = !authoring)}>{authoring ? '× close' : '+ author'}</button>
         <span class="vitals mono">
@@ -119,7 +128,9 @@
               {@const look = edgeLook(e)}
               <path d={elbow(view.pos.get(e.source), view.pos.get(e.target), lane.get(e.id))}
                     fill="none" stroke={look.color} stroke-width={look.width}
-                    stroke-dasharray={look.dash} opacity={look.opacity}
+                    stroke-dasharray={e.data?.proposed ? '6 4' : look.dash}
+                    opacity={e.data?.verdict === 'rejected' ? 0.25
+                             : e.data?.proposed ? 0.8 : look.opacity}
                     marker-end={e.kind === 'contains' ? null : `url(#a-${e.kind})`} />
             {/each}
             <!-- A route's REGISTER is the thing that makes it enforceable, so it
@@ -175,6 +186,8 @@
   .crumb { font-size: .72rem; background: none; border: 0; color: var(--dim); cursor: pointer; padding: 0; }
   .crumb.on { color: var(--ink); font-weight: 600; }
   .sep { color: var(--dim); font-size: .72rem; }
+  .pick { font-size: .66rem; margin-left: .6rem; max-width: 260px; padding: .05rem .25rem;
+          border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
   .author { font-size: .68rem; margin-left: .6rem; padding: .1rem .4rem; cursor: pointer;
             border-radius: 4px; border: 1px solid var(--line); background: none; color: var(--dim); }
   .author.on { color: var(--accent); border-color: var(--accent); }

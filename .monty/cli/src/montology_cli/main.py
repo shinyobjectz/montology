@@ -463,6 +463,119 @@ def onto_route(
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("propose")
+def onto_propose(
+    title: str = typer.Argument(..., help="What this proposal is for."),
+    change: list[str] = typer.Option([], "--change", help="intent=JSON, e.g. word.add={\"name\":\"cell\",\"definition\":\"…\"}"),
+    why: str = typer.Option("", "--why", help="The case for the change."),
+    author: str = typer.Option("", "--author"),
+) -> None:
+    """Open a proposal: a set of changes to be reviewed before it lands."""
+    import json as _json
+
+    from montology_ontology import propose
+
+    parsed = []
+    for spec in change:
+        intent, _, blob = spec.partition("=")
+        try:
+            parsed.append({"intent": intent.strip(), "fields": _json.loads(blob or "{}")})
+        except ValueError as e:
+            typer.echo(f"REFUSED — {intent!r}: the fields are JSON ({e})")
+            raise typer.Exit(1) from None
+    line = propose(title, parsed, why=why, author=author)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("proposals")
+def onto_proposals(status: str = typer.Argument("", help="open | merged | closed")) -> None:
+    """Every proposal, newest first."""
+    from montology_ontology import changes, proposals
+
+    from ._ui import emit_all
+
+    rows = proposals(status or None)
+    if not rows:
+        typer.echo("no proposals — `monty onto propose \"title\" --change intent=JSON`.")
+        raise typer.Exit(0)
+    lines = []
+    for r in rows:
+        cs = changes(r["id"])
+        undecided = sum(1 for c in cs if not c["verdict"])
+        lines.append(f"  {r['id']}  [{r['status']}]  {r['title']}  "
+                     f"({len(cs)} change(s)"
+                     + (f", {undecided} undecided" if undecided else "") + ")")
+    emit_all(lines)
+
+
+@onto_app.command("show")
+def onto_show(pid: str) -> None:
+    """One proposal: its changes, their verdicts, and what it would break."""
+    import json as _json
+
+    from montology_ontology import changes, preview, proposals
+
+    from ._ui import emit_all
+
+    row = next((p for p in proposals() if p["id"] == pid), None)
+    if not row:
+        typer.echo(f"REFUSED — no proposal {pid!r}.")
+        raise typer.Exit(1)
+
+    lines = [f"{row['id']}  [{row['status']}]  {row['title']}"]
+    if row["why"]:
+        lines += ["", f"  {row['why']}"]
+    lines.append("")
+    for c in changes(pid):
+        mark = {"approved": "✓", "rejected": "✗"}.get(c["verdict"], "·")
+        lines.append(f"  {mark} #{c['ord']}  {c['intent']}")
+        for k, v in sorted(c["fields"].items()):
+            lines.append(f"        {k}: {v}")
+    seen = preview(pid)
+    lines.append("")
+    if seen["new"]:
+        lines.append("  NEWLY RAISED by this merge:")
+        lines += [f"    {line}" for line in seen["new"]]
+    for r in seen.get("refused", []):
+        lines.append(f"    {r['line']}")
+    lines.append("  the gate holds after this merge" if seen["ok"]
+                 else "  THE GATE WOULD FAIL — this cannot merge as it stands")
+    emit_all(lines)
+
+
+@onto_app.command("decide")
+def onto_decide(pid: str, ord_: int = typer.Argument(..., metavar="N"),
+                verdict: str = typer.Argument(..., help="approved | rejected"),
+                note: str = typer.Option("", "--note")) -> None:
+    """Approve or reject ONE change — a good rename should not sink with a bad definition."""
+    from montology_ontology import decide
+
+    line = decide(pid, ord_, verdict, note)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("merge")
+def onto_merge(pid: str) -> None:
+    """Replay the approved changes — refused while the gate would fail."""
+    from montology_ontology import merge
+
+    line = merge(pid)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("close")
+def onto_close(pid: str) -> None:
+    """Close a proposal without merging it."""
+    from montology_ontology import close_proposal
+
+    line = close_proposal(pid)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
 @onto_app.command("review")
 def onto_review(
     threshold: float = typer.Option(0.70, "--threshold", help="Cosine above which two meanings count as one."),

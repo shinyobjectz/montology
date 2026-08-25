@@ -160,8 +160,55 @@ def _code_facts(vocab: list[dict], decls: list[dict], granted: list[dict],
     return facts
 
 
+def _ghosts(pid: str) -> tuple[list[dict], list[dict]]:
+    """A proposal's changes as nodes and edges that are not there yet.
+
+    Drawn over the live graph rather than beside it, because the question a
+    reviewer is actually asking is "what would this vocabulary look like" — and
+    a list of intents in a side panel cannot answer that. Everything here
+    carries `proposed` and its verdict, so nothing a proposal suggests can be
+    mistaken for something the database already holds.
+    """
+    from montology_ontology import changes
+
+    nodes, edges = [], []
+    for c in changes(pid):
+        f, v = c["fields"], c["verdict"]
+        tag = {"proposed": True, "verdict": v, "ord": c["ord"], "intent": c["intent"]}
+        if c["intent"] in ("word.add", "word.amend"):
+            nodes.append({"id": f"word:{f.get('name', '?')}", "kind": "word",
+                          "label": f.get("name", "?"),
+                          "data": {"name": f.get("name", "?"), "word_kind": f.get("kind", "core"),
+                                   "pos": f.get("pos"), "owner": f.get("owner"),
+                                   "code": f.get("code"), "definition": f.get("definition", ""),
+                                   "test": f.get("test"), **tag}})
+        elif c["intent"] == "route.add":
+            edges.append({"id": f"routes:proposed:{c['ord']}", "kind": "routes",
+                          "source": f"term:{f.get('from_term')}",
+                          "target": f"word:{f.get('to_word')}",
+                          "label": f.get("register", "all"),
+                          "data": {"register": f.get("register", "all"),
+                                   "scope": f.get("scope", ""),
+                                   "gates": bool(f.get("scope")) or f.get("register", "all") != "all",
+                                   **tag}})
+            nodes.append({"id": f"term:{f.get('from_term')}", "kind": "term",
+                          "label": f.get("from_term", "?"),
+                          "data": {"name": f.get("from_term", "?"), **tag}})
+        elif c["intent"] == "genus.add":
+            edges.append({"id": f"genus:proposed:{c['ord']}", "kind": "genus",
+                          "source": f"word:{f.get('word')}", "target": f"word:{f.get('genus')}",
+                          "label": "is a kind of", "data": {"gates": True, **tag}})
+        elif c["intent"] == "ruling.overload":
+            nodes.append({"id": f"term:{f.get('dont_say')}", "kind": "term",
+                          "label": f.get("dont_say", "?"), "data": {**tag}})
+            edges.append({"id": f"overloaded:proposed:{c['ord']}", "kind": "overloaded",
+                          "source": f"term:{f.get('dont_say')}", "target": f"word:{f.get('say')}",
+                          "label": "say instead", "data": {"gates": True, **tag}})
+    return nodes, edges
+
+
 def graph(root: Path | None = None, *, with_scan: bool = True,
-          candidate_top: int = 20) -> dict:
+          candidate_top: int = 20, proposal: str | None = None) -> dict:
     """The whole ontology as one document: nodes, edges, stats, provenance.
 
     `with_scan=False` skips the tree-sitter sweep — the vocabulary alone, for
@@ -246,8 +293,19 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                   "collides": sum(f["collides"] for f in facts.values()),
                   "excepted": sum(f["excepted"] for f in facts.values())}
 
+    if proposal:
+        gn, ge = _ghosts(proposal)
+        have = {n["id"] for n in nodes}
+        # a proposal that AMENDS an existing word replaces the node it shadows,
+        # so the canvas shows what would be there rather than both at once
+        nodes = [n for n in nodes if n["id"] not in {g["id"] for g in gn}] + gn
+        edges += ge
+        stats["proposed"] = len(gn) + len(ge)
+        stats["new_words"] = len([g for g in gn if g["id"] not in have])
+
     return {"workspace": root.name, "nodes": nodes, "edges": edges,
-            "stats": stats, "fingerprint": _fingerprint(nodes, edges)}
+            "stats": stats, "proposal": proposal,
+            "fingerprint": _fingerprint(nodes, edges)}
 
 
 def _enforced_kinds(root: Path) -> set[str]:

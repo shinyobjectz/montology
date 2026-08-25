@@ -45,10 +45,16 @@ def _handler(state: dict):
             path = self.path.split("?", 1)[0]
             if path in ("/api/graph", "/api/graph/"):
                 from .graph import graph
-                from .intents import catalogue
+                from montology_ontology.intents import catalogue
 
+                from urllib.parse import parse_qs, urlparse
+
+                from montology_ontology import proposals
+
+                pid = (parse_qs(urlparse(self.path).query).get("proposal") or [""])[0]
                 try:
-                    payload = graph(with_scan=state["with_scan"])
+                    payload = graph(with_scan=state["with_scan"], proposal=pid or None)
+                    payload["proposals"] = proposals("open")
                     # The token rides here and nowhere else. A cross-origin page
                     # can POST to loopback, but it cannot READ this response —
                     # no CORS headers are sent — so it never learns the token.
@@ -90,7 +96,7 @@ def _handler(state: dict):
                 self._json(400, {"error": f"unreadable intent: {e}"})
                 return
 
-            from .intents import apply
+            from montology_ontology.intents import apply
 
             # The engine's own answer, verbatim — including its refusal text.
             # Errors are data with the repair attached; re-wording one here

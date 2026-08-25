@@ -89,6 +89,12 @@ WORDS = [
     ("gist", "core", "ontology", "onto.gist",
      "a definition rendered to its first sentence — what a resident page carries when the whole definition is not worth its place in context",
      "the short form of a meaning"),
+    ("proposal", "core", "ontology", "onto.proposal",
+     "a set of changes to the vocabulary, reviewed before it lands — stored as intents rather than as a second copy of the words, so it reads as a diff of meaning and replays through the same door a person uses",
+     "what someone wants the words to become"),
+    ("intent", "core", "ontology", "onto.intent",
+     "one named way to change the vocabulary, and the only way anything that is not a person at a terminal may do so",
+     "how a change is asked for"),
     ("genus", "core", "ontology", "onto.genus",
      "the more general word a word is a kind of — containment says where a word lives, this says what it IS, and a word inherits its genus's rulings",
      "what kind of thing is it"),
@@ -114,6 +120,7 @@ POS_OF = {
     "intake": "noun", "glossary": "noun",
     "disclosure": "noun", "gist": "noun", "edge": "noun",
     "genus": "noun", "rigidity": "value",
+    "proposal": "noun", "intent": "noun",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and

@@ -1,15 +1,18 @@
-"""What the canvas may ask the engine to do — and how it is not a second writer.
+"""Intents: the ontology's write surface, as data.
 
-THE CANVAS HAS NO SQL. It posts an intent; the server calls the same function
-`monty onto …` calls; the answer is whatever that function returned, refusal
-text included. That is not tidiness — it is the whole thesis. One truth with
-one gate stops being true the moment a second surface can write to the database
-on its own terms, and a refusal re-worded in TypeScript is a second gate that
-will drift from the first.
+One named map from an intent to the function that performs it. Everything that
+is not a person at a terminal goes through here — the canvas posts intents, a
+proposal STORES them and replays them on merge — and they all land in the same
+functions `monty onto …` calls.
 
-So the dispatch below is deliberately thin. Every entry names an existing
-function and the fields it takes; there is no validation here that the engine
-does not already do, because validation duplicated is validation that disagrees.
+That is not tidiness, it is the whole thesis. One truth with one gate stops
+being true the moment a second surface can write to the database on its own
+terms, and a refusal re-worded somewhere else is a second gate that will drift
+from the first.
+
+So the dispatch is deliberately thin. Every entry names an existing function
+and the fields it takes; there is no validation here that those functions do
+not already do, because validation duplicated is validation that disagrees.
 """
 
 from __future__ import annotations
@@ -22,9 +25,8 @@ def _intents() -> dict[str, tuple[Callable, tuple[str, ...], tuple[str, ...]]]:
 
     Imported lazily: the ontology is the dependency, not the import graph.
     """
-    from montology_ontology import (add, amend, except_add, genus_add, rigidity_set,
-                                    route_add, rule, token_add)
-    from montology_ontology import collide, rename_word
+    from .db import (add, amend, collide, except_add, genus_add, rename_word,
+                     rigidity_set, route_add, rule, token_add)
 
     return {
         "word.add":        (add,          ("name", "definition"),
