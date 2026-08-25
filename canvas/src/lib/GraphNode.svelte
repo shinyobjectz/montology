@@ -56,6 +56,10 @@
   .node.selected { outline: 2px solid var(--c); outline-offset: 1px; }
   .node.focused { box-shadow: 0 3px 14px rgb(0 0 0 / .18); border-color: var(--c); }
   .node.focused .label { font-size: .95rem; }
+  /* a question is a SENTENCE, and hyphenating one at a word node's width
+     ("al-ready spo-ken") makes it harder to read than the thing it asks about */
+  .node.question { max-width: 330px; }
+  .node.question .label { font-weight: 500; hyphens: manual; }
   .glyph { color: var(--c); font-size: .8rem; line-height: 1.35; }
   .body { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
   .label { font-size: .82rem; font-weight: 600; overflow-wrap: break-word; hyphens: auto; }

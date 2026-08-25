@@ -6,14 +6,15 @@
 // outline it already is. So the canvas answers one question at a time: what is
 // around THIS word. Reading outward from the centre —
 //
+//                                   ↑ owner · what it is a kind of
 //        terms that died into it   ←  [ WORD ]  →   rulings taken about it
-//                                        ↑ owner
 //                                        ↓ the words it owns   → what bears it
+//                                   ↓ the questions it answers
 //
 // Everything is placed by rule, never by force: a layout that moves when
 // nothing moved is a layout you cannot trust to mean anything.
 
-const R = { owner: -150, child: 170, ring: 330, far: 620 };
+const R = { owner: -150, child: 170, ring: 330, far: 620, asked: 330 };
 const GAP = 74;
 
 /** Stack n items centred on y=0, in a fixed order, at a fixed pitch. */
@@ -47,6 +48,12 @@ export function focusLayout(graph, focusId) {
   // what implements it, and where the name is redirected onward — far right
   const bears = take(outs.filter((e) => e.kind === 'bears'), 'out');
   const onward = take(outs.filter((e) => ['renamed', 'overloaded', 'routes'].includes(e.kind)), 'out');
+  // what it is a kind of — up, beside the owner, because both are "above" it
+  // and the whole point of the genus is that it is NOT the owner
+  const kinds = take(outs.filter((e) => e.kind === 'genus'), 'out');
+  // what motivated it. A word answering no question is the finding here, and
+  // an empty space below a word says that better than a count elsewhere.
+  const asked = take(ins.filter((e) => e.kind === 'answers'), 'in');
 
   const place = (items, x, gap) => {
     for (const [n, p] of column(items, x, gap)) { pos.set(n.id, p); seen.add(n.id); }
@@ -57,6 +64,8 @@ export function focusLayout(graph, focusId) {
   kids.forEach((n, i) => pos.set(n.id, {
     x: -((kids.length - 1) * 190) / 2 + i * 190, y: R.child,
   }));
+  kinds.forEach((n, i) => { pos.set(n.id, { x: 250 + i * 210, y: R.owner }); seen.add(n.id); });
+  asked.forEach((n, i) => { pos.set(n.id, { x: -260 + i * 300, y: R.asked }); seen.add(n.id); });
   place(dead, -R.ring, 56);
   place([...rulings, ...onward], R.ring, 82);
   place(bears, R.far, 70);

@@ -253,9 +253,12 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                                "unanswered": not q["answered_by"]}})
         for w in q["answered_by"]:
             if w in live:
+                # No `gates` key: this edge is not a ruling, and "cannot gate"
+                # said of a competency question is a sentence about nothing.
+                # The flag belongs to relations that could enforce and do not.
                 edges.append({"id": f"answers:{q['id']}:{w}", "kind": "answers",
                               "source": f"question:{q['id']}", "target": f"word:{w}",
-                              "label": "answered by", "data": {"gates": False}})
+                              "label": "answered by", "data": {}})
 
     for d in doctrines():
         nodes.append({"id": f"doctrine:{d['title']}", "kind": "doctrine",
