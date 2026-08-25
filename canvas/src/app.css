@@ -1,21 +1,124 @@
+/* A reference work, set to be read: one column, generous measure, a type scale
+   with three sizes and no more. The palette carries meaning and nothing else —
+   amber is always "this needs a decision", red is always "this name is retired
+   or contested", green is always "this is settled". */
 :root {
   color-scheme: light dark;
-  --bg: #fbfbfd; --panel: #ffffff; --ink: #16181d; --dim: #6a7080;
-  --line: #dfe2ea; --accent: #3b5bdb;
-  --word: #3b5bdb; --word-adopted: #7a869a; --word-custom: #0b7285;
-  --term: #b02020; --ruling: #7048e8; --surface: #0f8a5f;
-  --candidate: #a06000; --doctrine: #495057; --token: #c2255c;
+  --bg: #fbfaf8; --panel: #ffffff; --ink: #1a1a1c; --dim: #6b6b73;
+  --line: #e4e2dd; --rule: #d8d5ce;
+  --accent: #2f4fd8; --settled: #1a7f4f; --open: #a8620a; --retired: #b3261e;
+  --measure: 66ch;
   font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1115; --panel: #161a21; --ink: #e6e8ee; --dim: #99a1b3;
-    --line: #262c37; --accent: #7c93f5;
-    --word: #7c93f5; --word-adopted: #8d97ab; --word-custom: #3bc9db;
-    --term: #ff8787; --ruling: #b197fc; --surface: #51cf66;
-    --candidate: #ffc078; --doctrine: #adb5bd; --token: #faa2c1;
+    --bg: #101114; --panel: #181a1f; --ink: #e8e8ec; --dim: #9a9aa4;
+    --line: #26282f; --rule: #32353e;
+    --accent: #8aa0ff; --settled: #55c98b; --open: #e0a355; --retired: #ff8a80;
   }
 }
 * { box-sizing: border-box; }
-html, body, #canvas { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+html, body, #root { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+body { -webkit-font-smoothing: antialiased; }
 .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+button { font: inherit; }
+
+/* ── the page ────────────────────────────────────────────────────────────── */
+.page { max-width: 920px; margin: 0 auto; padding: 3rem 2rem 8rem; }
+.dim { color: var(--dim); }
+.error { color: var(--retired); }
+code.mono { font-size: .84em; }
+
+.masthead h1 { font-size: 2rem; margin: 0; letter-spacing: -.025em; font-weight: 700; }
+.masthead p { font-size: .88rem; line-height: 1.6; margin: .4rem 0 0; max-width: var(--measure); }
+
+/* ── lookup: the hero ─────────────────────────────────────────────────────── */
+.lookup { margin: 1.8rem 0 1.2rem; position: sticky; top: 0; z-index: 5;
+          background: var(--bg); padding: .8rem 0 .7rem;
+          /* content scrolls UNDER this; without a boundary the verdict reads as
+             part of whatever entry happens to be behind it */
+          border-bottom: 1px solid var(--line);
+          box-shadow: 0 8px 12px -12px rgb(0 0 0 / .5); }
+.lookup input { width: 100%; max-width: var(--measure); padding: .7rem .85rem;
+                font-size: .95rem; border-radius: 9px; border: 1px solid var(--rule);
+                background: var(--panel); color: var(--ink); }
+.lookup input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+.verdict { font-size: .82rem; line-height: 1.55; margin: .5rem 0 0; max-width: var(--measure); }
+.verdict.free { color: var(--settled); }
+.verdict.taken { color: var(--retired); }
+.hits { list-style: none; padding: 0; margin: .5rem 0 0; max-width: var(--measure);
+        border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--panel); }
+.hits li + li { border-top: 1px solid var(--line); }
+.hits button { display: flex; gap: .7rem; align-items: baseline; width: 100%; text-align: left;
+               padding: .45rem .7rem; background: none; border: 0; color: var(--ink); cursor: pointer; }
+.hits button:hover { background: var(--line); }
+.hits b { font-size: .82rem; min-width: 9ch; }
+.hits span { font-size: .76rem; color: var(--dim); overflow: hidden;
+             text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── what wants a decision ───────────────────────────────────────────────── */
+.attention { margin: 1.6rem 0; max-width: var(--measure); }
+.attention h2 { font-size: .68rem; text-transform: uppercase; letter-spacing: .11em;
+                color: var(--open); margin: 0 0 .5rem; }
+.attention ul { list-style: none; padding: 0; margin: 0; }
+.attention li { display: flex; align-items: baseline; gap: .5rem; padding: .3rem 0;
+                font-size: .85rem; border-bottom: 1px solid var(--line); }
+.attention b { color: var(--open); font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
+.attention code { margin-left: auto; color: var(--dim); font-size: .72rem; white-space: nowrap; }
+
+/* ── the figure ──────────────────────────────────────────────────────────── */
+.relations { margin: 2.2rem 0; }
+.relations figcaption { font-size: .78rem; color: var(--dim); line-height: 1.55;
+                        max-width: var(--measure); margin-bottom: .4rem; }
+.relations svg { width: 100%; max-width: 640px; height: auto; display: block; }
+.relations text { font: 600 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+                  paint-order: stroke; stroke: var(--bg); stroke-width: 3.5px; stroke-linejoin: round; }
+.relations .n { cursor: pointer; }
+.relations .n rect { fill: var(--panel); stroke: var(--rule); }
+.relations .n:hover rect { stroke: var(--accent); }
+.relations .lbl { fill: var(--ink); stroke: var(--panel); }
+
+/* ── areas ───────────────────────────────────────────────────────────────── */
+.areas { display: flex; flex-wrap: wrap; gap: .3rem; margin: 2rem 0 .5rem;
+         padding-top: 1rem; border-top: 1px solid var(--rule); }
+.areas button { font-size: .74rem; padding: .16rem .5rem; border-radius: 999px; cursor: pointer;
+                border: 1px solid var(--line); background: none; color: var(--dim); }
+.areas button span { opacity: .55; }
+.areas button:hover { color: var(--ink); }
+.areas button.on { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+
+/* ── entries ─────────────────────────────────────────────────────────────── */
+.chapter > h2 { font-size: .7rem; text-transform: uppercase; letter-spacing: .12em;
+                color: var(--dim); margin: 2.4rem 0 .2rem; font-weight: 600; }
+article { padding: 1rem 0; border-bottom: 1px solid var(--line); scroll-margin-top: 5rem; }
+article h3 { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin: 0; }
+article .name { font-size: 1.02rem; font-weight: 700; }
+article .grade { font-size: .68rem; color: var(--dim); }
+.def { font-size: .92rem; line-height: 1.6; margin: .35rem 0 .3rem; max-width: var(--measure); }
+.test { font-size: .78rem; color: var(--dim); margin: 0 0 .35rem; max-width: var(--measure); }
+.test span { text-transform: uppercase; font-size: .6rem; letter-spacing: .07em; }
+
+.decided { list-style: none; padding: 0; margin: .5rem 0; }
+.decided li { font-size: .8rem; line-height: 1.55; max-width: var(--measure);
+              border-left: 2px solid var(--rule); padding: .1rem 0 .1rem .6rem; margin: .18rem 0; }
+.decided em { font-style: normal; color: var(--dim); }
+.decided em.weak { color: var(--open); }
+.retired { color: var(--retired); text-decoration: line-through; }
+
+.ties { display: flex; flex-wrap: wrap; gap: .15rem .9rem; margin: .35rem 0 0;
+        font-size: .78rem; color: var(--dim); align-items: baseline; }
+.ties > span { display: inline-flex; gap: .3rem; align-items: baseline; flex-wrap: wrap; }
+.link { background: none; border: 0; padding: 0; font-size: .78rem; color: var(--accent);
+        cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
+
+.wrong { list-style: none; padding: .4rem .6rem; margin: .6rem 0 0; max-width: var(--measure);
+         border-left: 2px solid var(--open); border-radius: 0 6px 6px 0;
+         background: color-mix(in oklab, var(--open) 9%, transparent); }
+.wrong li { font-size: .78rem; color: var(--open); line-height: 1.55;
+            display: flex; flex-direction: column; }
+.where { color: var(--dim); font-size: .68rem; }
+
+/* ── doctrine ────────────────────────────────────────────────────────────── */
+.doctrine { margin: 2.4rem 0 0; max-width: var(--measure); }
+.doctrine h2 { font-size: 1rem; margin: 0 0 .3rem; font-weight: 700; }
+.doctrine p { font-size: .88rem; line-height: 1.65; margin: 0; white-space: pre-wrap; }
