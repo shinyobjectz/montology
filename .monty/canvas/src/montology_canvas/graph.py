@@ -318,9 +318,14 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
         # which nothing happens.
         if with_acts:
             from montology_scan import domain_acts
+            from montology_scan.acts import PLUMBING
 
             does: dict[str, dict[str, set]] = {}
             for a in domain_acts(root):
+                # `lower`, `get`, `append` — every codebase does these and none
+                # of it is a relation. They were reaching the canvas as edges.
+                if a["verb"].lower() in PLUMBING:
+                    continue
                 seen_verbs = does.setdefault(
                     a["object"], {"named": set(), "unnamed": set(), "proven": set()})
                 seen_verbs["named" if a["verb_is_word"] else "unnamed"].add(a["verb"].lower())

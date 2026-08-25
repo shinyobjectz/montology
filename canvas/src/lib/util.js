@@ -23,11 +23,40 @@ export const EDGE = {
   seam:       { color: 'var(--line)',      width: 1,   dash: null,  label: 'seam' },
 };
 
+// ── the colour of a verb ────────────────────────────────────────────────────
+//
+// Every act and relation was drawn in one colour, so a graph of verbs read as a
+// grey mesh and the labels were the only way to tell one from another. The hue
+// is derived from the VERB ITSELF, deterministically, so `holds` is the same
+// colour everywhere and you can follow one relation across the canvas by eye.
+//
+// The hue means "this verb" and nothing more — it is not a taxonomy, and
+// pretending it were would be inventing meaning the database does not hold.
+// What the SATURATION carries is real: a verb that is a word is stated
+// outright, a verb nobody has defined is muted, because an unnamed action
+// should not look as settled as a named one.
+function hueOf(verb) {
+  let h = 0;
+  for (let i = 0; i < verb.length; i++) h = (h * 31 + verb.charCodeAt(i)) % 360;
+  // skip the reds: those are spoken for by retired terms and collisions
+  return 20 + (h % 320);
+}
+
+export function verbColor(verb, { defined = false } = {}) {
+  const dark = typeof matchMedia === 'function'
+    && matchMedia('(prefers-color-scheme: dark)').matches;
+  const h = hueOf((verb || '').toLowerCase());
+  const s = defined ? 78 : 45;
+  const l = dark ? (defined ? 70 : 58) : (defined ? 42 : 52);
+  return `hsl(${h} ${s}% ${l}%)`;
+}
+
 /** A ruling that cannot be scoped can never gate. Drawing it like one with
  *  teeth is the canvas lying about which decisions are enforced — so a
  *  toothless edge is drawn as one: faint and broken. */
 export function edgeLook(edge) {
   const base = EDGE[edge.kind] || EDGE.seam;
+  const verb = edge.data?.verb;
   const toothless = edge.data && edge.data.gates === false;
   const unnamedVerb = edge.kind === 'act' && edge.data && edge.data.defined === false;
   // An act resolved BY NAME matched a spelling and would vanish if someone
@@ -35,7 +64,7 @@ export function edgeLook(edge) {
   // would be the canvas claiming a confidence it does not have.
   const guessed = edge.kind === 'act' && edge.data && edge.data.resolved === 'by-name';
   return {
-    color: base.color,
+    color: verb ? verbColor(verb, { defined: edge.data?.defined !== false }) : base.color,
     width: base.width,
     dash: guessed ? '2 5' : toothless || unnamedVerb ? '5 5' : base.dash,
     opacity: toothless ? 0.5 : unnamedVerb ? 0.7 : 1,
@@ -67,6 +96,31 @@ export function elbow(a, b, lane = 0) {
   const sy = Math.sign(dy), sx = Math.sign(dx);
   return `M${a.x},${a.y} L${mid - r * sx},${a.y} Q${mid},${a.y} ${mid},${a.y + r * sy}`
        + ` L${mid},${b.y - r * sy} Q${mid},${b.y} ${mid + r * sx},${b.y} L${b.x},${b.y}`;
+}
+
+/** A curve, for a graph laid out in rings.
+ *
+ *  Elbows are right for a containment tree and wrong for a hub: every edge into
+ *  the centre shares the same orthogonal channels, so they stack into one thick
+ *  grey line. An arc leaves the node at its own angle and no two arcs between
+ *  different pairs run along each other. `lane` bows the parallel ones apart.
+ */
+export function arc(a, b, lane = 0) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  // perpendicular offset at the midpoint: a fixed fraction so long edges bow
+  // more than short ones and the whole picture stays legible
+  const bow = len * 0.13 + lane * LANE * 1.6;
+  const mx = a.x + dx / 2 - (dy / len) * bow;
+  const my = a.y + dy / 2 + (dx / len) * bow;
+  // The apex of a quadratic sits HALFWAY to its control point, so the label
+  // goes there rather than on the control point — and a little further out
+  // again, which is what keeps it off the nodes the curve passes near.
+  const ax = (a.x + b.x) / 2 * 0.5 + mx * 0.5;
+  const ay = (a.y + b.y) / 2 * 0.5 + my * 0.5;
+  const push = 16;
+  return { d: `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`,
+           mid: { x: ax - (dy / len) * push, y: ay + (dx / len) * push } };
 }
 
 export function index(graph) {

@@ -4,7 +4,7 @@
   import Detail from './lib/Detail.svelte';
   import Spine from './lib/Spine.svelte';
   import Compose from './lib/Compose.svelte';
-  import { index, edgeLook, elbow, LANE } from './lib/util.js';
+  import { index, edgeLook, elbow, arc, LANE } from './lib/util.js';
   import { focusLayout, overviewLayout } from './lib/layout.js';
 
   // Half the wire layer's box. Big enough that no laid-out graph reaches the
@@ -54,6 +54,10 @@
   });
 
   const shownNodes = $derived(graph ? graph.nodes.filter((n) => view.shown.has(n.id)) : []);
+  // Elbows are right for a containment tree and wrong for a hub: every edge into
+  // the centre would share the same orthogonal channels and stack into one
+  // thick line. The ring layout gets arcs.
+  const curved = $derived(mode === 'graph' && !focus);
 
   // The vitals were thirteen pairs, six of them zeros. A zero is not a fact
   // worth a slot: "0 seams" tells you nothing you would have asked. So only
@@ -186,7 +190,9 @@
             <g transform="translate({SPAN},{SPAN})">
             {#each shownEdges as e (e.id)}
               {@const look = edgeLook(e)}
-              <path d={elbow(view.pos.get(e.source), view.pos.get(e.target), lane.get(e.id))}
+              {@const a = view.pos.get(e.source)}
+              {@const b = view.pos.get(e.target)}
+              <path d={curved ? arc(a, b, lane.get(e.id)).d : elbow(a, b, lane.get(e.id))}
                     fill="none" stroke={look.color} stroke-width={look.width}
                     stroke-dasharray={e.data?.proposed ? '6 4' : look.dash}
                     opacity={e.data?.verdict === 'rejected' ? 0.25

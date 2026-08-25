@@ -176,41 +176,42 @@ export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'a
   }
 
   // Satellites hang to the LEFT of what they are about — the same reading the
-  // focused view uses. Occupancy is tracked per COLUMN and not per anchor,
-  // which is what went wrong before: two anchors at nearby heights each kept
-  // their own tidy offset and both wrote into the same strip of screen.
-  const anchorOf = (node) => {
-    for (const e of graph.out.get(node.id) ?? []) if (pos.has(e.target)) return e.target;
-    for (const e of graph.inn.get(node.id) ?? []) if (pos.has(e.source)) return e.source;
-    return null;
-  };
-  // Seeded with everything already placed. Tracking only the satellites was the
-  // last bug here: a satellite goes one column left of its anchor, that column
-  // can already hold WORDS, and a map that has never heard of them will hand
-  // out a slot straight on top of one.
-  const columns = new Map();          // x -> [[top, bottom], …] already taken
+  // focused view uses.
+  //
+  // Occupancy is checked as real BOXES, not per column. Keying it by exact x
+  // was the last bug here: a satellite goes one column left of its anchor, an
+  // anchor that is itself a satellite is not on a column boundary, and the
+  // result landed BETWEEN the word columns where a map keyed by x had nothing
+  // to say about it. Boxes cannot be fooled by an offset.
+  const boxes = [];
   for (const [id, at] of pos) {
     const node = graph.byId.get(id);
-    const h = nodeHeight(node, measured);
-    const taken = columns.get(at.x) ?? [];
-    taken.push([at.y - h / 2, at.y + h / 2]);
-    columns.set(at.x, taken);
+    boxes.push({ x: at.x, y: at.y, w: nodeWidth(node, measured), h: nodeHeight(node, measured) });
   }
-  for (const taken of columns.values()) taken.sort((p, q) => p[0] - q[0]);
-  const claim = (x, want, h) => {
-    const taken = columns.get(x) ?? [];
-    let top = want - h / 2;
+  const hits = (a, b) => Math.abs(a.x - b.x) * 2 < a.w + b.w + 24
+                      && Math.abs(a.y - b.y) * 2 < a.h + b.h + 14;
+  const settle = (box) => {
     let moved = true;
-    while (moved) {
+    let guard = 0;
+    while (moved && guard++ < 400) {
       moved = false;
-      for (const [a, b] of taken) {
-        if (top < b + 10 && top + h > a - 10) { top = b + 10; moved = true; }
+      for (const other of boxes) {
+        if (!hits(box, other)) continue;
+        box.y = other.y + other.h / 2 + box.h / 2 + 14;   // push down, never sideways
+        moved = true;
       }
     }
-    taken.push([top, top + h]);
-    taken.sort((p, q) => p[0] - q[0]);
-    columns.set(x, taken);
-    return top + h / 2;
+    boxes.push(box);
+    return box.y;
+  };
+
+  // Prefer anchoring to a WORD: hanging a satellite off another satellite is
+  // what pushed them off the column grid in the first place.
+  const anchorOf = (node) => {
+    const near = [...(graph.out.get(node.id) ?? []), ...(graph.inn.get(node.id) ?? [])]
+      .map((e) => (e.source === node.id ? e.target : e.source))
+      .filter((id) => pos.has(id));
+    return near.find((id) => graph.byId.get(id)?.kind === 'word') ?? near[0] ?? null;
   };
 
   for (const node of graph.nodes) {
@@ -218,8 +219,10 @@ export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'a
     const anchor = anchorOf(node);
     if (!anchor) continue;
     const at = pos.get(anchor);
-    const x = at.x - SAT;
-    place(node, x, claim(x, at.y, nodeHeight(node, measured)));
+    const w = nodeWidth(node, measured);
+    const h = nodeHeight(node, measured);
+    const x = at.x - (nodeWidth(graph.byId.get(anchor), measured) / 2 + w / 2 + NODE_GAP_X);
+    place(node, x, settle({ x, y: at.y, w, h }));
   }
 
   return { pos, shown, quiet };
