@@ -30,10 +30,14 @@ export function edgeLook(edge) {
   const base = EDGE[edge.kind] || EDGE.seam;
   const toothless = edge.data && edge.data.gates === false;
   const unnamedVerb = edge.kind === 'act' && edge.data && edge.data.defined === false;
+  // An act resolved BY NAME matched a spelling and would vanish if someone
+  // renamed the variable. One resolved BY TYPE is evidence. Drawing them alike
+  // would be the canvas claiming a confidence it does not have.
+  const guessed = edge.kind === 'act' && edge.data && edge.data.resolved === 'by-name';
   return {
     color: base.color,
     width: base.width,
-    dash: toothless || unnamedVerb ? '5 5' : base.dash,
+    dash: guessed ? '2 5' : toothless || unnamedVerb ? '5 5' : base.dash,
     opacity: toothless ? 0.5 : unnamedVerb ? 0.7 : 1,
     label: edge.label || base.label,
   };

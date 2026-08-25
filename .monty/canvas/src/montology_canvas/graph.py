@@ -310,14 +310,18 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
 
             does: dict[str, dict[str, set]] = {}
             for a in domain_acts(root):
-                seen_verbs = does.setdefault(a["object"], {"named": set(), "unnamed": set()})
+                seen_verbs = does.setdefault(
+                    a["object"], {"named": set(), "unnamed": set(), "proven": set()})
                 seen_verbs["named" if a["verb_is_word"] else "unnamed"].add(a["verb"].lower())
+                if a["resolved"] == "by-type":
+                    seen_verbs["proven"].add(a["verb"].lower())
                 if a["subject_word"] and a["subject_word"] != a["object"]:
                     edges.append({
                         "id": f"act:{a['subject_word']}:{a['verb']}:{a['object']}",
                         "kind": "act", "source": f"word:{a['subject_word']}",
                         "target": f"word:{a['object']}", "label": a["verb"],
                         "data": {"verb": a["verb"], "defined": a["verb_is_word"],
+                                 "resolved": a["resolved"],
                                  "at": f"{a['file']}:{a['line']}"}})
             for n in nodes:
                 if n["kind"] != "word":
@@ -326,8 +330,10 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                 if d:
                     n["data"]["verbs_named"] = sorted(d["named"])
                     n["data"]["verbs_unnamed"] = sorted(d["unnamed"])
+                    n["data"]["verbs_proven"] = sorted(d["proven"])
             stats["acts"] = sum(len(v["named"]) + len(v["unnamed"]) for v in does.values())
             stats["unnamed_verbs"] = sum(len(v["unnamed"]) for v in does.values())
+            stats["proven_acts"] = sum(len(v["proven"]) for v in does.values())
 
         for c in scan_candidates(root, top=candidate_top):
             nodes.append({"id": f"candidate:{c['name']}", "kind": "candidate",

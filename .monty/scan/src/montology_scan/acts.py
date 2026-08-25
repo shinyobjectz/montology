@@ -201,7 +201,7 @@ def _norm(name: str | None) -> str:
     return (name or "").lower().replace("_", "-")
 
 
-def domain_acts(root: Path | None = None) -> list[dict]:
+def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
     """The acts that are about THIS domain rather than about a library.
 
     The discriminator is montology's own thesis: an act is domain vocabulary
@@ -214,15 +214,35 @@ def domain_acts(root: Path | None = None) -> list[dict]:
     """
     from montology_ontology import words
 
+    from .bindings import bindings_for
+
     have = {w["name"].lower() for w in words()}
+    binds = bindings_for(root) if typed else {}
+
+    def resolve(name: str | None, file: str) -> tuple[str | None, str]:
+        """What this name IS, and how we know.
+
+        A name bound to a type resolves BY TYPE, which survives a rename of the
+        variable. A name that is simply spelled like a word resolves BY NAME,
+        which does not — and the two must not be drawn alike, because one is
+        evidence and the other is a coincidence that happens to be useful.
+        """
+        if not name:
+            return None, "none"
+        ty = _norm(binds.get(file, {}).get(name))
+        if ty and ty in have:
+            return ty, "by-type"
+        low = _norm(name)
+        return (low, "by-name") if low in have else (None, "none")
+
     out = []
     for a in acts(root)["acts"]:
-        obj = _norm(a["object"])
-        if not obj or obj not in have:
+        obj, how = resolve(a["object"], a["file"])
+        if not obj:
             continue
-        subj = _norm(a["subject"])
-        out.append({**a, "object": obj,
-                    "subject_word": subj if subj in have else None,
+        subj, subj_how = resolve(a["subject"], a["file"])
+        out.append({**a, "object": obj, "resolved": how,
+                    "subject_word": subj, "subject_resolved": subj_how,
                     "verb_is_word": a["verb"].lower() in have})
     return out
 
@@ -238,6 +258,7 @@ def unnamed_verbs(root: Path | None = None, top: int = 15) -> list[dict]:
     """
     by_word: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     named: dict[str, set[str]] = defaultdict(set)
+    proven: dict[str, set[str]] = defaultdict(set)
     for a in domain_acts(root):
         verb = a["verb"].lower()
         if verb in PLUMBING or len(verb) < 3 or not verb.isalpha():
@@ -248,8 +269,11 @@ def unnamed_verbs(root: Path | None = None, top: int = 15) -> list[dict]:
         where = by_word[a["object"]][verb]
         if len(where) < 4:
             where.append(f"{a['file']}:{a['line']}")
+        if a["resolved"] == "by-type":
+            proven[a["object"]].add(verb)
 
     rows = [{"word": word, "unnamed": sorted(verbs), "named": sorted(named.get(word, [])),
+             "proven": sorted(proven.get(word, [])),
              "at": {v: w for v, w in verbs.items()}}
             for word, verbs in by_word.items()]
     rows.sort(key=lambda r: (-len(r["unnamed"]), r["word"]))
@@ -269,7 +293,8 @@ def render(root: Path | None = None, top: int = 15) -> list[str]:
         held = f"  ({', '.join(r['named'])} named)" if r["named"] else ""
         out.append(f"  {r['word']} — acted on {len(r['unnamed'])} way(s) with no word{held}")
         for verb in r["unnamed"]:
-            out.append(f"      .{verb:<20} {r['at'][verb][0]}")
+            how = "by type" if verb in r["proven"] else "by name"
+            out.append(f"      .{verb:<20} {r['at'][verb][0]:<38} ({how})")
     out += ["",
             "A vocabulary of nouns describes a world that never does anything. "
             "montology's own is 30 nouns to 1 verb; qubie's is 100 to 9.",

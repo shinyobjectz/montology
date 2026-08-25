@@ -25,6 +25,7 @@ from .rename import migrate
 from .styles import (design_candidates, design_lint, ingest_theme,
                      recipe_candidates, style_surface, tailwind_theme)
 from .acts import acts, domain_acts, unnamed_verbs
+from .bindings import bindings, bindings_for
 from .acts import render as render_acts
 from .review import render as render_review
 from .review import review

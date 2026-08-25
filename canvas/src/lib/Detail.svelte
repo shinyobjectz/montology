@@ -48,7 +48,12 @@
     <h3>Made to do</h3>
     <p class="verbs">
       {#each d.verbs_named ?? [] as v}<span class="verb named mono">{v}</span>{/each}
-      {#each d.verbs_unnamed ?? [] as v}<span class="verb mono">{v}</span>{/each}
+      {#each d.verbs_unnamed ?? [] as v}
+        <span class="verb mono" class:proven={d.verbs_proven?.includes(v)}
+              title={d.verbs_proven?.includes(v)
+                ? 'proven by type — survives renaming the variable'
+                : 'matched by name — would vanish if the variable were renamed'}>{v}</span>
+      {/each}
     </p>
     {#if d.verbs_unnamed?.length}
       <p class="test">{d.verbs_unnamed.length} of these are not words. A noun the
@@ -94,6 +99,7 @@
   .verb { font-size: .66rem; padding: .05rem .3rem; border-radius: 3px;
           border: 1px dashed color-mix(in oklab, var(--candidate) 45%, transparent);
           color: var(--candidate); }
+  .verb.proven { border-style: solid; }
   .verb.named { border-style: solid; border-color: color-mix(in oklab, var(--surface) 45%, transparent);
                 color: var(--surface); }
   .around { list-style: none; padding: 0; margin: 0; }
