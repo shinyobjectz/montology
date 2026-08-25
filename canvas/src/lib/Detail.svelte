@@ -44,15 +44,30 @@
     {/if}
   {/if}
 
+  {#if d.verbs_unnamed?.length || d.verbs_named?.length}
+    <h3>Made to do</h3>
+    <p class="verbs">
+      {#each d.verbs_named ?? [] as v}<span class="verb named mono">{v}</span>{/each}
+      {#each d.verbs_unnamed ?? [] as v}<span class="verb mono">{v}</span>{/each}
+    </p>
+    {#if d.verbs_unnamed?.length}
+      <p class="test">{d.verbs_unnamed.length} of these are not words. A noun the
+        code makes do five things, with no word for any of them, is standing in
+        for a behaviour nobody has settled.</p>
+    {/if}
+  {/if}
+
   {#if around.length}
     <h3>Around it</h3>
     <ul class="around">
       {#each around as r}
         <li>
-          <span class="ekind" style="color:{(EDGE[r.e.kind] ?? EDGE.seam).color}">{r.e.kind}</span>
+          <span class="ekind" style="color:{(EDGE[r.e.kind] ?? EDGE.seam).color}">
+            {r.e.kind === 'act' ? r.e.data.verb : r.e.kind}</span>
           <span class="dir">{r.dir}</span>
           <button class="mono link" onclick={() => onpick(r.other)}>{r.other.label}</button>
           {#if r.e.data?.gates === false}<span class="toothless">cannot gate</span>{/if}
+          {#if r.e.kind === 'act' && r.e.data?.defined === false}<span class="toothless">no word</span>{/if}
         </li>
       {/each}
     </ul>
@@ -75,6 +90,12 @@
   .counts { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .72rem; margin: 0; }
   .bad { color: var(--term); } .ok { color: var(--surface); }
   .places { list-style: none; padding: 0; margin: .4rem 0 0; font-size: .68rem; color: var(--dim); }
+  .verbs { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 .4rem; }
+  .verb { font-size: .66rem; padding: .05rem .3rem; border-radius: 3px;
+          border: 1px dashed color-mix(in oklab, var(--candidate) 45%, transparent);
+          color: var(--candidate); }
+  .verb.named { border-style: solid; border-color: color-mix(in oklab, var(--surface) 45%, transparent);
+                color: var(--surface); }
   .around { list-style: none; padding: 0; margin: 0; }
   .around li { display: flex; gap: .4rem; align-items: baseline; padding: .16rem 0; font-size: .72rem; }
   .ekind { font-size: .62rem; min-width: 66px; }

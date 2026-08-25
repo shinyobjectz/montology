@@ -23,6 +23,7 @@
     d.excepted ? { t: `${d.excepted} excepted`, tone: 'ok' } : null,
     d.count ? { t: `${d.count}×`, tone: 'dim' } : null,
     d.suggested ? { t: 'suggested', tone: 'dim' } : null,
+    d.verbs_unnamed?.length ? { t: `${d.verbs_unnamed.length} unnamed verb${d.verbs_unnamed.length > 1 ? 's' : ''}`, tone: 'todo' } : null,
   ].filter(Boolean));
 </script>
 
@@ -84,4 +85,5 @@
   .node.rejected { opacity: .45; text-decoration: line-through; }
   .prop { font-size: .58rem; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
   .mark.ok { color: var(--surface); border-color: color-mix(in oklab, var(--surface) 40%, transparent); }
+  .mark.todo { color: var(--candidate); border-color: color-mix(in oklab, var(--candidate) 40%, transparent); }
 </style>

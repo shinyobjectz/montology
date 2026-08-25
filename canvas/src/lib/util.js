@@ -29,11 +29,12 @@ export const EDGE = {
 export function edgeLook(edge) {
   const base = EDGE[edge.kind] || EDGE.seam;
   const toothless = edge.data && edge.data.gates === false;
+  const unnamedVerb = edge.kind === 'act' && edge.data && edge.data.defined === false;
   return {
     color: base.color,
     width: base.width,
-    dash: toothless ? '5 5' : base.dash,
-    opacity: toothless ? 0.5 : 1,
+    dash: toothless || unnamedVerb ? '5 5' : base.dash,
+    opacity: toothless ? 0.5 : unnamedVerb ? 0.7 : 1,
     label: edge.label || base.label,
   };
 }
@@ -45,9 +46,11 @@ export function edgeLook(edge) {
  *  `intelligence` is both ROUTED and OVERLOADED to `brain` — and drawn on one
  *  line they read as a single ruling, which is the opposite of true: they are
  *  two decisions, and one of them cannot gate. */
+export const LANE = 24;   // wide enough that five parallel acts read as five
+
 export function elbow(a, b, lane = 0) {
   const dx = b.x - a.x, dy = b.y - a.y;
-  const off = lane * 13;
+  const off = lane * LANE;
   if (Math.abs(dy) < 4) {
     if (!off) return `M${a.x},${a.y} L${b.x},${b.y}`;
     const m = a.x + dx / 2;

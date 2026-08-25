@@ -30,6 +30,9 @@ WORDS = [
     ("collision", "core", "scan", "scan.collision",
      "a declaration named after a word that means something else — the failure scan exists to catch",
      "where code and vocabulary disagree"),
+    ("act", "core", "scan", "scan.act",
+     "one thing the code does, read off the tree: a subject, a verb and an object at a place — the half of a codebase that declarations cannot see",
+     "what the code does, not what it declares"),
     ("candidate", "core", "scan", "scan.candidate",
      "a recurring declared name with no word — vocabulary the codebase is asking for",
      "what wants a definition"),
@@ -118,7 +121,7 @@ WORDS = [
 # it (`sync`) is the one command whose name is also its meaning.
 POS_OF = {
     "ontology": "noun", "word": "noun", "code": "value", "doctrine": "noun",
-    "scan": "noun", "collision": "noun", "candidate": "noun",
+    "scan": "noun", "collision": "noun", "candidate": "noun", "act": "noun",
     "workspace": "noun", "migration": "noun", "ruling": "noun",
     "amendment": "noun", "token": "noun", "recipe": "noun", "drift": "noun",
     "vitals": "noun", "convergence": "noun", "sync": "verb",
@@ -203,6 +206,8 @@ QUESTIONS = [
      ["surface", "seam", "phantom"]),
     ("What vocabulary is this codebase asking for that nobody has defined?",
      ["candidate", "scan", "collision", "divergence"]),
+    ("What does the code DO to the things we name, and do we name any of it?",
+     ["act"]),
     ("Is the generated prose still true of the database it claims to render?",
      ["sync", "drift", "glossary"]),
     ("How much of the vocabulary does an agent carry on every single turn?",

@@ -8,8 +8,13 @@
 //
 //                                   ↑ owner · what it is a kind of
 //        terms that died into it   ←  [ WORD ]  →   rulings taken about it
-//                                        ↓ the words it owns   → what bears it
+//        what ACTS on it           ←            →   what it ACTS ON, what bears it
+//                                        ↓ the words it owns
 //                                   ↓ the questions it answers
+//
+// Left is what comes in, right is what goes out, up is what it is, down is what
+// it holds. An act is code-side, like a bearing, so it sits with the outer
+// columns rather than in the middle where the vocabulary's own relations are.
 //
 // Everything is placed by rule, never by force: a layout that moves when
 // nothing moved is a layout you cannot trust to mean anything.
@@ -43,6 +48,8 @@ export function focusLayout(graph, focusId, measured) {
   const bears = take(outs.filter((e) => e.kind === 'bears'), 'out');
   const onward = take(outs.filter((e) => ['renamed', 'overloaded', 'routes'].includes(e.kind)), 'out');
   const kinds = take(outs.filter((e) => e.kind === 'genus'), 'out');
+  const actors = take(ins.filter((e) => e.kind === 'act'), 'in');
+  const acted = take(outs.filter((e) => e.kind === 'act'), 'out');
   const asked = take(ins.filter((e) => e.kind === 'answers'), 'in');
 
   // centred on the focus, so a column of two and a column of nine both read as
@@ -68,8 +75,9 @@ export function focusLayout(graph, focusId, measured) {
   };
 
   column(dead, -R.ring);
+  column(actors, -R.far);
   column([...rulings, ...onward], R.ring);
-  column(bears, R.far);
+  column([...bears, ...acted], R.far);
   row(kids, R.child);
   row(asked, R.asked + (kids.length ? R.child : 0));
   if (owner.length) {

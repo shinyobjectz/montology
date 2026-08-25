@@ -208,7 +208,8 @@ def _ghosts(pid: str) -> tuple[list[dict], list[dict]]:
 
 
 def graph(root: Path | None = None, *, with_scan: bool = True,
-          candidate_top: int = 20, proposal: str | None = None) -> dict:
+          candidate_top: int = 20, proposal: str | None = None,
+          with_acts: bool = True) -> dict:
     """The whole ontology as one document: nodes, edges, stats, provenance.
 
     `with_scan=False` skips the tree-sitter sweep — the vocabulary alone, for
@@ -301,6 +302,33 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                           "target": f"surface:{s['to_id']}", "label": s["kind"],
                           "data": {"direction": s["direction"], "at": s["at"]}})
 
+        # What the code DOES to what the vocabulary names. The noun side of
+        # this graph was always here; without the acts it draws a world in
+        # which nothing happens.
+        if with_acts:
+            from montology_scan import domain_acts
+
+            does: dict[str, dict[str, set]] = {}
+            for a in domain_acts(root):
+                seen_verbs = does.setdefault(a["object"], {"named": set(), "unnamed": set()})
+                seen_verbs["named" if a["verb_is_word"] else "unnamed"].add(a["verb"].lower())
+                if a["subject_word"] and a["subject_word"] != a["object"]:
+                    edges.append({
+                        "id": f"act:{a['subject_word']}:{a['verb']}:{a['object']}",
+                        "kind": "act", "source": f"word:{a['subject_word']}",
+                        "target": f"word:{a['object']}", "label": a["verb"],
+                        "data": {"verb": a["verb"], "defined": a["verb_is_word"],
+                                 "at": f"{a['file']}:{a['line']}"}})
+            for n in nodes:
+                if n["kind"] != "word":
+                    continue
+                d = does.get(n["data"]["name"].lower())
+                if d:
+                    n["data"]["verbs_named"] = sorted(d["named"])
+                    n["data"]["verbs_unnamed"] = sorted(d["unnamed"])
+            stats["acts"] = sum(len(v["named"]) + len(v["unnamed"]) for v in does.values())
+            stats["unnamed_verbs"] = sum(len(v["unnamed"]) for v in does.values())
+
         for c in scan_candidates(root, top=candidate_top):
             nodes.append({"id": f"candidate:{c['name']}", "kind": "candidate",
                           "label": c["name"],
@@ -321,6 +349,9 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
         edges += ge
         stats["proposed"] = len(gn) + len(ge)
         stats["new_words"] = len([g for g in gn if g["id"] not in have])
+
+    seen_ids = set()
+    edges = [e for e in edges if not (e["id"] in seen_ids or seen_ids.add(e["id"]))]
 
     return {"workspace": root.name, "nodes": nodes, "edges": edges,
             "stats": stats, "proposal": proposal,

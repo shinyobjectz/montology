@@ -4,7 +4,7 @@
   import Detail from './lib/Detail.svelte';
   import Spine from './lib/Spine.svelte';
   import Compose from './lib/Compose.svelte';
-  import { index, edgeLook, elbow } from './lib/util.js';
+  import { index, edgeLook, elbow, LANE } from './lib/util.js';
   import { focusLayout, overviewLayout } from './lib/layout.js';
 
   // Half the wire layer's box. Big enough that no laid-out graph reaches the
@@ -178,9 +178,11 @@
               {@const a = view.pos.get(e.source)}
               {@const b = view.pos.get(e.target)}
               {@const look = edgeLook(e)}
+              <!-- the LABEL is always legible; the dash is what says the verb
+                   is unnamed, and fading both says it twice and reads as noise -->
               <text class="wirelabel" x={(a.x + b.x) / 2}
-                    y={(a.y + b.y) / 2 - 7 + lane.get(e.id) * 13}
-                    text-anchor="middle" fill={look.color} opacity={look.opacity}>
+                    y={(a.y + b.y) / 2 - 7 + lane.get(e.id) * LANE}
+                    text-anchor="middle" fill={look.color}>
                 {look.label}{e.data?.gates === false ? ' · cannot gate' : ''}
               </text>
             {/each}

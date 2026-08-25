@@ -647,6 +647,21 @@ def onto_close(pid: str) -> None:
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("verbs")
+def onto_verbs(top: int = typer.Option(15, "--top", help="How many words to report.")) -> None:
+    """What the code DOES to the things this vocabulary names — and does not name.
+
+    The scan measures declarations, which is the noun side, and it is why a
+    montology vocabulary comes out about ninety percent nouns. This is the
+    other half, read off the same tree.
+    """
+    from montology_scan import render_acts
+
+    from ._ui import emit_all
+
+    emit_all(render_acts(top=top))
+
+
 @onto_app.command("review")
 def onto_review(
     threshold: float = typer.Option(0.70, "--threshold", help="Cosine above which two meanings count as one."),
