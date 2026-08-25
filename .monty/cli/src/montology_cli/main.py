@@ -463,6 +463,56 @@ def onto_route(
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("genus")
+def onto_genus(
+    word: str = typer.Argument("", help="The word that is a kind of something."),
+    is_a: str = typer.Option("", "--is", help="The more general word it is a kind of."),
+    why: str = typer.Option("", "--why", help="Why the subsumption holds."),
+    drop: bool = typer.Option(False, "--drop", help="Remove the subsumption."),
+) -> None:
+    """What a word IS a kind of — the one relation that changes what the gate knows."""
+    from montology_ontology import genera, genus_add, genus_chain, genus_drop, inherited
+
+    from ._ui import emit_all
+
+    if not word:
+        rows = genera()
+        if not rows:
+            typer.echo("no genus recorded yet — `monty onto genus WORD --is WORD`.")
+            raise typer.Exit(0)
+        emit_all([f"  {r['word_name']} is a kind of {r['genus_name']}"
+                  + (f"  ({r['why']})" if r["why"] else "") for r in rows])
+        raise typer.Exit(0)
+
+    if not is_a:
+        chain = genus_chain(word)
+        lines = [f"{word} is a kind of: " + (" → ".join(chain) if chain else "(nothing recorded)")]
+        got = inherited(word)
+        if got:
+            lines += ["", "inherited rulings:"]
+            lines += [f"  from {i['from']}  [{i['kind']}] {i['detail']}" for i in got]
+        emit_all(lines)
+        raise typer.Exit(0)
+
+    line = genus_drop(word, is_a) if drop else genus_add(word, is_a, why=why or None)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("rigidity")
+def onto_rigidity(word: str, value: str = typer.Argument(..., help="rigid | anti-rigid")) -> None:
+    """Judge what KIND of thing a word names, so its subsumptions can be checked.
+
+    Rigid is what a thing IS and cannot stop being; anti-rigid is a role it
+    plays for a while. The one OntoClean metaproperty montology keeps.
+    """
+    from montology_ontology import rigidity_set
+
+    line = rigidity_set(word, value)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
 @onto_app.command("routes")
 def onto_routes() -> None:
     """Where terms land: chains, orphans, and rulings that contradict."""

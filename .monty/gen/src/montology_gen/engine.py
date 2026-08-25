@@ -243,6 +243,22 @@ def _render_collisions(rulings: list[dict], plan: Plan) -> tuple[list[str], dict
     return head + [""], {"collisions.md": page}
 
 
+def _render_genera(genera: list[dict]) -> list[str]:
+    """What each word IS a kind of. Small by nature — a vocabulary with more
+    subsumptions than words has a taxonomy problem, not a rendering one — so it
+    stays resident and is not on the ladder."""
+    if not genera:
+        return []
+    lines = ["## Is a kind of", "",
+             "Containment says where a word lives; this says what it IS. A word "
+             "inherits its genus's rulings — check the genus before naming "
+             "against it.", "",
+             "| word | is a kind of | why |", "|---|---|---|"]
+    for g in genera:
+        lines.append(f"| **{g['word_name']}** | {g['genus_name']} | {g['why'] or ''} |")
+    return lines + [""]
+
+
 def _render_renames(renames: list[dict], plan: Plan) -> tuple[list[str], dict[str, list[str]]]:
     if not renames:
         return [], {}
@@ -326,6 +342,7 @@ def _render(repo_name: str, vocab: dict, plan: Plan, cap: int) -> tuple[str, dic
             lines.append(f"| **{t['name']}** | {t['category']} | `{t['value']}` |")
         lines.append("")
 
+    lines += _render_genera(vocab.get("genera", []))
     lines += take(_render_collisions(vocab["collisions"], plan))
 
     if vocab.get("exceptions"):

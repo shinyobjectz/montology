@@ -13,6 +13,7 @@ export const KIND = {
 
 export const EDGE = {
   contains:   { color: 'var(--dim)',       width: 1.5, dash: null,  label: 'owns' },
+  genus:      { color: 'var(--word-custom)', width: 2, dash: null,  label: 'is a kind of' },
   renamed:    { color: 'var(--term)',      width: 2,   dash: null,  label: 'renamed to' },
   overloaded: { color: 'var(--candidate)', width: 2,   dash: null,  label: 'say instead' },
   routes:     { color: 'var(--accent)',    width: 2,   dash: null,  label: 'routes to' },

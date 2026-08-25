@@ -168,7 +168,7 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
     when the caller wants the graph in milliseconds and does not need the code.
     """
     from montology_core import workspace_root
-    from montology_ontology import (collisions, doctrines, exceptions,
+    from montology_ontology import (collisions, doctrines, exceptions, genera,
                                     overloads, renames, routes, tokens, words)
 
     root = root or workspace_root()
@@ -178,6 +178,14 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
 
     nodes = _word_nodes(vocab)
     edges = _code_edges(vocab)
+
+    # subsumption: what a word IS, as against where it lives. Drawn separately
+    # from containment for exactly that reason — see the genus doctrine.
+    edges += [{"id": f"genus:{g['word_name']}:{g['genus_name']}", "kind": "genus",
+               "source": f"word:{g['word_name']}", "target": f"word:{g['genus_name']}",
+               "label": "is a kind of", "data": {"why": g.get("why"), "gates": True}}
+              for g in genera()
+              if g["word_name"] in live and g["genus_name"] in live]
 
     term_nodes, term_edges = _term_edges(routes(), renames(), overloads(), live)
     nodes += term_nodes
@@ -195,7 +203,7 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                       "data": {"category": t["category"], "value": t["value"]}})
 
     # ── the code side ────────────────────────────────────────────────────────
-    stats = {"words": len(vocab), "rulings": len(ruling_nodes),
+    stats = {"words": len(vocab), "genus": len(genera()), "rulings": len(ruling_nodes),
              "terms": len(term_nodes), "doctrine": len(doctrines()),
              "tokens": len(tokens())}
 

@@ -1,10 +1,11 @@
 """montology-ontology: a repo's vocabulary as a queryable database."""
 
-from .db import (POS, TREE_WIDE, add, amend, amendments, check, collide,
-                 collisions, connect, db_path, doctrines, except_add,
-                 except_drop, exceptions, overloads, record_run, rename_word,
-                 renames, route_add, route_drafts, route_drop, routes, rule,
-                 token_add, tokens, words)
+from .db import (POS, RIGIDITY, TREE_WIDE, add, amend, amendments, check,
+                 collide, collisions, connect, db_path, doctrines, except_add,
+                 except_drop, exceptions, genera, genus_add, genus_chain,
+                 genus_drop, inherited, overloads, record_run, rename_word,
+                 renames, rigidity_set, route_add, route_drafts, route_drop,
+                 routes, rule, token_add, tokens, words)
 from .chains import analyse as route_analyse
 from .chains import render as render_routes
 from .seed import seed
@@ -12,7 +13,8 @@ from .semantics import audit as semantic_audit
 from .semantics import similar as semantic_similar
 from .upstream import pinned_upstream, pull
 
-__all__ = ["POS", "TREE_WIDE", "add", "amend", "amendments", "check", "collide", "collisions", "connect", "db_path",
-           "doctrines", "except_add", "except_drop", "exceptions",
+__all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "amend", "amendments", "check", "collide", "collisions", "connect", "db_path",
+           "doctrines", "except_add", "except_drop", "exceptions", "genera", "genus_add", "genus_chain",
+           "genus_drop", "inherited", "rigidity_set",
            "overloads", "record_run", "rename_word", "renames",
            "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "semantic_audit", "semantic_similar", "token_add", "tokens", "words"]

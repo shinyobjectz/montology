@@ -37,3 +37,9 @@ WHAT WE ARE NOT BUILDING — see the decision ticket. Palantir-style domain link
 
 `monty canvas` opens a local page showing montology's own 26 words and qubie's 99 with every edge type visible; a word can be authored and a ruling made from the canvas with every existing law enforced; a set of changes can be proposed, reviewed with its lint verdict attached, and merged; and `monty onto review` names anti-patterns in the vocabulary the way Palantir's catalogue names them. The canvas never writes the database except through the code paths the CLI uses.
 
+
+## Notes
+
+**2026-08-25T20:03:45Z**
+
+TECH DECISION, taken during mon-gskj: NOT Svelte Flow. Two reasons that only appeared once the graph endpoint existed. (1) Every edge in montology is a form, not a gesture — a route is (from_term, to_word, register, scope, why), so a drag gives you two of five fields and still needs the modal; drag-to-connect with isValidConnection was the strongest argument for the library and it does not hold. (2) The graph is a sparse tree with satellites (qubie: 169 nodes, 82 edges, 36 containment), which is precisely where node-link diagrams read worst — and the layout was hand-written anyway, which is where a flow library earns most of its keep. Built on plain Svelte + SVG instead: 58kB vs 216kB for a TRIVIAL Svelte Flow app. Consequence for mon-mamk: the write mode's 'isValidConnection refuses a tree-breaking drag' becomes 'the form refuses it', which is the same law in the right place. The canvas also opens FOCUSED on one word's neighbourhood rather than showing the whole graph.

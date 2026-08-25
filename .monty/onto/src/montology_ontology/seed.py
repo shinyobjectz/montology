@@ -89,6 +89,12 @@ WORDS = [
     ("gist", "core", "ontology", "onto.gist",
      "a definition rendered to its first sentence — what a resident page carries when the whole definition is not worth its place in context",
      "the short form of a meaning"),
+    ("genus", "core", "ontology", "onto.genus",
+     "the more general word a word is a kind of — containment says where a word lives, this says what it IS, and a word inherits its genus's rulings",
+     "what kind of thing is it"),
+    ("rigidity", "core", "ontology", "onto.rigidity",
+     "whether a word names what a thing IS and cannot stop being, or a role it plays for a while — the one metaproperty that makes a wrong subsumption catchable",
+     "could a thing stop being this"),
     ("edge", "core", "ontology", "onto.edge",
      "a relation the ontology holds between two things it names — containment, a route, a ruling, a bearing — and every one of them gates something, because an edge nothing can check is a drawing",
      "what connects two things we name"),
@@ -107,6 +113,7 @@ POS_OF = {
     "exception": "noun", "divergence": "noun",
     "intake": "noun", "glossary": "noun",
     "disclosure": "noun", "gist": "noun", "edge": "noun",
+    "genus": "noun", "rigidity": "value",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and
@@ -145,6 +152,25 @@ EXCEPTIONS = [
      "`divergence()` and `glossary()`: below the surface, a function that hands back exactly "
      "what the word names and is called anything else would be the drift"),
 ]
+
+# What each word IS, where saying so is TRUE. montology's vocabulary is mostly
+# flat, and that is a finding rather than a gap: inventing a hierarchy to have
+# one is the over-modelling these tools are supposed to catch.
+GENERA = [
+    ("exception", "ruling", "an exception is a recorded boundary decision like any "
+     "other — which is why it carries a reason and a place, and why a bare "
+     "allow-list was never one"),
+]
+
+# The one OntoClean metaproperty. `candidate` is the clearest case in this
+# vocabulary and the reason the check is worth having: a candidate is a ROLE a
+# declared name plays until somebody defines it, so nothing that permanently is
+# something may be a kind of candidate.
+RIGIDITY_OF = {
+    "word": "rigid", "ruling": "rigid", "exception": "rigid", "doctrine": "rigid",
+    "seam": "rigid", "token": "rigid", "edge": "rigid",
+    "candidate": "anti-rigid", "phantom": "anti-rigid",
+}
 
 DOCTRINE = [
     ("Prose is rendered, never authored", 10,
@@ -246,6 +272,12 @@ def seed() -> str:
             "VALUES (?,?,?,?,'unchecked','2026-08-13')",
             (word, scope, why, POS_OF.get(word)),
         )
+    for name, value in RIGIDITY_OF.items():
+        conn.execute("UPDATE word SET rigidity=? WHERE lower(name)=?", (value, name))
+    for word, genus, why in GENERA:
+        conn.execute("INSERT OR REPLACE INTO genus (word_name, genus_name, why) "
+                     "VALUES (?,?,?)", (word, genus, why))
     conn.commit()
     return (f"seeded {len(WORDS)} words, {len(DOCTRINE)} doctrine blocks, "
-            f"{len(EXCEPTIONS)} exceptions")
+            f"{len(EXCEPTIONS)} exceptions, {len(GENERA)} genus, "
+            f"{len(RIGIDITY_OF)} rigidity judgements")

@@ -1,6 +1,6 @@
 ---
 id: mon-z85n
-status: open
+status: closed
 deps: [mon-ll1c, mon-gskj]
 links: []
 created: 2026-08-25T19:38:08Z
@@ -30,3 +30,9 @@ Filtering matters more than it sounds at qubie's size: by kind, by owner, by 'ha
 
 qubie's ontology renders legibly: every word, every rename, every collision, every route with its register, and the candidates the scan is asking for. Clicking a word shows its definition, its test, and the files whose declarations resolve to it. Nothing writes.
 
+
+## Notes
+
+**2026-08-25T20:03:45Z**
+
+Delivered with mon-gskj — the same app. All five edge kinds render: containment as the spine, renamed/overloaded/routes from retired terms on the left, rulings as nodes on the right, bearings out to surfaces. A route's register is drawn ON the wire and a ruling that cannot gate is faint, broken and labelled 'cannot gate'. Clicking a word shows its definition, its test, its code, its collides/excepted counts and the PLACES (file:line) rather than only a number. Verified in a browser against both montology (27 words) and qubie (99 words, 5237 declarations): qubie's 'permission' draws its two dead terms — warrant (renamed) and change-control (overloaded) — which is the vocabulary's history made visible, and the thing the words skill cannot show. Nothing writes.

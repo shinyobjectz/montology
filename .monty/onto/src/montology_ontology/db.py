@@ -204,6 +204,15 @@ CREATE TABLE IF NOT EXISTS seam (
   PRIMARY KEY (from_id, to_id, kind, at)
 );
 
+CREATE TABLE IF NOT EXISTS genus (
+  word_name   TEXT NOT NULL,          -- the word that is a kind of something
+  genus_name  TEXT NOT NULL,          -- the more general word it is a kind of
+  ruled_on    TEXT,
+  why         TEXT,
+  origin      TEXT,
+  PRIMARY KEY (word_name, genus_name)
+);
+
 CREATE TABLE IF NOT EXISTS route (
   from_term   TEXT NOT NULL,          -- the term being routed AWAY from
   to_word     TEXT NOT NULL,          -- what to say instead
@@ -261,6 +270,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(word)")}
     if cols and "pos" not in cols:
         conn.execute("ALTER TABLE word ADD COLUMN pos TEXT")
+    if cols and "rigidity" not in cols:
+        conn.execute("ALTER TABLE word ADD COLUMN rigidity TEXT")
 
 
 def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
@@ -927,6 +938,169 @@ def except_drop(word: str, scope: str | None = None) -> str:
     conn.commit()
     return (f"dropped  the exception on {word!r} in {scope}" if cur.rowcount
             else f"no exception on {word!r} in {scope}")
+
+
+# ── the genus: the one structural relation that gates something ────────────
+#
+# It is called `genus` and not `kind-of` because `kind` already means
+# provenance here — whose word it is — and one root meaning two things is the
+# failure the vocabulary exists to prevent. `genus` is also the older and more
+# exact word: a definition is a genus narrowed by a differentia, which is what
+# every definition in this database already is.
+
+# OntoClean's metaproperty, and only this one. Identity and unity need a
+# judgement the tool cannot supply, and a metaproperty nobody fills in
+# correctly is worse than none.
+#
+#   rigid      — what a thing IS, and cannot stop being: a person, a file.
+#   anti-rigid — a role a thing PLAYS for a while: a student, a reviewer.
+#
+# The constraint that follows: a rigid word may not be a kind of an anti-rigid
+# one. `person kind-of student` is the classic error — every student is a
+# person, but a person is not a kind of student, because they stop.
+RIGIDITY = ("rigid", "anti-rigid")
+
+
+def genus_chain(word: str, conn: sqlite3.Connection | None = None) -> list[str]:
+    """Every word this one is a kind of, transitively, nearest first.
+
+    A cycle is reported by simply not walking it twice: a vocabulary can
+    contain one (it is a finding, not a crash), and an instrument that hangs
+    on it is useless exactly when it is needed — the same rule `chains`
+    follows for routes.
+    """
+    c = conn or connect(readonly=True)
+    if not _has_genus(c):
+        return []
+    seen, out, front = {word.lower()}, [], [word.lower()]
+    while front:
+        nxt = []
+        for name in front:
+            for row in c.execute("SELECT genus_name FROM genus WHERE lower(word_name)=?", (name,)):
+                g = row[0]
+                if g.lower() in seen:
+                    continue
+                seen.add(g.lower())
+                out.append(g)
+                nxt.append(g.lower())
+        front = nxt
+    return out
+
+
+def _has_genus(conn: sqlite3.Connection) -> bool:
+    """A database written before the genus landed simply has no genus, which is
+    a fact and not a failure — the same rule the settings instrument follows.
+    A read-only connection cannot migrate, and crashing a reader over a table
+    the writer will create is a worse answer than an empty list."""
+    return bool(conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='genus'").fetchone())
+
+
+def genera(word: str | None = None) -> list[dict]:
+    conn = connect(readonly=True)
+    if not _has_genus(conn):
+        return []
+    sql = "SELECT * FROM genus"
+    args: list = []
+    if word:
+        sql += " WHERE lower(word_name)=?"
+        args.append(word.lower())
+    return [dict(r) for r in conn.execute(sql + " ORDER BY word_name, genus_name", args)]
+
+
+def rigidity_set(word: str, value: str) -> str:
+    """Judge what kind of thing a word names, so its subsumptions can be checked."""
+    if value not in RIGIDITY:
+        return (f"REFUSED — rigidity is {' or '.join(RIGIDITY)}, not {value!r}. "
+                "Rigid is what a thing IS and cannot stop being; anti-rigid is a "
+                "role it plays for a while.")
+    conn = connect()
+    if not conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (word.lower(),)).fetchone():
+        return f"REFUSED — {word!r} is not a word. Add it first (`monty onto add`)."
+    conn.execute("UPDATE word SET rigidity=? WHERE lower(name)=?", (value, word.lower()))
+    conn.commit()
+    return f"judged  {word} is {value}"
+
+
+def genus_add(word: str, genus: str, *, why: str | None = None,
+              ruled_on: str | None = None, origin: str | None = None) -> str:
+    """Record that a word is a kind of another word.
+
+    Refused rather than recorded when it cannot mean anything: an unknown word
+    at either end, a word being a kind of itself, a cycle, or a subsumption
+    OntoClean rules out. Unlike a route — which may point at a word that does
+    not exist yet, because a ledger has to be able to describe a decision taken
+    before its target landed — a genus asserts something about two things that
+    must both already be here for the assertion to have content.
+    """
+    conn = connect()
+    if word.lower() == genus.lower():
+        return f"REFUSED — {word!r} cannot be a kind of itself."
+    for name, role in ((word, "the word"), (genus, "the genus")):
+        if not conn.execute("SELECT 1 FROM word WHERE lower(name)=?", (name.lower(),)).fetchone():
+            return (f"REFUSED — {name!r} is not a word, and {role} has to be one. "
+                    f"Repair: `monty onto add {name!r} \"<definition>\"` first.")
+
+    if word.lower() in {g.lower() for g in genus_chain(genus, conn)}:
+        path = " → ".join([genus, *genus_chain(genus, conn)])
+        return (f"REFUSED — that closes a cycle: {path}. A word cannot be a kind "
+                f"of something that is already a kind of it.")
+
+    rows = {r["name"].lower(): r for r in conn.execute(
+        "SELECT name, rigidity, owner FROM word WHERE lower(name) IN (?,?)",
+        (word.lower(), genus.lower()))}
+    w, g = rows[word.lower()], rows[genus.lower()]
+    if w["rigidity"] == "rigid" and g["rigidity"] == "anti-rigid":
+        return (f"REFUSED — {word!r} is rigid and {genus!r} is anti-rigid. A thing "
+                f"cannot permanently be a kind of something it stops being: every "
+                f"{genus} is a {word}, not the other way round. Repair: reverse it, "
+                f"or re-judge one of them with `monty onto rigidity`.")
+
+    conn.execute("INSERT OR REPLACE INTO genus (word_name, genus_name, ruled_on, why, origin) "
+                 "VALUES (?,?,?,?,?)", (word, genus, ruled_on, why, origin))
+    conn.commit()
+    line = f"genus  {word} is a kind of {genus}"
+    # The confusion this relation exists to survive. `scan.collision` lives
+    # inside `scan` and is NOT a kind of scan; saying both is usually a sign
+    # that containment was mistaken for subsumption.
+    if w["owner"] and w["owner"].lower() == genus.lower():
+        line += (f"\n  note: {genus!r} is also {word!r}'s owner. Containment says "
+                 f"where a word LIVES; a genus says what it IS. They are often "
+                 f"different — check this one is both.")
+    return line
+
+
+def genus_drop(word: str, genus: str) -> str:
+    conn = connect()
+    cur = conn.execute("DELETE FROM genus WHERE lower(word_name)=? AND lower(genus_name)=?",
+                       (word.lower(), genus.lower()))
+    conn.commit()
+    return (f"dropped  {word} is no longer a kind of {genus}" if cur.rowcount
+            else f"nothing to drop — {word!r} was not recorded as a kind of {genus!r}.")
+
+
+def inherited(word: str) -> list[dict]:
+    """The rulings a word gets from what it is a kind of.
+
+    This is what makes the genus worth having: it is not decoration on a
+    diagram, it changes what the gate knows. An inherited ruling that is
+    invisible is a trap, so everything that shows a word's own rulings shows
+    these beside them, saying which ancestor they came from.
+    """
+    conn = connect(readonly=True)
+    out: list[dict] = []
+    for ancestor in genus_chain(word, conn):
+        low = ancestor.lower()
+        for r in conn.execute("SELECT dont_say, say, why FROM overload WHERE lower(say)=?", (low,)):
+            out.append({"from": ancestor, "kind": "overload", "detail":
+                        f"do not say {r['dont_say']!r} — say {r['say']!r}"})
+        for r in conn.execute("SELECT term, theirs, ruling FROM collision WHERE lower(term)=?", (low,)):
+            out.append({"from": ancestor, "kind": "collision", "detail":
+                        f"{r['term']} vs {r['theirs']}: {r['ruling']}"})
+        for r in conn.execute("SELECT was, now FROM renamed WHERE lower(now)=?", (low,)):
+            out.append({"from": ancestor, "kind": "renamed", "detail":
+                        f"{r['was']} was retired in favour of {r['now']}"})
+    return out
 
 
 def collisions() -> list[dict]:
