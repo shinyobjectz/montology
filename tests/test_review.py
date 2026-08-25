@@ -124,3 +124,33 @@ def test_the_review_never_fails_a_build(ws, onto_db):
     lines = render_review(review())
     assert not any(line.startswith("FAIL") for line in lines)
     assert any("advisory" in line for line in lines)
+
+
+def test_a_path_still_carrying_a_retired_name(ws, onto_db):
+    """Ours, and it took a real repo to see. qubie renamed q1 to reactive-layer
+    and q2 to edge-layer and left the directories as `q1/` and `q2/` — so the
+    vocabulary said one thing and the tree said another, and every act inside
+    those folders resolved to a retired term and vanished."""
+    from montology_scan import review
+
+    (ws / "q2").mkdir()
+    (ws / "q2" / "relay.py").write_text("class Relay:\n    pass\n")
+    (ws / "q2" / "brain.py").write_text("class Brain:\n    pass\n")
+    onto_db.add("q2", "the middle layer", kind="core", pos="noun")
+    onto_db.rename_word("q2", "edge-layer", "layers are named for what they do")
+
+    got = only(review(), "The Old Address")
+    assert got and got[0]["verdict"] == "proof"
+    assert "q2" in got[0]["subject"] and "edge-layer" in got[0]["subject"]
+    assert "2 file(s)" in got[0]["evidence"]
+    assert "q2/relay.py" in got[0]["evidence"]
+
+
+def test_a_path_that_matches_the_new_name_is_not_a_finding(ws, onto_db):
+    from montology_scan import review
+
+    (ws / "edge-layer").mkdir()
+    (ws / "edge-layer" / "relay.py").write_text("class Relay:\n    pass\n")
+    onto_db.add("q2", "the middle layer", kind="core", pos="noun")
+    onto_db.rename_word("q2", "edge-layer", "layers are named for what they do")
+    assert not only(review(), "The Old Address")

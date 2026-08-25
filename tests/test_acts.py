@@ -149,3 +149,19 @@ def test_a_stronger_subject_wins_over_the_module(ws, onto_db):
 
     a = next(x for x in domain_acts() if x["verb"] == "fly")
     assert a["subject_word"] == "tour" and a["subject_resolved"] == "by-name"
+
+
+def test_the_ledger_is_followed_when_a_path_carries_a_retired_name(ws, onto_db):
+    """A path is OLDER MATERIAL, and older material is exactly what the rename
+    ledger exists to be read through. qubie: 8 edges became 23."""
+    from montology_scan.acts import domain_acts
+
+    (ws / "q1").mkdir()
+    (ws / "q1" / "cycle.py").write_text("def run():\n    dwell.feed(1)\n")
+    onto_db.add("dwell", "a rest long enough to mean it", kind="core", pos="noun")
+    onto_db.add("q1", "the fast layer", kind="core", pos="noun")
+    onto_db.rename_word("q1", "reactive-layer", "layers are named for what they do")
+
+    a = next(x for x in domain_acts() if x["verb"] == "feed")
+    assert a["subject_word"] == "reactive-layer"
+    assert a["subject_resolved"] == "by-module (renamed)"

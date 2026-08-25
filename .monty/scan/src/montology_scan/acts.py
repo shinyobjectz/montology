@@ -212,12 +212,33 @@ def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
     was `time`, `sleep`, `monotonic`, `expanduser`, which says nothing about
     what qubie is.
     """
-    from montology_ontology import words
+    from montology_ontology import overloads, renames, routes, words
 
     from .bindings import bindings_for
 
     have = {w["name"].lower() for w in words()}
     binds = bindings_for(root) if typed else {}
+
+    # A path is OLDER MATERIAL, and older material is exactly what the rename
+    # ledger exists to be read through. qubie renamed q1 -> reactive-layer and
+    # q2 -> edge-layer while the directories stayed `q1/` and `q2/`, so every
+    # act inside them resolved to a retired term, found no word, and vanished.
+    # Following the ledger took qubie from 8 edges to 23.
+    ledger: dict[str, str] = {}
+    for r in renames():
+        ledger[_norm(r["was"])] = _norm(r["now"])
+    for o in overloads():
+        ledger.setdefault(_norm(o["dont_say"]), _norm(o["say"]))
+    for r in routes():
+        ledger.setdefault(_norm(r["from_term"]), _norm(r["to_word"]))
+
+    def live(name: str | None) -> str | None:
+        """The word this name means now, following the ledger once."""
+        low = _norm(name)
+        if low in have:
+            return low
+        was = ledger.get(low)
+        return was if was in have else None
 
     def resolve(name: str | None, file: str) -> tuple[str | None, str]:
         """What this name IS, and how we know.
@@ -232,8 +253,12 @@ def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
         ty = _norm(binds.get(file, {}).get(name))
         if ty and ty in have:
             return ty, "by-type"
+        if ty and live(ty):
+            return live(ty), "by-type (renamed)"
         low = _norm(name)
-        return (low, "by-name") if low in have else (None, "none")
+        if low in have:
+            return low, "by-name"
+        return (live(low), "by-name (renamed)") if live(low) else (None, "none")
 
     def from_path(file: str) -> str | None:
         """The module or directory a call lives in, when that is a word.
@@ -247,8 +272,11 @@ def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
         for candidate in (Path(file).stem, *reversed(parts[:-1])):
             low = _norm(candidate)
             if low in have:
-                return low
-        return None
+                return low, "by-module"
+            if live(low):
+                # the directory still carries the name we retired
+                return live(low), "by-module (renamed)"
+        return None, "none"
 
     out = []
     for a in acts(root)["acts"]:
@@ -257,7 +285,7 @@ def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
             continue
         subj, subj_how = resolve(a["subject"], a["file"])
         if not subj:
-            subj, subj_how = from_path(a["file"]), "by-module"
+            subj, subj_how = from_path(a["file"])
         out.append({**a, "object": obj, "resolved": how,
                     "subject_word": subj, "subject_resolved": subj_how,
                     "verb_is_word": a["verb"].lower() in have})

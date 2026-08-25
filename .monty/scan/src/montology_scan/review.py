@@ -150,6 +150,41 @@ def _god_objects(vocab: list[dict], decls: list[dict], enforced: set[str],
         for name, areas in sorted(where.items()) if len(areas) >= spread]
 
 
+def _old_addresses(root: Path, renames: list[dict]) -> list[dict]:
+    """Paths still carrying a name the vocabulary retired.
+
+    Ours, and it took a real repo to see. qubie renamed q1 to reactive-layer and
+    q2 to edge-layer and left the directories as `q1/` and `q2/` — so the
+    vocabulary said one thing and the tree said another, and every act inside
+    those folders resolved to a retired term and vanished. A rename that reached
+    the ledger and the prose but not the paths is a rename that only half
+    happened, and nothing was watching the half that did not.
+    """
+    retired = {r["was"].lower().replace("_", "-"): r["now"] for r in renames}
+    if not retired:
+        return []
+    from .surface import _iter_files
+
+    seen: dict[str, dict] = {}
+    for f in _iter_files(root):
+        for part in f.relative_to(root).parts:
+            low = part.rsplit(".", 1)[0].lower().replace("_", "-")
+            if low not in retired:
+                continue
+            row = seen.setdefault(low, {"count": 0, "at": []})
+            row["count"] += 1
+            if len(row["at"]) < 3:
+                row["at"].append(str(f.relative_to(root)))
+    return [_finding(
+        "The Old Address", "proof", f"{was}/ → {retired[was]}",
+        f"{row['count']} file(s) still sit under the retired name {was!r}: "
+        f"{', '.join(row['at'])}",
+        f"the ledger says {was!r} became {retired[was]!r}. Move the path to match, "
+        f"or the vocabulary and the tree keep disagreeing — and every act inside "
+        f"resolves to a name no longer in the vocabulary")
+        for was, row in sorted(seen.items(), key=lambda kv: -kv[1]["count"])]
+
+
 def _toothless(routes: list[dict]) -> list[dict]:
     """Not in anyone's catalogue, because no vendor models a register. A ruling
     that cannot be scoped can never gate, so it reads as a decision and behaves
@@ -178,7 +213,7 @@ def review(root: Path | None = None, *, threshold: float = 0.70,
            spread: int = 3) -> dict:
     """Every anti-pattern this vocabulary instantiates, with its evidence."""
     from montology_core import workspace_root
-    from montology_ontology import routes, words
+    from montology_ontology import renames, routes, words
 
     from .lint import _config
     from .surface import declarations
@@ -196,6 +231,7 @@ def review(root: Path | None = None, *, threshold: float = 0.70,
     findings = (_misnomers(vocab) + _time_machines(vocab)
                 + _kitchen_sinks(vocab, vendors) + silos
                 + _god_objects(vocab, declarations(root)["decls"], enforced, spread)
+                + _old_addresses(root, renames())
                 + _toothless(routes()))
     return {"findings": findings, "skipped": skipped(),
             "unavailable": [note] if note else [], "words": len(vocab)}
