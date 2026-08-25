@@ -7,8 +7,10 @@
   --bg: #fbfaf8; --panel: #ffffff; --ink: #1a1a1c; --dim: #6b6b73;
   --line: #e4e2dd; --rule: #d8d5ce;
   --accent: #2f4fd8; --settled: #1a7f4f; --open: #a8620a; --retired: #b3261e;
-  /* a wire at rest carries no meaning beyond "there is a relation here" */
-  --wire: #c3c0b8; --wire-ink: #86838c;
+  /* A wire at rest still has to be READ. It carries no hue — the hue is what
+     hovering buys — but grey is a colour, not an absence, and one pitched so
+     faint that the verb on it cannot be made out has stopped saying anything. */
+  --wire: #a9a69d; --wire-ink: #6e6b74;
   --measure: 66ch;
   font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
 }
@@ -17,7 +19,7 @@
     --bg: #101114; --panel: #181a1f; --ink: #e8e8ec; --dim: #9a9aa4;
     --line: #26282f; --rule: #32353e;
     --accent: #8aa0ff; --settled: #55c98b; --open: #e0a355; --retired: #ff8a80;
-    --wire: #3b3f4a; --wire-ink: #7e828e;
+    --wire: #565b68; --wire-ink: #9ba0ac;
   }
 }
 * { box-sizing: border-box; }
@@ -88,11 +90,13 @@ code.mono { font-size: .84em; }
 .relations .n { cursor: pointer; }
 /* At rest everything is grey. On hover the pointed-at thing and what it touches
    take their colour and the rest recedes — colour is attention, and spending it
-   on all seventeen wires at once means spending it on none. */
+   on all seventeen wires at once means spending it on none.
+   The unhovered rest RECEDES, it does not vanish: dimming to nothing turns a
+   hover into a filter, and the point of the reveal is that you can still see
+   what you are choosing between. */
 .relations .w, .relations .vb, .relations .n { transition: opacity .13s ease; }
 .relations .w path { transition: stroke-width .13s ease; }
-.relations .off { opacity: .16; }
-.relations .w.on { filter: drop-shadow(0 0 5px currentColor); }
+.relations .off { opacity: .42; }
 .relations .vb.on { font-weight: 700; }
 .relations .n.on rect { stroke: var(--accent); }
 .relations .n.self rect { stroke: var(--accent); stroke-width: 2; fill: var(--panel); }
