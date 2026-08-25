@@ -122,3 +122,30 @@ def test_an_act_between_two_words_is_an_edge(ws, onto_db):
     assert acts_ and all(e["source"] == "word:tour" for e in acts_)
     assert {e["data"]["verb"] for e in acts_} == {"hide"}
     assert acts_[0]["data"]["defined"] is False
+
+
+def test_the_module_names_the_subject_when_nothing_else_does(ws, onto_db):
+    """`pointer.fly()` in `q1/step.py` is step flying a pointer, and the file
+    says so — codebases put a concept's code in a file named after it far more
+    reliably than they name the local variable."""
+    from montology_scan.acts import domain_acts
+
+    (ws / "src" / "step.py").write_text("def helper():\n    pointer.fly(1)\n")
+    onto_db.add("pointer", "what the person is looking at", kind="core", pos="noun")
+    onto_db.add("step", "one move in a walkthrough", kind="core", pos="noun")
+
+    a = next(x for x in domain_acts() if x["verb"] == "fly")
+    assert a["subject_word"] == "step" and a["subject_resolved"] == "by-module"
+    assert a["object"] == "pointer"
+
+
+def test_a_stronger_subject_wins_over_the_module(ws, onto_db):
+    from montology_scan.acts import domain_acts
+
+    (ws / "src" / "step.py").write_text("def tour():\n    pointer.fly(1)\n")
+    onto_db.add("pointer", "what the person is looking at", kind="core", pos="noun")
+    onto_db.add("step", "one move in a walkthrough", kind="core", pos="noun")
+    onto_db.add("tour", "a walk through the system", kind="core", pos="noun")
+
+    a = next(x for x in domain_acts() if x["verb"] == "fly")
+    assert a["subject_word"] == "tour" and a["subject_resolved"] == "by-name"

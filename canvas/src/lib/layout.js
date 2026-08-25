@@ -92,13 +92,19 @@ export function focusLayout(graph, focusId, measured) {
   return { pos, shown: seen };
 }
 
-/** The overview: every word, containment as the spine.
+/** The overview: the whole graph, not just the spine.
  *
- *  Flowed into COLUMNS rather than one tall stack. qubie's 110 words in a
- *  single column fit the screen at 13% — a smear, not an overview — because
- *  the layout was tall and the screen is wide. Groups now pack down a column
- *  and wrap to the next, the way a glossary sets on a page. */
-export function overviewLayout(graph, { columnHeight = 1000, measured } = {}) {
+ *  This placed ONLY words, so every term, ruling and question went unpositioned
+ *  and every edge touching one was filtered out — qubie drew 36 containment
+ *  edges out of 93 and read as a tree, because two thirds of the graph was
+ *  invisible. A retired name is placed beside the word it points at and a
+ *  ruling beside the word it rules, so the relation is short, local and
+ *  legible instead of a line across the screen.
+ *
+ *  Groups pack down a column and wrap to the next, the way a glossary sets on
+ *  a page: 110 words in one tall stack fit the screen at 13%, which is a smear.
+ */
+export function overviewLayout(graph, { columnHeight = 1050, measured } = {}) {
   const words = graph.nodes.filter((n) => n.kind === 'word');
   const kids = new Map();
   for (const w of words) {
@@ -110,44 +116,58 @@ export function overviewLayout(graph, { columnHeight = 1000, measured } = {}) {
   const tops = words.filter((w) => !w.data.owner || !known.has(w.data.owner))
                     .sort((a, b) => a.label.localeCompare(b.label));
 
-  // owners with children first: they are the structure, and burying them under
-  // sixty ungrouped words is what made the old overview unreadable
   const grouped = tops.filter((t) => (kids.get(t.label) || []).length);
   const flat = tops.filter((t) => !(kids.get(t.label) || []).length);
 
-  const COL_W = NODE_GAP_X + 2 * (240 + NODE_GAP_X);   // parent column + child column
+  const COL_W = NODE_GAP_X + 3 * (240 + NODE_GAP_X);   // satellites · parent · children
+  const SAT = 240 + NODE_GAP_X;
   const pos = new Map();
   const shown = new Set();
   let col = 0, y = 0;
 
   const wrap = (needed) => { if (y + needed > columnHeight && y > 0) { col += 1; y = 0; } };
+  const place = (node, x, yy) => { pos.set(node.id, { x, y: yy }); shown.add(node.id); };
 
   for (const top of grouped) {
     const mine = (kids.get(top.label) || []).sort((a, b) => a.label.localeCompare(b.label));
     const { height } = stack(mine, { x: 0, top: 0, measured });
     wrap(height + 34);
     const x = col * COL_W;
-    for (const [n, p] of stack(mine, { x: x + 240 + NODE_GAP_X, top: y, measured }).placed) {
+    for (const [n, p] of stack(mine, { x: x + SAT * 2, top: y, measured }).placed) {
       pos.set(n.id, p);
       shown.add(n.id);
     }
-    pos.set(top.id, { x, y: y + height / 2 });
-    shown.add(top.id);
+    place(top, x + SAT, y + height / 2);
     y += height + 34;
   }
 
-  // the ungrouped tail sets two-up, so a long flat vocabulary does not become a
-  // mile-long ribbon nobody scrolls. The row advances by the TALLER of the pair.
   for (let i = 0; i < flat.length; i += 2) {
     const pair = flat.slice(i, i + 2);
     const h = Math.max(...pair.map((n) => nodeHeight(n, measured)));
     wrap(h + 16);
     const x = col * COL_W;
-    pair.forEach((n, j) => {
-      pos.set(n.id, { x: x + j * (240 + NODE_GAP_X), y: y + h / 2 });
-      shown.add(n.id);
-    });
+    pair.forEach((n, j) => place(n, x + SAT + j * SAT, y + h / 2));
     y += h + 16;
+  }
+
+  // Now the rest of the graph, hung off whatever it is about. A dead name sits
+  // to the LEFT of the word it became, a ruling to the left of the word it
+  // rules — the same reading the focused view uses, kept consistent so the two
+  // views teach the same thing.
+  const anchored = (node) => {
+    for (const e of graph.out.get(node.id) ?? []) if (pos.has(e.target)) return pos.get(e.target);
+    for (const e of graph.inn.get(node.id) ?? []) if (pos.has(e.source)) return pos.get(e.source);
+    return null;
+  };
+  const taken = new Map();
+  for (const node of graph.nodes) {
+    if (pos.has(node.id) || node.kind === 'word') continue;
+    const at = anchored(node);
+    if (!at) continue;                      // nothing to hang it on: leave it out
+    const slot = `${Math.round(at.x)}:${Math.round(at.y)}`;
+    const nth = taken.get(slot) ?? 0;
+    taken.set(slot, nth + 1);
+    place(node, at.x - SAT, at.y + nth * (nodeHeight(node, measured) + 10));
   }
 
   return { pos, shown };

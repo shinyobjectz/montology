@@ -235,12 +235,29 @@ def domain_acts(root: Path | None = None, *, typed: bool = True) -> list[dict]:
         low = _norm(name)
         return (low, "by-name") if low in have else (None, "none")
 
+    def from_path(file: str) -> str | None:
+        """The module or directory a call lives in, when that is a word.
+
+        `pointer.fly()` in `q1/step.py` is step flying a pointer, and the file
+        says so — codebases put a concept's code in a file named after it far
+        more reliably than they name the local variable. Weaker than a type and
+        recorded as such.
+        """
+        parts = Path(file).parts
+        for candidate in (Path(file).stem, *reversed(parts[:-1])):
+            low = _norm(candidate)
+            if low in have:
+                return low
+        return None
+
     out = []
     for a in acts(root)["acts"]:
         obj, how = resolve(a["object"], a["file"])
         if not obj:
             continue
         subj, subj_how = resolve(a["subject"], a["file"])
+        if not subj:
+            subj, subj_how = from_path(a["file"]), "by-module"
         out.append({**a, "object": obj, "resolved": how,
                     "subject_word": subj, "subject_resolved": subj_how,
                     "verb_is_word": a["verb"].lower() in have})
