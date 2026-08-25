@@ -34,41 +34,37 @@ from pathlib import Path
 
 from .surface import LANG_BY_EXT, MAX_BYTES, _iter_files
 
-# What a call means in each grammar. Deliberately only the shapes that carry a
-# SUBJECT and a VERB — a bare `foo()` names no object and tells us nothing about
-# what interacts with what.
-ACT_QUERIES: dict[str, str] = {
-    "python": """
-        (call function: (attribute object: (identifier) @object
-                                   attribute: (identifier) @verb)) @act
-        (call function: (attribute object: (attribute attribute: (identifier) @object)
-                                   attribute: (identifier) @verb)) @act
-    """,
-    "javascript": """
-        (call_expression function: (member_expression
-            object: (identifier) @object property: (property_identifier) @verb)) @act
-    """,
-    "typescript": """
-        (call_expression function: (member_expression
-            object: (identifier) @object property: (property_identifier) @verb)) @act
-    """,
-    "tsx": """
-        (call_expression function: (member_expression
-            object: (identifier) @object property: (property_identifier) @verb)) @act
-    """,
-    "go": """
-        (call_expression function: (selector_expression
-            operand: (identifier) @object field: (field_identifier) @verb)) @act
-    """,
-    "rust": """
-        (call_expression function: (field_expression
-            value: (identifier) @object field: (field_identifier) @verb)) @act
-        (method_call_expression receiver: (identifier) @object name: (field_identifier) @verb) @act
-    """,
-    "ruby": """
-        (call receiver: (identifier) @object method: (identifier) @verb) @act
-    """,
+# What a call looks like in each grammar, as FIELDS rather than as a query.
+#
+# The first version matched captures and paired them by line, which silently
+# dropped every line holding two calls and could never reach the ARGUMENTS —
+# and the arguments are where the ontology is. `engram.store(mention)` is a
+# noun, a verb and a noun; keeping only `engram` and `store` throws away the
+# half that makes it a sentence.
+CALL_SHAPES: dict[str, dict] = {
+    "python": {"node": "call", "fn": "function", "recv_kind": "attribute",
+               "recv": "object", "verb": "attribute", "args": "arguments"},
+    "javascript": {"node": "call_expression", "fn": "function",
+                   "recv_kind": "member_expression", "recv": "object",
+                   "verb": "property", "args": "arguments"},
+    "typescript": {"node": "call_expression", "fn": "function",
+                   "recv_kind": "member_expression", "recv": "object",
+                   "verb": "property", "args": "arguments"},
+    "tsx": {"node": "call_expression", "fn": "function",
+            "recv_kind": "member_expression", "recv": "object",
+            "verb": "property", "args": "arguments"},
+    "go": {"node": "call_expression", "fn": "function",
+           "recv_kind": "selector_expression", "recv": "operand",
+           "verb": "field", "args": "arguments"},
+    "rust": {"node": "call_expression", "fn": "function",
+             "recv_kind": "field_expression", "recv": "value",
+             "verb": "field", "args": "arguments"},
+    "ruby": {"node": "call", "fn": None, "recv_kind": None,
+             "recv": "receiver", "verb": "method", "args": "arguments"},
 }
+
+# Names that are never a concept, whatever the grammar says.
+_SKIP_NAMES = {"self", "this", "cls", "super", "None", "True", "False", "null"}
 
 # Verbs every codebase performs and no vocabulary should have to name. Not a
 # judgement about the words — `get` is a fine English verb — but about whether
@@ -83,11 +79,54 @@ PLUMBING = {
     "toString", "valueOf", "call", "apply", "bind", "json", "dumps", "loads",
     "group", "match", "search", "sub", "findall", "compile", "exists", "mkdir",
     "unwrap", "expect", "clone", "into", "iter", "collect", "push_str", "new",
-    "commit", "execute", "fetchone", "fetchall", "cursor", "connect", "close",
-    "self", "super", "init", "str", "repr", "dict", "list",
-    "rsplit", "lstrip", "rstrip", "partition", "rpartition", "splitlines",
-    "count", "index", "find", "title", "capitalize", "ljust", "rjust", "zfill",
+    "commit", "execute", "fetchone", "fetchall", "cursor", "connect",
+    "init", "str", "repr", "dict", "list", "rsplit", "lstrip", "rstrip",
+    "partition", "rpartition", "splitlines", "count", "index", "find", "title",
+    "capitalize", "ljust", "rjust", "zfill", "startsWith", "endsWith", "slice",
 }
+
+
+def _text(node) -> str | None:
+    return node.text.decode(errors="replace") if node is not None else None
+
+
+def _parts(node, shape) -> tuple[str | None, str | None, list[str]]:
+    """The receiver, the verb and the identifier arguments of one call."""
+    if shape["fn"]:
+        fn = node.child_by_field_name(shape["fn"])
+        if fn is None or fn.type != shape["recv_kind"]:
+            return None, None, []
+        recv_node = fn.child_by_field_name(shape["recv"])
+        # `Path(__file__).resolve()` has a receiver that is an expression, and an
+        # expression names nothing. Only a plain name can be a concept — with
+        # one step through an attribute, so `self.engram.store()` still says
+        # `engram`.
+        if recv_node is not None and recv_node.type == shape["recv_kind"]:
+            recv_node = recv_node.child_by_field_name(shape["verb"])
+        recv = _text(recv_node) if recv_node is not None and recv_node.type in (
+            "identifier", "property_identifier", "field_identifier") else None
+        verb = _text(fn.child_by_field_name(shape["verb"]))
+    else:
+        recv = _text(node.child_by_field_name(shape["recv"]))
+        verb = _text(node.child_by_field_name(shape["verb"]))
+
+    args: list[str] = []
+    arglist = node.child_by_field_name(shape["args"])
+    if arglist is not None:
+        for child in arglist.named_children:
+            # a bare name, or the value of a keyword argument — both name a
+            # thing; anything more complex is an expression, not a concept
+            if child.type in ("identifier", "shorthand_property_identifier"):
+                args.append(_text(child))
+            elif child.type in ("keyword_argument", "pair"):
+                value = child.child_by_field_name("value")
+                if value is not None and value.type == "identifier":
+                    args.append(_text(value))
+            elif child.type == "attribute":
+                attr = child.child_by_field_name("attribute")
+                if attr is not None:
+                    args.append(_text(attr))
+    return recv, verb, [a for a in args if a and a not in _SKIP_NAMES]
 
 
 def _enclosing(decls: list[dict], file: str, line: int) -> str | None:
@@ -108,7 +147,7 @@ def acts(root: Path | None = None, decls: list[dict] | None = None) -> dict:
     """Every act the tree can see. Deterministic; a language with no query map
     is SKIPPED and said to be skipped, the same rule the declarations follow."""
     from montology_core import workspace_root
-    from tree_sitter_language_pack import get_language, get_parser
+    from tree_sitter_language_pack import get_parser
 
     from .surface import declarations
 
@@ -118,49 +157,43 @@ def acts(root: Path | None = None, decls: list[dict] | None = None) -> dict:
 
     out: list[dict] = []
     skipped: dict[str, int] = {}
-    parsers: dict[str, tuple] = {}
+    parsers: dict[str, object] = {}
+
+    def walk(node, shape, rel, lang):
+        if node.type == shape["node"]:
+            recv, verb, args = _parts(node, shape)
+            if verb and not verb.startswith("_"):
+                line = node.start_point[0] + 1
+                subject = _enclosing(decls, rel, line)
+                if recv in _SKIP_NAMES:
+                    recv = None
+                # One act per (receiver, verb) and one per argument: the second
+                # is the triple — a noun, a verb and a noun — and it is the
+                # reason this reads as an ontology rather than as a call log.
+                out.append({"verb": verb, "object": recv, "arg": None, "lang": lang,
+                            "file": rel, "line": line, "subject": subject})
+                for a in args:
+                    out.append({"verb": verb, "object": recv, "arg": a, "lang": lang,
+                                "file": rel, "line": line, "subject": subject})
+        for child in node.named_children:
+            walk(child, shape, rel, lang)
 
     for f in _iter_files(root):
         lang = LANG_BY_EXT[f.suffix]
-        query_src = ACT_QUERIES.get(lang)
-        if query_src is None:
+        shape = CALL_SHAPES.get(lang)
+        if shape is None:
             skipped[lang] = skipped.get(lang, 0) + 1
             continue
         try:
             if lang not in parsers:
-                language = get_language(lang)
-                try:
-                    from tree_sitter import Query, QueryCursor
-                    parsers[lang] = (get_parser(lang), ("cursor", QueryCursor(Query(language, query_src))))
-                except ImportError:
-                    parsers[lang] = (get_parser(lang), ("query", language.query(query_src)))
-            parser, (mode, q) = parsers[lang]
+                parsers[lang] = get_parser(lang)
             if f.stat().st_size > MAX_BYTES:
                 continue
-            tree = parser.parse(f.read_bytes())
-            caps = q.captures(tree.root_node) if mode == "cursor" else q.captures(tree.root_node)
+            tree = parsers[lang].parse(f.read_bytes())
         except Exception:  # noqa: BLE001 — one broken file is a count, not a crash
             continue
+        walk(tree.root_node, shape, str(f.relative_to(root)), lang)
 
-        # captures come back grouped by name; pair them up by position
-        verbs = {n.start_point[0]: n for n in caps.get("verb", [])}
-        objects = {n.start_point[0]: n for n in caps.get("object", [])}
-        rel = str(f.relative_to(root))
-        for line, vnode in verbs.items():
-            onode = objects.get(line)
-            if onode is None:
-                continue
-            verb = vnode.text.decode(errors="replace")
-            obj = onode.text.decode(errors="replace")
-            if verb.startswith("_") or obj in ("self", "this"):
-                # `self.store(...)` still tells us the VERB, which is the half
-                # that matters most; the subject is the enclosing declaration.
-                if obj not in ("self", "this"):
-                    continue
-                obj = None
-            out.append({"verb": verb, "object": obj, "lang": lang,
-                        "file": rel, "line": line + 1,
-                        "subject": _enclosing(decls, rel, line + 1)})
     return {"acts": out, "skipped": skipped}
 
 
