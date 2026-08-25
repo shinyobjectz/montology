@@ -1,6 +1,6 @@
 ---
 id: mon-gh8j
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-08-25T19:36:19Z
@@ -43,3 +43,7 @@ WHAT WE ARE NOT BUILDING — see the decision ticket. Palantir-style domain link
 **2026-08-25T20:03:45Z**
 
 TECH DECISION, taken during mon-gskj: NOT Svelte Flow. Two reasons that only appeared once the graph endpoint existed. (1) Every edge in montology is a form, not a gesture — a route is (from_term, to_word, register, scope, why), so a drag gives you two of five fields and still needs the modal; drag-to-connect with isValidConnection was the strongest argument for the library and it does not hold. (2) The graph is a sparse tree with satellites (qubie: 169 nodes, 82 edges, 36 containment), which is precisely where node-link diagrams read worst — and the layout was hand-written anyway, which is where a flow library earns most of its keep. Built on plain Svelte + SVG instead: 58kB vs 216kB for a TRIVIAL Svelte Flow app. Consequence for mon-mamk: the write mode's 'isValidConnection refuses a tree-breaking drag' becomes 'the form refuses it', which is the same law in the right place. The canvas also opens FOCUSED on one word's neighbourhood rather than showing the whole graph.
+
+**2026-08-25T20:28:36Z**
+
+EPIC COMPLETE. All eight children closed; gate green (204 tests, monty lint ok, bundle current). Verified end to end against both workspaces: montology 33 words / 95 nodes / 262 edges, qubie 99 words / 192 nodes / 88 edges, with all eight edge kinds drawn across the two (contains, genus, rules, answers, bears, seam, routes, renamed, overloaded). Author from the canvas with check-first unskippable; propose, review with the gate run against the merged world, and merge; monty onto review names the anti-patterns. The canvas writes only through the ontology's intents, which are the same functions the CLI calls. Two epic assumptions were corrected by contact with the work and both are recorded in the notes above: Svelte Flow was dropped (every edge here is a form, not a gesture; the graph is a sparse tree, not a network), and a word node carries collides/excepted rather than 'declarations that resolve to it', because in montology's model a declaration wearing a word's name is a COLLISION. Four bugs were found by the tools building each other rather than by reasoning: the words skill defining scan as 'the tree-sitter sweep' (a seeded vendor the word laws never checked), scan exclude matching bare names while every workspace writes globs (qubie: 5237 declarations to 2180), Chrome not painting a zero-sized svg, and qubie routing intelligence to brain at register all where it can never gate.

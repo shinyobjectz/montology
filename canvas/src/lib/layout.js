@@ -13,17 +13,16 @@
 //
 // Everything is placed by rule, never by force: a layout that moves when
 // nothing moved is a layout you cannot trust to mean anything.
+//
+// Every stack goes through `stack()`, which advances by each node's OWN height.
+// Nothing here may assume nodes are the same size — they are not, and a fixed
+// pitch is how long names ended up drawn through their neighbours.
 
-const R = { owner: -150, child: 170, ring: 330, far: 620, asked: 330 };
-const GAP = 74;
+import { NODE_GAP_X, nodeHeight, nodeWidth, stack } from './util.js';
 
-/** Stack n items centred on y=0, in a fixed order, at a fixed pitch. */
-function column(items, x, gap = GAP) {
-  const start = -((items.length - 1) * gap) / 2;
-  return items.map((n, i) => [n, { x, y: start + i * gap }]);
-}
+const R = { owner: -190, child: 210, ring: 380, far: 700, asked: 340 };
 
-export function focusLayout(graph, focusId) {
+export function focusLayout(graph, focusId, measured) {
   const { byId, out, inn } = graph;
   const focus = byId.get(focusId);
   if (!focus) return { pos: new Map(), shown: new Set() };
@@ -37,46 +36,61 @@ export function focusLayout(graph, focusId) {
   const outs = out.get(focusId) || [];
   const ins = inn.get(focusId) || [];
 
-  // the word this one lives inside — above, because containment is read down
   const owner = take(ins.filter((e) => e.kind === 'contains'), 'in');
-  // the words it owns — below
   const kids = take(outs.filter((e) => e.kind === 'contains'), 'out');
-  // dead names pointing in — left. This is the vocabulary's history.
   const dead = take(ins.filter((e) => ['renamed', 'overloaded', 'routes'].includes(e.kind)), 'in');
-  // decisions taken about it — right
   const rulings = take(ins.filter((e) => e.kind === 'rules'), 'in');
-  // what implements it, and where the name is redirected onward — far right
   const bears = take(outs.filter((e) => e.kind === 'bears'), 'out');
   const onward = take(outs.filter((e) => ['renamed', 'overloaded', 'routes'].includes(e.kind)), 'out');
-  // what it is a kind of — up, beside the owner, because both are "above" it
-  // and the whole point of the genus is that it is NOT the owner
   const kinds = take(outs.filter((e) => e.kind === 'genus'), 'out');
-  // what motivated it. A word answering no question is the finding here, and
-  // an empty space below a word says that better than a count elsewhere.
   const asked = take(ins.filter((e) => e.kind === 'answers'), 'in');
 
-  const place = (items, x, gap) => {
-    for (const [n, p] of column(items, x, gap)) { pos.set(n.id, p); seen.add(n.id); }
+  // centred on the focus, so a column of two and a column of nine both read as
+  // belonging to it rather than hanging off it
+  const column = (nodes, x) => {
+    if (!nodes.length) return;
+    const { height } = stack(nodes, { x, top: 0, measured });
+    for (const [n, p] of stack(nodes, { x, top: -height / 2, measured }).placed) {
+      pos.set(n.id, p);
+      seen.add(n.id);
+    }
   };
-  place(owner, 0, GAP);
-  if (owner.length) pos.set(owner[0].id, { x: 0, y: R.owner });
-  place(kids, 0, 0);
-  kids.forEach((n, i) => pos.set(n.id, {
-    x: -((kids.length - 1) * 190) / 2 + i * 190, y: R.child,
-  }));
-  kinds.forEach((n, i) => { pos.set(n.id, { x: 250 + i * 210, y: R.owner }); seen.add(n.id); });
-  asked.forEach((n, i) => { pos.set(n.id, { x: -260 + i * 300, y: R.asked }); seen.add(n.id); });
-  place(dead, -R.ring, 56);
-  place([...rulings, ...onward], R.ring, 82);
-  place(bears, R.far, 70);
+  // a row that advances by each node's OWN width
+  const row = (nodes, y) => {
+    const total = nodes.reduce((a, n) => a + nodeWidth(n, measured) + NODE_GAP_X, -NODE_GAP_X);
+    let x = -total / 2;
+    for (const n of nodes) {
+      const w = nodeWidth(n, measured);
+      pos.set(n.id, { x: x + w / 2, y });
+      seen.add(n.id);
+      x += w + NODE_GAP_X;
+    }
+  };
+
+  column(dead, -R.ring);
+  column([...rulings, ...onward], R.ring);
+  column(bears, R.far);
+  row(kids, R.child);
+  row(asked, R.asked + (kids.length ? R.child : 0));
+  if (owner.length) {
+    pos.set(owner[0].id, { x: 0, y: R.owner });
+    seen.add(owner[0].id);
+  }
+  kinds.forEach((n, i) => {
+    pos.set(n.id, { x: 300 + i * (nodeWidth(n, measured) + NODE_GAP_X), y: R.owner });
+    seen.add(n.id);
+  });
 
   return { pos, shown: seen };
 }
 
-/** The overview: every word, containment as the spine. Used when nothing is
- *  focused yet — the one time showing everything is the right answer, because
- *  "how big is this vocabulary and how is it grouped" is a real question. */
-export function overviewLayout(graph) {
+/** The overview: every word, containment as the spine.
+ *
+ *  Flowed into COLUMNS rather than one tall stack. qubie's 110 words in a
+ *  single column fit the screen at 13% — a smear, not an overview — because
+ *  the layout was tall and the screen is wide. Groups now pack down a column
+ *  and wrap to the next, the way a glossary sets on a page. */
+export function overviewLayout(graph, { columnHeight = 1000, measured } = {}) {
   const words = graph.nodes.filter((n) => n.kind === 'word');
   const kids = new Map();
   for (const w of words) {
@@ -88,16 +102,45 @@ export function overviewLayout(graph) {
   const tops = words.filter((w) => !w.data.owner || !known.has(w.data.owner))
                     .sort((a, b) => a.label.localeCompare(b.label));
 
+  // owners with children first: they are the structure, and burying them under
+  // sixty ungrouped words is what made the old overview unreadable
+  const grouped = tops.filter((t) => (kids.get(t.label) || []).length);
+  const flat = tops.filter((t) => !(kids.get(t.label) || []).length);
+
+  const COL_W = NODE_GAP_X + 2 * (240 + NODE_GAP_X);   // parent column + child column
   const pos = new Map();
   const shown = new Set();
-  let y = 0;
-  for (const top of tops) {
+  let col = 0, y = 0;
+
+  const wrap = (needed) => { if (y + needed > columnHeight && y > 0) { col += 1; y = 0; } };
+
+  for (const top of grouped) {
     const mine = (kids.get(top.label) || []).sort((a, b) => a.label.localeCompare(b.label));
-    const start = y;
-    mine.forEach((k, i) => { pos.set(k.id, { x: 300, y: start + i * 56 }); shown.add(k.id); });
-    pos.set(top.id, { x: 0, y: mine.length ? start + ((mine.length - 1) * 56) / 2 : start });
+    const { height } = stack(mine, { x: 0, top: 0, measured });
+    wrap(height + 34);
+    const x = col * COL_W;
+    for (const [n, p] of stack(mine, { x: x + 240 + NODE_GAP_X, top: y, measured }).placed) {
+      pos.set(n.id, p);
+      shown.add(n.id);
+    }
+    pos.set(top.id, { x, y: y + height / 2 });
     shown.add(top.id);
-    y = start + Math.max(1, mine.length) * 56 + 18;
+    y += height + 34;
   }
+
+  // the ungrouped tail sets two-up, so a long flat vocabulary does not become a
+  // mile-long ribbon nobody scrolls. The row advances by the TALLER of the pair.
+  for (let i = 0; i < flat.length; i += 2) {
+    const pair = flat.slice(i, i + 2);
+    const h = Math.max(...pair.map((n) => nodeHeight(n, measured)));
+    wrap(h + 16);
+    const x = col * COL_W;
+    pair.forEach((n, j) => {
+      pos.set(n.id, { x: x + j * (240 + NODE_GAP_X), y: y + h / 2 });
+      shown.add(n.id);
+    });
+    y += h + 16;
+  }
+
   return { pos, shown };
 }

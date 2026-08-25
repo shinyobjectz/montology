@@ -1,7 +1,16 @@
 <script>
   import { KIND } from './util.js';
 
-  let { node, focused = false, selected = false, onpick } = $props();
+  let { node, focused = false, selected = false, onpick, onmeasure } = $props();
+
+  // Report the real box once it exists. The layout re-flows from this, so a
+  // node that wraps to four lines pushes its neighbours down instead of
+  // through them — see the note in util.js about why this is measured.
+  let el = $state(null);
+  $effect(() => {
+    if (!el) return;
+    onmeasure?.(node.id, { w: el.offsetWidth, h: el.offsetHeight });
+  });
   const look = $derived(KIND[node.kind] ?? KIND.word);
   const d = $derived(node.data ?? {});
 
@@ -18,6 +27,7 @@
 </script>
 
 <button
+  bind:this={el}
   class="node {node.kind}" class:focused class:selected
   class:proposed={d.proposed} class:rejected={d.verdict === 'rejected'}
   class:approved={d.verdict === 'approved'}

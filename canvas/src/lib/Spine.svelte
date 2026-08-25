@@ -42,8 +42,13 @@
 
 <input class="find mono" bind:value={q} placeholder="find a word…" spellcheck="false" />
 <div class="filters">
+  <!-- glyph only. Eight chips reading "● word ✕ retired term § ruling ▣ surface
+       ? candidate ¶ doctrine ◆ token ? question" spent two lines of the rail on
+       a legend you learn once and then never read again. -->
   {#each Object.entries(KIND) as [k, v]}
-    <button class:on={kinds.has(k)} style="--c:{v.color}" onclick={() => toggle(k)}>{v.glyph} {v.name}</button>
+    <button class:on={kinds.has(k)} style="--c:{v.color}"
+            title="{kinds.has(k) ? 'hide' : 'show'} {v.name}s" aria-label={v.name}
+            onclick={() => toggle(k)}>{v.glyph}</button>
   {/each}
 </div>
 <nav>
@@ -63,13 +68,15 @@
 <style>
   .find { width: 100%; padding: .35rem .5rem; font-size: .76rem; border-radius: 5px;
           border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
-  .filters { display: flex; flex-wrap: wrap; gap: .22rem; margin: .5rem 0 .7rem; }
-  .filters button { font-size: .6rem; padding: .1rem .3rem; border-radius: 4px; cursor: pointer;
-                    border: 1px solid var(--line); background: none; color: var(--dim); }
-  .filters button.on { color: var(--c); border-color: var(--c); }
+  .filters { display: flex; gap: .18rem; margin: .45rem 0 .55rem; }
+  .filters button { width: 22px; height: 22px; font-size: .68rem; border-radius: 4px;
+                    cursor: pointer; border: 1px solid transparent; background: none;
+                    color: var(--dim); opacity: .45; line-height: 1; }
+  .filters button:hover { opacity: 1; }
+  .filters button.on { color: var(--c); opacity: 1; }
   nav { overflow-y: auto; flex: 1; margin: 0 -.2rem; }
-  .head { font-size: .6rem; text-transform: uppercase; letter-spacing: .07em;
-          color: var(--dim); margin: .7rem .2rem .2rem; }
+  .head { font-size: .58rem; text-transform: uppercase; letter-spacing: .08em;
+          color: var(--dim); opacity: .65; margin: .8rem .2rem .15rem; }
   .row { display: flex; justify-content: space-between; gap: .4rem; width: 100%;
          text-align: left; font-size: .74rem; padding: .16rem .35rem; border-radius: 4px;
          border: 0; border-left: 2px solid var(--c); background: none; color: var(--ink); cursor: pointer; }

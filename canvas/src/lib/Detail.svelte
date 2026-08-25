@@ -1,6 +1,6 @@
 <script>
   import { KIND, EDGE } from './util.js';
-  let { node, graph, onpick } = $props();
+  let { node, graph, onpick, onclose } = $props();
 
   const d = $derived(node?.data ?? {});
   const around = $derived.by(() => {
@@ -19,6 +19,7 @@
   <header>
     <span class="glyph mono" style="color:{(KIND[node.kind] ?? KIND.word).color}">{(KIND[node.kind] ?? KIND.word).glyph}</span>
     <h2 class="mono">{node.label}</h2>
+    <button class="x" onclick={() => onclose?.()} aria-label="close">×</button>
   </header>
   <p class="kindline">{(KIND[node.kind] ?? KIND.word).name}{d.word_kind ? ` · ${d.word_kind}` : ''}{d.pos ? ` · ${d.pos}` : ''}</p>
 
@@ -68,7 +69,9 @@
   .test { font-size: .72rem; color: var(--dim); margin: 0 0 .4rem; line-height: 1.45; }
   .test span { text-transform: uppercase; letter-spacing: .05em; font-size: .6rem; }
   .code { font-size: .7rem; color: var(--accent); }
-  .empty { font-size: .78rem; color: var(--dim); line-height: 1.5; }
+  .x { margin-left: auto; background: none; border: 0; color: var(--dim);
+       cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .1rem; }
+  .x:hover { color: var(--ink); }
   .counts { display: flex; gap: .5rem; flex-wrap: wrap; font-size: .72rem; margin: 0; }
   .bad { color: var(--term); } .ok { color: var(--surface); }
   .places { list-style: none; padding: 0; margin: .4rem 0 0; font-size: .68rem; color: var(--dim); }
