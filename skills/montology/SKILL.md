@@ -41,7 +41,13 @@ stays correct only as long as someone remembers it; this one has a gate.
    silences a divergence: sharing a name is a decision, meaning two things
    is not.
 5. **Never hand-edit the words skill.** It is GENERATED; `monty sync`
-   re-renders it after any change (onto add/amend/rule do this themselves).
+   re-renders it after any change (onto add/amend/rule do this themselves),
+   and lint fails on any file that differs from what the database renders.
+   Past its budget the render TIERS rather than truncating: the page keeps
+   the words and the rulings, and hands the rest to `references/*.md`
+   beside it — read one when you are working in its area. Nothing is ever
+   lost to compaction; `monty onto check <name>` answers in full for any
+   single word without reading a page at all.
 
 ## One ontology, every repo
 

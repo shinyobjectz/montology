@@ -24,6 +24,11 @@ from .instruments import parse_frontmatter, read_settings
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 DESCRIPTION_CAP = 1024      # Agent Skills std: metadata stays ~100 tokens
 BODY_CAP = 24_000           # ~5k tokens: the std's instruction budget
+# A reference page is not resident: it enters context only when an agent decides
+# to read it, one at a time and for a reason. So it is allowed to be larger than
+# the always-loaded page — but not unbounded, because "read this page" must stay
+# a cheaper answer than "ask the database". Past this, split the area.
+PAGE_CAP = 3 * BODY_CAP
 VENDOR_WORDS = ("tree-sitter", "ast-grep", "sqlite", "ollama", "github",
                 "openai", "mellea")  # fine in method prose, banned as ontology words
 
@@ -100,7 +105,12 @@ def _body_fits(text: str) -> str | None:
                 f"more than {BODY_CAP} chars (~5k tokens) of every agent's context.")
 
     if len(body) > cap:
-        return f"body is {len(body)} chars; the disclosure budget is {cap} (~5k tokens at {BODY_CAP})"
+        # sync walks the whole ladder before writing, so reaching this means the
+        # vocabulary does not fit even fully compacted — the honest wall, and a
+        # different problem from the one tiering solves.
+        return (f"body is {len(body)} chars; the disclosure budget is {cap} "
+                f"(~5k tokens at {BODY_CAP}). Every disclosure step is already spent: "
+                f"raise body_cap with its reason, or split this vocabulary.")
 
     if not body.strip():
         return "the body is empty"

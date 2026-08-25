@@ -88,3 +88,113 @@ def test_init_is_minimal_and_merge_safe(tmp_path, onto_db, monkeypatch, capsys):
     # idempotent: a second run appends nothing twice
     init_command(str(tmp_path), yes=True, as_json=True, agents="claude")
     assert (tmp_path / "CLAUDE.md").read_text().count("montology:begin") == 1
+
+
+# ── disclosure: the resident page is context every agent pays for ───────────
+
+def _tighten(ws, cap: int) -> None:
+    """A workspace that has decided what its always-loaded page is worth."""
+    (ws / ".monty" / "montology.toml").write_text(
+        f'[gen]\nbody_cap = {cap}\nbody_cap_why = "a test workspace"\n')
+
+
+def _body(text: str) -> str:
+    from montology_gen.instruments import parse_frontmatter
+
+    return parse_frontmatter(text)[1]
+
+
+def test_gist_is_the_first_sentence_never_a_new_claim():
+    from montology_gen import gist
+
+    assert gist("a run's sandbox. It is network-blocked and dies with the run.") \
+        == "a run's sandbox"
+    assert gist("a short one") == "a short one"          # nothing to cut
+    assert gist("x" * 400).endswith("…") and len(gist("x" * 400)) <= 171
+
+
+def test_a_column_no_word_fills_is_not_rendered(ws, onto_db):
+    """qubie: 0 of 99 words had a code, so `| code |` rendered '—' 99 times."""
+    from montology_gen import render_words_skill
+
+    onto_db.add("thread", "a stateful session", kind="core", pos="noun")
+    assert "| code |" not in render_words_skill("t")
+    onto_db.add("cell", "the box a run executes in", kind="core", code="cell", pos="noun")
+    assert "| code |" in render_words_skill("t")
+
+
+def test_the_ladder_demotes_the_cheapest_thing_first(ws, onto_db):
+    """The failure this exists for: qubie, 99 words, 48,703 chars, third raise.
+
+    Adopted words carry their source's prose into a budget sized for this
+    repo's own instructions — so they compact, and the retired-name ledger
+    (which the guard already enforces at write time) leaves first.
+    """
+    from montology_gen import render_pages
+
+    onto_db.add("run", "one execution of a task", kind="core", pos="noun")
+    onto_db.add("output", "what a task produces", kind="core", pos="noun")
+    onto_db.rename_word("output", "dossier", "one word for the deliverable")
+    for i in range(30):
+        onto_db.add(f"borrowed{i}",
+                    f"a term taken from elsewhere. {'Elaboration. ' * 20}",
+                    kind="adopted", pos="noun")
+    _tighten(ws, 6_000)
+
+    text, pages, demoted = render_pages("t")
+    assert len(_body(text)) <= 6_000                      # sync never ships over budget
+    assert [d.split(":")[0] for d in demoted][:2] == ["renames", "adopted"]
+    assert set(pages) >= {"renamed.md", "adopted.md"}
+    assert "a term taken from elsewhere" in text          # the gist stayed resident…
+    assert "Elaboration." not in text                     # …the source's prose did not
+    assert "Elaboration." in pages["adopted.md"]          # …and is one read away
+    assert "references/adopted.md" in text                # the page says where it went
+
+
+def test_what_left_the_page_is_reported_not_silent(ws, onto_db):
+    from montology_gen import lint, sync
+
+    onto_db.add("run", "one execution of a task", kind="core", pos="noun")
+    for i in range(30):
+        onto_db.add(f"borrowed{i}", f"a taken term. {'More. ' * 20}", kind="adopted", pos="noun")
+    _tighten(ws, 6_000)
+
+    assert "reference page" in sync()
+    assert any("demoted adopted" in r for r in lint())
+
+
+def test_reference_pages_are_gated_like_the_skill(ws, onto_db):
+    from montology_gen import lint, sync
+
+    onto_db.add("run", "one execution of a task", kind="core", pos="noun")
+    for i in range(30):
+        onto_db.add(f"borrowed{i}", f"a taken term. {'More. ' * 20}", kind="adopted", pos="noun")
+    _tighten(ws, 6_000)
+    sync()
+    refs = ws / ".claude" / "skills" / "words" / "references"
+    assert lint()[-1].endswith("ok")
+
+    (refs / "adopted.md").write_text("my own words")          # hand-edited…
+    assert any("HAND-EDITED" in r for r in lint())            # …caught
+    sync()
+
+    (refs / "adopted.md").unlink()                            # missing…
+    assert any("missing" in r for r in lint())
+    sync()
+
+    (refs / "invented.md").write_text("linked from nothing")  # orphaned…
+    assert any("linked from nothing" in r for r in lint())
+    sync()                                                    # …and swept
+    assert not (refs / "invented.md").exists()
+    assert lint()[-1].endswith("ok")
+
+
+def test_a_hand_edited_skill_fails_the_gate(ws, onto_db):
+    """CLAUDE.md says hand edits are lost and lint catches them. Now it does."""
+    from montology_gen import lint, sync
+
+    onto_db.add("run", "one execution of a task", kind="core", pos="noun")
+    sync()
+    skill = ws / ".claude" / "skills" / "words" / "SKILL.md"
+    skill.write_text(skill.read_text() + "\n## My own section\n")
+    assert any("HAND-EDITED" in r and "monty sync" in r for r in lint())

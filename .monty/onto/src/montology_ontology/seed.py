@@ -83,6 +83,12 @@ WORDS = [
     ("glossary", "core", "ontology", "onto.glossary",
      "the whole ontology rendered to one page — every word, ruling and doctrine block, from the database, with the intake it grew from as appendix",
      "what our words mean, on one page"),
+    ("disclosure", "core", "ontology", "onto.disclosure",
+     "how much of the vocabulary a render keeps resident and how much it points at — the always-loaded page, the reference pages behind it, the database behind those",
+     "what every agent is made to carry"),
+    ("gist", "core", "ontology", "onto.gist",
+     "a definition rendered to its first sentence — what a resident page carries when the whole definition is not worth its place in context",
+     "the short form of a meaning"),
 ]
 
 # What each word NAMES. Almost every term montology has is a NOUN, which is
@@ -97,6 +103,7 @@ POS_OF = {
     "surface": "noun", "seam": "noun", "phantom": "noun",
     "exception": "noun", "divergence": "noun",
     "intake": "noun", "glossary": "noun",
+    "disclosure": "noun", "gist": "noun",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and
@@ -131,6 +138,9 @@ EXCEPTIONS = [
      "anything else would be the drift"),
     ("glossary", ".monty/**", "`monty intake glossary` and `glossary()` hand back the glossary — "
      "the surface being literal"),
+    ("gist", ".monty/gen/**", "`gist()` in the renderer returns a gist — the same literalism as "
+     "`divergence()` and `glossary()`: below the surface, a function that hands back exactly "
+     "what the word names and is called anything else would be the drift"),
 ]
 
 DOCTRINE = [
@@ -171,6 +181,21 @@ DOCTRINE = [
      "a divergence: it says a symbol may share the name, never that the name "
      "may mean two values, and the gate reports the second whether or not the "
      "first was granted."),
+    ("The skill is a routing table, not the vocabulary", 50,
+     "The words skill is loaded on every turn, so every character in it is rent "
+     "an agent pays before it has done anything. The database already answers "
+     "for any single word (`monty onto check`), which means a full render of "
+     "the vocabulary into an always-loaded file is an O(words) copy of an O(1) "
+     "store. So the render is TIERED: it stays whole while it fits, and past "
+     "the budget it gives up the cheapest thing first — retired names (the "
+     "guard blocks those at write time, so the ledger was never what enforced "
+     "them), then adopted words (imported prose, one sentence resident and the "
+     "source text a page away), then the argument behind a ruling, then a "
+     "doctrine's body, and only last our own definitions. What leaves the page "
+     "is reported by sync and by every lint, because a reader who cannot see "
+     "that something left cannot ask for it. Raising `body_cap` is still "
+     "allowed and still has to say why, but it now buys residency rather than "
+     "postponing a wall."),
 ]
 
 
