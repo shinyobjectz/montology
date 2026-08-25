@@ -7,6 +7,8 @@
   --bg: #fbfaf8; --panel: #ffffff; --ink: #1a1a1c; --dim: #6b6b73;
   --line: #e4e2dd; --rule: #d8d5ce;
   --accent: #2f4fd8; --settled: #1a7f4f; --open: #a8620a; --retired: #b3261e;
+  /* a wire at rest carries no meaning beyond "there is a relation here" */
+  --wire: #c3c0b8; --wire-ink: #86838c;
   --measure: 66ch;
   font-family: ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
 }
@@ -15,6 +17,7 @@
     --bg: #101114; --panel: #181a1f; --ink: #e8e8ec; --dim: #9a9aa4;
     --line: #26282f; --rule: #32353e;
     --accent: #8aa0ff; --settled: #55c98b; --open: #e0a355; --retired: #ff8a80;
+    --wire: #3b3f4a; --wire-ink: #7e828e;
   }
 }
 * { box-sizing: border-box; }
@@ -83,6 +86,17 @@ code.mono { font-size: .84em; }
 .relations text { font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
                   paint-order: stroke; stroke: var(--bg); stroke-width: 3.5px; stroke-linejoin: round; }
 .relations .n { cursor: pointer; }
+/* At rest everything is grey. On hover the pointed-at thing and what it touches
+   take their colour and the rest recedes — colour is attention, and spending it
+   on all seventeen wires at once means spending it on none. */
+.relations .w, .relations .vb, .relations .n { transition: opacity .13s ease; }
+.relations .w path { transition: stroke-width .13s ease; }
+.relations .off { opacity: .16; }
+.relations .w.on { filter: drop-shadow(0 0 5px currentColor); }
+.relations .vb.on { font-weight: 700; }
+.relations .n.on rect { stroke: var(--accent); }
+.relations .n.self rect { stroke: var(--accent); stroke-width: 2; fill: var(--panel); }
+.relations .n:hover rect { stroke: var(--accent); }
 .relations .n rect { fill: var(--bg); stroke: var(--rule); }
 .relations .n:hover rect { stroke: var(--accent); }
 .relations .lbl { fill: var(--ink); stroke: none; font-size: 12px; font-weight: 600; }

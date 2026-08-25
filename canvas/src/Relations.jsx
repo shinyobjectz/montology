@@ -122,6 +122,13 @@ function route(a, b, channelX, label) {
 }
 
 export default function Relations({ g, onPick }) {
+  // What is being pointed at, and what that reveals. Colour is expensive
+  // attention: seventeen coloured wires at rest is a christmas tree nobody can
+  // read, so everything is grey until asked. Hovering a word lights the edges
+  // it touches and the words on the other end of them, and dims the rest —
+  // which answers "what is this connected to" in one gesture, without a click
+  // and without leaving the page.
+  const [hot, setHot] = useState(null);   // { kind: 'node' | 'edge', id }
   const rel = useMemo(
     () => g.edges.filter((e) => e.kind === 'relation' || e.kind === 'act'), [g]);
 
@@ -201,6 +208,26 @@ export default function Relations({ g, onPick }) {
     return { pos, drawn, ids, width, height };
   }, [rel, g]);
 
+  const lit = useMemo(() => {
+    if (!hot) return null;
+    const edges = new Set();
+    const nodes = new Set();
+    if (hot.kind === 'node') {
+      nodes.add(hot.id);
+      for (const e of rel) {
+        if (e.source === hot.id || e.target === hot.id) {
+          edges.add(e.id);
+          nodes.add(e.source);
+          nodes.add(e.target);
+        }
+      }
+    } else {
+      const e = rel.find((x) => x.id === hot.id);
+      if (e) { edges.add(e.id); nodes.add(e.source); nodes.add(e.target); }
+    }
+    return { edges, nodes };
+  }, [hot, rel]);
+
   // pan and zoom, inside the inset only
   const box = useRef(null);
   const [t, setT] = useState({ x: 0, y: 0, k: 1 });
@@ -250,32 +277,55 @@ export default function Relations({ g, onPick }) {
            onPointerUp={up} onPointerCancel={up}>
         <svg width="100%" height="100%" role="img" aria-label="what acts on what">
           <g transform={`translate(${t.x},${t.y}) scale(${t.k})`}>
-            {view.drawn.map(({ e, parts, color }) => (
-              <g key={e.id} style={{ color }}>
-                {parts.map((d, i) => (
-                  <path key={i} d={d} fill="none" stroke={color} strokeWidth="1.6"
-                        strokeLinecap="round"
-                        markerEnd={i === parts.length - 1 ? 'url(#tip)' : undefined} />
-                ))}
-              </g>
-            ))}
+            {view.drawn.map(({ e, parts, color }) => {
+              const on = lit?.edges.has(e.id);
+              const off = lit && !on;
+              return (
+                <g key={e.id} className={`w ${on ? 'on' : ''} ${off ? 'off' : ''}`}
+                   style={{ color: on ? color : 'var(--wire)' }}
+                   onPointerEnter={() => setHot({ kind: 'edge', id: e.id })}
+                   onPointerLeave={() => setHot(null)}>
+                  {/* a wire is 1.6px wide and a pointer is not that accurate */}
+                  {parts.map((d, i) => (
+                    <path key={`h${i}`} d={d} fill="none" stroke="transparent" strokeWidth="14" />
+                  ))}
+                  {parts.map((d, i) => (
+                    <path key={i} d={d} fill="none" stroke="currentColor"
+                          strokeWidth={on ? 2.2 : 1.5} strokeLinecap="round"
+                          markerEnd={i === parts.length - 1 ? 'url(#tip)' : undefined} />
+                  ))}
+                </g>
+              );
+            })}
             <defs>
               <marker id="tip" viewBox="0 0 8 8" refX="7" refY="4"
                       markerWidth="5.5" markerHeight="5.5" orient="auto">
                 <path d="M0.5,1 L7,4 L0.5,7" fill="none" stroke="currentColor" strokeWidth="1.4" />
               </marker>
             </defs>
-            {view.drawn.map(({ e, at, short, full, color }) => (
-              <text key={`${e.id}t`} x={at.x} y={at.y + 4} fill={color} textAnchor="middle">
-                {short}<title>{full}</title>
-              </text>
-            ))}
+            {view.drawn.map(({ e, at, short, full, color }) => {
+              const on = lit?.edges.has(e.id);
+              const off = lit && !on;
+              return (
+                <text key={`${e.id}t`} x={at.x} y={at.y + 4} textAnchor="middle"
+                      className={`vb ${on ? 'on' : ''} ${off ? 'off' : ''}`}
+                      fill={on ? color : 'var(--wire-ink)'}
+                      onPointerEnter={() => setHot({ kind: 'edge', id: e.id })}
+                      onPointerLeave={() => setHot(null)}>
+                  {short}<title>{full}</title>
+                </text>
+              );
+            })}
             {view.ids.map((id) => {
               const p = view.pos.get(id);
               const node = g.byId.get(id);
               if (!p || !node) return null;
               return (
-                <g key={id} className="n" onClick={() => onPick(node)}>
+                <g key={id}
+                   className={`n ${lit?.nodes.has(id) ? 'on' : ''} ${lit && !lit.nodes.has(id) ? 'off' : ''} ${hot?.kind === 'node' && hot.id === id ? 'self' : ''}`}
+                   onClick={() => onPick(node)}
+                   onPointerEnter={() => setHot({ kind: 'node', id })}
+                   onPointerLeave={() => setHot(null)}>
                   <rect x={p.x - NODE_W / 2} y={p.y - NODE_H / 2}
                         width={NODE_W} height={NODE_H} rx="7" />
                   <text className="lbl" x={p.x} y={p.y + 4} textAnchor="middle">{node.label}</text>
