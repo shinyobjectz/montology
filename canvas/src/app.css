@@ -88,15 +88,19 @@ code.mono { font-size: .84em; }
 .relations text { font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace;
                   paint-order: stroke; stroke: var(--bg); stroke-width: 3.5px; stroke-linejoin: round; }
 .relations .n { cursor: pointer; }
-/* At rest everything is grey. On hover the pointed-at thing and what it touches
-   take their colour and the rest recedes — colour is attention, and spending it
-   on all seventeen wires at once means spending it on none.
-   The unhovered rest RECEDES, it does not vanish: dimming to nothing turns a
-   hover into a filter, and the point of the reveal is that you can still see
-   what you are choosing between. */
+/* An edge keeps its verb's colour at rest — held back, not removed. Grey said
+   "there is a relation here" and nothing else, which threw away the one thing
+   the colour was for: telling two verbs apart at a glance.
+   Hovering brings the pointed-at thing to full strength and lets the rest
+   recede. It does NOT erase them: dimming to nothing turns a hover into a
+   filter, and the point of a reveal is that you can still see what you are
+   choosing between. */
 .relations .w, .relations .vb, .relations .n { transition: opacity .13s ease; }
 .relations .w path { transition: stroke-width .13s ease; }
-.relations .off { opacity: .42; }
+.relations .w { opacity: .72; }
+.relations .vb { opacity: .82; }
+.relations .w.on, .relations .vb.on { opacity: 1; }
+.relations .off { opacity: .3; }
 .relations .vb.on { font-weight: 700; }
 .relations .n.on rect { stroke: var(--accent); }
 .relations .n.self rect { stroke: var(--accent); stroke-width: 2; fill: var(--panel); }

@@ -82,14 +82,14 @@ function layers(rel, ids) {
  *  either way: an unlabelled edge in a graph of verbs is a line that says
  *  nothing, and the first version dropped eight of seventeen that way.
  */
-function route(a, b, channelX, label) {
+function route(a, b, channelX, label, at) {
   const x1 = a.x + NODE_W / 2;
   const x2 = b.x - NODE_W / 2;
   const dy = b.y - a.y;
   const s = Math.sign(dy) || 1;
 
   if (Math.abs(dy) < 2) {
-    const mid = (x1 + x2) / 2;
+    const mid = at ? at.x : (x1 + x2) / 2;
     return { parts: [`M${x1},${a.y} L${mid - label.w / 2},${a.y}`,
                      `M${mid + label.w / 2},${b.y} L${x2},${b.y}`],
              at: { x: mid, y: a.y }, along: 'x', range: [x1 + label.w / 2, x2 - label.w / 2] };
@@ -104,7 +104,7 @@ function route(a, b, channelX, label) {
   // room on the vertical run? put it there — text is horizontal, so a gap in a
   // vertical line reads as cleanly as a guard on a flowchart
   if (Math.abs(to - from) > label.h + 14) {
-    const mid = (from + to) / 2;
+    const mid = at ? at.y : (from + to) / 2;
     return { parts: [`${head} L${channelX},${mid - (label.h / 2) * s}`,
                      `M${channelX},${mid + (label.h / 2) * s} L${channelX},${to}`,
                      tail],
@@ -112,13 +112,36 @@ function route(a, b, channelX, label) {
              range: [Math.min(from, to) + label.h, Math.max(from, to) - label.h] };
   }
   // otherwise break the run OUT of the source, which is always long enough
-  const cut = Math.min(x1 + 26 + label.w / 2, channelX - r - 6);
+  const cut = at ? at.x : Math.min(x1 + 26 + label.w / 2, channelX - r - 6);
   return { parts: [`M${x1},${a.y} L${cut - label.w / 2},${a.y}`,
                    `M${cut + label.w / 2},${a.y} L${channelX - r},${a.y} `
                    + `Q${channelX},${a.y} ${channelX},${a.y + r * s} L${channelX},${to}`,
                    tail],
            at: { x: cut, y: a.y }, along: 'x',
            range: [x1 + label.w / 2 + 4, channelX - r - label.w / 2 - 4] };
+}
+
+/** Points along a path string, cheaply — enough to tell whether a label is
+ *  sitting on a wire. Only the straight runs and the corner ends are sampled,
+ *  which is all these paths are made of. */
+function sample(d) {
+  const nums = d.match(/-?\d+(?:\.\d+)?/g);
+  if (!nums) return [];
+  const pts = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) {
+    pts.push({ x: +nums[i], y: +nums[i + 1] });
+  }
+  // walk each consecutive pair so a long run is not judged by its ends alone
+  const out = [];
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    const n = Math.max(2, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / 6));
+    for (let k = 0; k <= n; k++) {
+      out.push({ x: a.x + ((b.x - a.x) * k) / n, y: a.y + ((b.y - a.y) * k) / n });
+    }
+  }
+  return out;
 }
 
 export default function Relations({ g, onPick }) {
@@ -161,48 +184,63 @@ export default function Relations({ g, onPick }) {
       const full = e.data.verb;
       const short = full.length > 18 ? `${full.slice(0, 17)}…` : full;
       const cx = channel.get(e.id) ?? (a.x + b.x) / 2;
-      const { parts, at, along, range } = route(a, b, cx, { w: short.length * 6.4 + 10, h: 17 });
-      return { e, parts, at, along, range, short, full,
+      const label = { w: short.length * 6.4 + 10, h: 17 };
+      const first = route(a, b, cx, label);
+      return { e, a, b, cx, label, ...first, short, full,
                color: verbColor(full, e.data.defined !== false) };
     }).filter(Boolean);
 
-    // Two labels that land on each other are two edges nobody can tell apart —
-    // and one that lands on a NODE is worse, because it reads as that node's.
-    // Both are the same problem, so the nodes go in the same list.
-    // Each obstacle carries its own HEIGHT. A flat threshold let a label clear
-    // another label and still sit on a node, which is twice as tall.
+    // Placing a label has to satisfy BOTH constraints at once: it must not
+    // land on another label or a node, and it must sit in the GAP in its own
+    // wire rather than on another part of it. Solving them one after the other
+    // does not work — the first pass fixed the self-crossings and pushed two
+    // labels onto each other doing it. So each candidate position is routed and
+    // then judged on both, and the first that satisfies both wins.
     const taken = [...pos.values()].map((p) => ({ x: p.x, y: p.y, w: NODE_W + 10, h: NODE_H + 6 }));
+
+    const clashes = (at, box) => taken.some((t) => Math.abs(t.x - at.x) * 2 < t.w + box.w
+                                                && Math.abs(t.y - at.y) * 2 < t.h + box.h);
+    const onOwnWire = (d, at) => {
+      const parts = route(d.a, d.b, d.cx, d.label, at).parts;
+      const bad = parts.some((seg) => sample(seg).some(
+        (q) => Math.abs(q.x - at.x) * 2 < d.label.w && Math.abs(q.y - at.y) * 2 < d.label.h));
+      return bad ? null : parts;
+    };
+
     for (const d of drawn) {
-      const w = d.short.length * 6.4 + 8;
-      const h = 16;
-      // Slide the label ALONG its own line, never away from it. Pushing
-      // perpendicular cleared the overlap and left a column of verbs floating
-      // beside the edges they belonged to — which is worse than touching, since
-      // a label you cannot attribute is a label that says nothing.
-      const [lo, hi] = d.range ?? [d.at.x, d.at.x];
-      const step = (d.along === 'x' ? w : h) * 0.55 + 4;
+      const box = { w: d.short.length * 6.4 + 8, h: 16 };
+      const [lo, hi] = d.range ?? [];
+      const along = (v) => (d.along === 'x' ? { x: v, y: d.at.y } : { x: d.at.x, y: v });
       const start = d.along === 'x' ? d.at.x : d.at.y;
-      const free = (at) => !taken.find((t) => Math.abs(t.x - at.x) * 2 < t.w + w
-                                           && Math.abs(t.y - at.y) * 2 < t.h + h);
-      const put = (v) => (d.along === 'x' ? { x: v, y: d.at.y } : { x: d.at.x, y: v });
-      let placed = null;
-      for (let i = 0; i < 26 && !placed; i++) {
-        // walk outward from where it wants to be, both ways
-        const cand = start + (i % 2 ? -1 : 1) * Math.ceil(i / 2) * step;
-        if (cand < lo || cand > hi) continue;
-        if (free(put(cand))) placed = put(cand);
+      const step = (d.along === 'x' ? box.w : box.h) * 0.6 + 4;
+
+      let settled = null;
+      const tries = [];
+      for (let i = 0; i < 26; i++) {
+        const v = start + (i % 2 ? -1 : 1) * Math.ceil(i / 2) * step;
+        if (lo == null || (v >= lo && v <= hi)) tries.push(along(v));
       }
-      // A run with no free slot on it at all — a short one carrying two long
-      // verbs. Then and only then, step off the line: still beside its own
-      // edge, and legible, which beats two words printed on each other.
-      if (!placed) {
-        for (const dy of [h + 2, -(h + 2), 2 * h + 4, -(2 * h + 4)]) {
-          const at = { x: d.at.x, y: d.at.y + dy };
-          if (free(at)) { placed = at; break; }
-        }
+      // last resort: step off the line, still beside its own edge
+      for (const dy of [box.h + 2, -(box.h + 2), 2 * box.h + 4, -(2 * box.h + 4)]) {
+        tries.push({ x: d.at.x, y: d.at.y + dy });
       }
-      d.at = placed ?? d.at;
-      taken.push({ x: d.at.x, y: d.at.y, w, h });
+      let clear = null;                       // satisfies the clash test at least
+      for (const at of tries) {
+        if (clashes(at, box)) continue;
+        if (!clear) clear = at;
+        const parts = onOwnWire(d, at);
+        if (!parts) continue;
+        settled = { at, parts };
+        break;
+      }
+      // Nothing satisfies both. Then take clash-free and accept the wire
+      // crossing: a word printed ON another word cannot be read at all, while a
+      // word with a line through it still can. The constraints are ranked
+      // because in a crowded graph they will eventually conflict.
+      if (!settled && clear) settled = { at: clear, parts: route(d.a, d.b, d.cx, d.label, clear).parts };
+      d.at = settled?.at ?? d.at;
+      d.parts = settled?.parts ?? route(d.a, d.b, d.cx, d.label, d.at).parts;
+      taken.push({ x: d.at.x, y: d.at.y, ...box });
     }
 
     return { pos, drawn, ids, width, height };
@@ -282,7 +320,7 @@ export default function Relations({ g, onPick }) {
               const off = lit && !on;
               return (
                 <g key={e.id} className={`w ${on ? 'on' : ''} ${off ? 'off' : ''}`}
-                   style={{ color: on ? color : 'var(--wire)' }}
+                   style={{ color }}
                    onPointerEnter={() => setHot({ kind: 'edge', id: e.id })}
                    onPointerLeave={() => setHot(null)}>
                   {/* a wire is 1.6px wide and a pointer is not that accurate */}
@@ -309,7 +347,7 @@ export default function Relations({ g, onPick }) {
               return (
                 <text key={`${e.id}t`} x={at.x} y={at.y + 4} textAnchor="middle"
                       className={`vb ${on ? 'on' : ''} ${off ? 'off' : ''}`}
-                      fill={on ? color : 'var(--wire-ink)'}
+                      fill={color}
                       onPointerEnter={() => setHot({ kind: 'edge', id: e.id })}
                       onPointerLeave={() => setHot(null)}>
                   {short}<title>{full}</title>
