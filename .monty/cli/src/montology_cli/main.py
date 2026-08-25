@@ -34,10 +34,12 @@ app = typer.Typer(
 
 onto_app = typer.Typer(help="The vocabulary: check, add, amend, rule, except, list.", no_args_is_help=True)
 intake_app = typer.Typer(help="The questions a workspace starts with: phased forms, answers on disk, the glossary.", no_args_is_help=True)
+canvas_app = typer.Typer(help="The ontology as a graph: build, write and review it on a local canvas.", invoke_without_command=True)
 design_app = typer.Typer(help="Design values as vocabulary: tokens, drift, candidates.", no_args_is_help=True)
 app.add_typer(onto_app, name="onto")
 app.add_typer(design_app, name="design")
 app.add_typer(intake_app, name="intake")
+app.add_typer(canvas_app, name="canvas")
 
 
 @app.command()
@@ -718,6 +720,20 @@ def serve(http: bool = typer.Option(False, help="Streamable HTTP instead of stdi
 
     sys.argv = ["montology-mcp"] + (["--http"] if http else [])
     serve_main()
+
+
+@canvas_app.command("graph")
+def canvas_graph_cmd(
+    no_scan: bool = typer.Option(False, "--no-scan", help="The vocabulary only — skip the tree-sitter sweep."),
+    candidates: int = typer.Option(20, "--candidates", help="How many candidate nodes to include."),
+) -> None:
+    """The vocabulary and the code it governs, as one node/edge document."""
+    import json as _json
+
+    from montology_canvas import graph
+
+    typer.echo(_json.dumps(graph(with_scan=not no_scan, candidate_top=candidates),
+                           indent=2, ensure_ascii=False))
 
 
 @intake_app.command("ask")

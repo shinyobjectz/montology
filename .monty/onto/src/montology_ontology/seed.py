@@ -89,6 +89,9 @@ WORDS = [
     ("gist", "core", "ontology", "onto.gist",
      "a definition rendered to its first sentence — what a resident page carries when the whole definition is not worth its place in context",
      "the short form of a meaning"),
+    ("edge", "core", "ontology", "onto.edge",
+     "a relation the ontology holds between two things it names — containment, a route, a ruling, a bearing — and every one of them gates something, because an edge nothing can check is a drawing",
+     "what connects two things we name"),
 ]
 
 # What each word NAMES. Almost every term montology has is a NOUN, which is
@@ -103,7 +106,7 @@ POS_OF = {
     "surface": "noun", "seam": "noun", "phantom": "noun",
     "exception": "noun", "divergence": "noun",
     "intake": "noun", "glossary": "noun",
-    "disclosure": "noun", "gist": "noun",
+    "disclosure": "noun", "gist": "noun", "edge": "noun",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and
@@ -196,6 +199,34 @@ DOCTRINE = [
      "that something left cannot ask for it. Raising `body_cap` is still "
      "allowed and still has to say why, but it now buys residency rather than "
      "postponing a wall."),
+    ("An edge must be enforceable", 60,
+     "Every relation montology holds gates something. Containment gates the code "
+     "namespace — a dotted prefix must resolve to a word, so the namespace stays a "
+     "tree. A route gates what may be said in a register. A ruling gates a name. A "
+     "bearing is checked against the scan. That is not a coincidence, it is the "
+     "admission test, and it is what decides which relations we copy from the "
+     "vendors and which we do not.\n\n"
+     "Palantir has link types and DTDL has relationships — hasPart, usedIn, cools, "
+     "isBilledTo — and they are right to. Those edges exist to power RUNTIME OBJECT "
+     "TRAVERSAL: Palantir has objects, DTDL has twins, Fabric has entity instances, "
+     "and a link is how a query walks from one instance to the next. montology has "
+     "no instances. It has words, and the code that answers to them. A hasPart "
+     "between two words would assert something nothing here can check, and an "
+     "ontology whose edges cannot be checked is a diagram — which is the artefact "
+     "this repo exists to replace. So we do not grow them, and this is written down "
+     "so the question is answered once rather than every time somebody new sees the "
+     "canvas and reaches for the obvious thing.\n\n"
+     "One relation DOES pass the test and we take it: the genus, the word a word is "
+     "a kind of. It passes because a word inherits its genus's rulings and its guard "
+     "behaviour, so drawing the edge changes what the gate does. It is called genus "
+     "and not kind-of because `kind` already means provenance here — whose word it "
+     "is — and one root meaning two things is the failure the vocabulary exists to "
+     "prevent.\n\n"
+     "Capabilities (Palantir's interfaces: Inspectable, Schedulable) are the "
+     "strongest idea in their model and are DEFERRED rather than refused. They earn "
+     "their place when something can target them — a function, an action, a rule "
+     "that applies to every word carrying the capability. Until montology has a "
+     "kinetic layer, a capability would gate nothing, and the test is the test."),
 ]
 
 

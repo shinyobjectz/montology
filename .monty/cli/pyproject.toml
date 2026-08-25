@@ -18,6 +18,7 @@ dependencies = [
     "montology-scan",
     "montology-gen",
     "montology-intake",
+    "montology-canvas",
     "fastmcp",
 ]
 
@@ -35,6 +36,7 @@ montology-ontology = { workspace = true }
 montology-scan = { workspace = true }
 montology-gen = { workspace = true }
 montology-intake = { workspace = true }
+montology-canvas = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

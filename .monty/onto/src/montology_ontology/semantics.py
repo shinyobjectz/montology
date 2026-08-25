@@ -29,7 +29,7 @@ _MODEL_ID = "minishlab/potion-base-8M"
 _NO_MODEL = (
     "semantic analysis needs the [semantics] extra (POTION static embeddings, "
     "~30 MB, numpy-only). Repair: reinstall with the extra — "
-    'uvx --from "montology[semantics] @ git+https://github.com/socialite-ml/'
+    'uvx --from "montology[semantics] @ git+https://github.com/shinyobjectz/'
     'montology#subdirectory=.monty/cli" monty …'
 )
 
