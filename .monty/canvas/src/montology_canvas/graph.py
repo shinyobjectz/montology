@@ -216,7 +216,8 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
     """
     from montology_core import workspace_root
     from montology_ontology import (collisions, doctrines, exceptions, genera,
-                                    overloads, renames, routes, tokens, words)
+                                    overloads, questions, renames, routes,
+                                    tokens, words)
 
     root = root or workspace_root()
     vocab = words()
@@ -242,6 +243,20 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
     nodes += ruling_nodes
     edges += ruling_edges
 
+    # what the vocabulary is answerable TO. Both an unanswered question and an
+    # unmotivated word should be visible without filtering for them.
+    for q in questions():
+        nodes.append({"id": f"question:{q['id']}", "kind": "question",
+                      "label": q["text"][:52] + ("…" if len(q["text"]) > 52 else ""),
+                      "data": {"text": q["text"], "asked_in": q["asked_in"],
+                               "answered_by": q["answered_by"],
+                               "unanswered": not q["answered_by"]}})
+        for w in q["answered_by"]:
+            if w in live:
+                edges.append({"id": f"answers:{q['id']}:{w}", "kind": "answers",
+                              "source": f"question:{q['id']}", "target": f"word:{w}",
+                              "label": "answered by", "data": {"gates": False}})
+
     for d in doctrines():
         nodes.append({"id": f"doctrine:{d['title']}", "kind": "doctrine",
                       "label": d["title"], "data": {"body": d["body"], "ord": d["ord"]}})
@@ -250,7 +265,8 @@ def graph(root: Path | None = None, *, with_scan: bool = True,
                       "data": {"category": t["category"], "value": t["value"]}})
 
     # ── the code side ────────────────────────────────────────────────────────
-    stats = {"words": len(vocab), "genus": len(genera()), "rulings": len(ruling_nodes),
+    stats = {"words": len(vocab), "genus": len(genera()),
+             "questions": len(questions()), "rulings": len(ruling_nodes),
              "terms": len(term_nodes), "doctrine": len(doctrines()),
              "tokens": len(tokens())}
 

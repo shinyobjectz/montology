@@ -1,6 +1,6 @@
 ---
 id: mon-vkpa
-status: open
+status: in_progress
 deps: [mon-z85n]
 links: []
 created: 2026-08-25T19:38:08Z

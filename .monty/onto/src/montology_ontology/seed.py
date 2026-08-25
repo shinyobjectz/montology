@@ -8,6 +8,7 @@ terms). A target repo's ontology starts empty and is authored through
 from __future__ import annotations
 
 from .db import connect
+from .questions import _id as _question_id
 
 WORDS = [
     # (name, kind, owner, code, definition, test) — part of speech in POS_OF
@@ -89,6 +90,12 @@ WORDS = [
     ("gist", "core", "ontology", "onto.gist",
      "a definition rendered to its first sentence — what a resident page carries when the whole definition is not worth its place in context",
      "the short form of a meaning"),
+    ("question", "core", "ontology", "onto.question",
+     "something the vocabulary must be able to answer — kept as a requirement, linked to the words that answer it, and checked both ways",
+     "what someone needs to be able to ask"),
+    ("coverage", "core", "ontology", "onto.coverage",
+     "the two-way check between questions and words: a question no word answers is a hole, and a word no question motivates is vocabulary nobody asked for",
+     "does this vocabulary answer for itself"),
     ("proposal", "core", "ontology", "onto.proposal",
      "a set of changes to the vocabulary, reviewed before it lands — stored as intents rather than as a second copy of the words, so it reads as a diff of meaning and replays through the same door a person uses",
      "what someone wants the words to become"),
@@ -121,6 +128,7 @@ POS_OF = {
     "disclosure": "noun", "gist": "noun", "edge": "noun",
     "genus": "noun", "rigidity": "value",
     "proposal": "noun", "intent": "noun",
+    "question": "noun", "coverage": "noun",
 }
 
 # Montology's own exceptions, moved out of `montology.toml [scan] allow` and
@@ -155,6 +163,10 @@ EXCEPTIONS = [
      "anything else would be the drift"),
     ("glossary", ".monty/**", "`monty intake glossary` and `glossary()` hand back the glossary — "
      "the surface being literal"),
+    ("coverage", ".monty/onto/**", "`coverage()` hands back the coverage — the same "
+     "literalism as `divergence()`, `glossary()` and `gist()`: below the surface, a "
+     "function that returns exactly what the word names and is called anything else "
+     "would be the drift"),
     ("gist", ".monty/gen/**", "`gist()` in the renderer returns a gist — the same literalism as "
      "`divergence()` and `glossary()`: below the surface, a function that hands back exactly "
      "what the word names and is called anything else would be the drift"),
@@ -178,6 +190,40 @@ RIGIDITY_OF = {
     "seam": "rigid", "token": "rigid", "edge": "rigid",
     "candidate": "anti-rigid", "phantom": "anti-rigid",
 }
+
+# What montology's vocabulary is ANSWERABLE TO. Written as the questions a
+# person actually arrives with — not as a summary of the words, which would
+# make the coverage check circular and therefore worthless.
+QUESTIONS = [
+    ("Is this name already spoken for, and by what?",
+     ["word", "code", "ruling", "exception"]),
+    ("What decisions were taken about this word, and why?",
+     ["doctrine", "ruling", "amendment"]),
+    ("What in the code answers to this word, and where do the two meet?",
+     ["surface", "seam", "phantom"]),
+    ("What vocabulary is this codebase asking for that nobody has defined?",
+     ["candidate", "scan", "collision", "divergence"]),
+    ("Is the generated prose still true of the database it claims to render?",
+     ["sync", "drift", "glossary"]),
+    ("How much of the vocabulary does an agent carry on every single turn?",
+     ["disclosure", "gist"]),
+    ("What would this change break, before anyone approves it?",
+     ["proposal", "intent"]),
+    ("What is this word a kind of, and what does it inherit by being one?",
+     ["genus", "rigidity", "edge"]),
+    ("Where does the vocabulary this repo starts with come from?",
+     ["intake", "workspace", "ontology"]),
+    ("Has the code caught up with a word we renamed?",
+     ["migration", "vitals", "convergence"]),
+    # Added because the coverage check found `recipe` and `token` motivated by
+    # nothing — which turned out to be a hole in the QUESTIONS, not in the
+    # vocabulary. That is the check working: it says where to look, not what
+    # the answer is.
+    ("Which values is the design allowed to use, and where has it drifted?",
+     ["token", "recipe", "drift"]),
+    ("What is this vocabulary answerable to, and is anything in it unasked for?",
+     ["question", "coverage"]),
+]
 
 DOCTRINE = [
     ("Prose is rendered, never authored", 10,
@@ -281,10 +327,17 @@ def seed() -> str:
         )
     for name, value in RIGIDITY_OF.items():
         conn.execute("UPDATE word SET rigidity=? WHERE lower(name)=?", (value, name))
+    for text, by in QUESTIONS:
+        qid = _question_id(text)
+        conn.execute("INSERT OR IGNORE INTO question (id, text, asked_in, asked_at) "
+                     "VALUES (?,?,?,?)", (qid, text, "seed", "2026-08-25"))
+        for word in by:
+            conn.execute("INSERT OR REPLACE INTO answers (question_id, word_name) "
+                         "VALUES (?,?)", (qid, word))
     for word, genus, why in GENERA:
         conn.execute("INSERT OR REPLACE INTO genus (word_name, genus_name, why) "
                      "VALUES (?,?,?)", (word, genus, why))
     conn.commit()
     return (f"seeded {len(WORDS)} words, {len(DOCTRINE)} doctrine blocks, "
             f"{len(EXCEPTIONS)} exceptions, {len(GENERA)} genus, "
-            f"{len(RIGIDITY_OF)} rigidity judgements")
+            f"{len(RIGIDITY_OF)} rigidity judgements, {len(QUESTIONS)} questions")

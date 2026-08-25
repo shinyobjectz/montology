@@ -204,6 +204,19 @@ CREATE TABLE IF NOT EXISTS seam (
   PRIMARY KEY (from_id, to_id, kind, at)
 );
 
+CREATE TABLE IF NOT EXISTS question (
+  id          TEXT PRIMARY KEY,       -- a hash of the text: asking twice is once
+  text        TEXT NOT NULL,          -- what the vocabulary must be able to answer
+  asked_in    TEXT,                   -- the intake phase it came from, if any
+  asked_at    TEXT
+);
+
+CREATE TABLE IF NOT EXISTS answers (
+  question_id TEXT NOT NULL,
+  word_name   TEXT NOT NULL,
+  PRIMARY KEY (question_id, word_name)
+);
+
 CREATE TABLE IF NOT EXISTS proposal (
   id          TEXT PRIMARY KEY,       -- short, quotable in a review
   title       TEXT NOT NULL,

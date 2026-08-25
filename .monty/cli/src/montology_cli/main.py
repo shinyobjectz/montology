@@ -463,6 +463,77 @@ def onto_route(
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("ask")
+def onto_ask(
+    text: str = typer.Argument(..., help="Something the vocabulary must be able to answer."),
+    answered_by: str = typer.Option("", "--by", help="Comma-separated words that answer it."),
+    phase: str = typer.Option("", "--from", help="The intake phase it came from."),
+) -> None:
+    """Record a competency question — the requirement the vocabulary answers to."""
+    from montology_ontology import ask
+
+    line = ask(text, asked_in=phase,
+               answered_by=[w.strip() for w in answered_by.split(",") if w.strip()])
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("answers")
+def onto_answers(qid: str, word: str = typer.Option(..., "--word", help="A word that answers it.")) -> None:
+    """Say that a word is part of how a question gets answered."""
+    from montology_ontology import answer
+
+    line = answer(qid, word)
+    typer.echo(line)
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
+
+
+@onto_app.command("questions")
+def onto_questions(drafts: bool = typer.Option(False, "--drafts", help="Draft questions from the intake answers.")) -> None:
+    """The questions this vocabulary is answerable to, and what answers them."""
+    from montology_ontology import coverage, harvest, questions
+
+    from ._ui import emit_all
+
+    if drafts:
+        try:
+            from montology_intake import merged_answers
+
+            got = harvest(merged_answers())
+        except Exception as e:  # noqa: BLE001
+            typer.echo(f"no intake answers to draft from ({type(e).__name__}). "
+                       "Run `just intake` first.")
+            raise typer.Exit(0) from None
+        if not got:
+            typer.echo("nothing to draft — the intake answers name no things yet.")
+            raise typer.Exit(0)
+        lines = [f"{len(got)} draft question(s) from the intake — "
+                 "confirm the ones that are the question you meant:", ""]
+        for d in got:
+            lines += [f"  {d['text']}   (from {d['from']})",
+                      f"      monty onto ask \"{d['text']}\" --from intake"]
+        emit_all(lines)
+        raise typer.Exit(0)
+
+    qs = questions()
+    cov = coverage()
+    if not qs:
+        typer.echo(cov["note"])
+        raise typer.Exit(0)
+    lines = []
+    for q in qs:
+        mark = "·" if not q["answered_by"] else "✓"
+        lines.append(f"  {mark} {q['id']}  {q['text']}")
+        if q["answered_by"]:
+            lines.append(f"        answered by: {', '.join(q['answered_by'])}")
+    lines += ["", f"  {len(cov['unanswered'])} question(s) no word answers",
+              f"  {len(cov['unmotivated'])} word(s) no question motivates"]
+    if cov["unmotivated"]:
+        lines.append(f"        {', '.join(cov['unmotivated'][:12])}"
+                     + (" …" if len(cov["unmotivated"]) > 12 else ""))
+    emit_all(lines)
+
+
 @onto_app.command("propose")
 def onto_propose(
     title: str = typer.Argument(..., help="What this proposal is for."),

@@ -9,6 +9,7 @@ export const KIND = {
   candidate: { color: 'var(--candidate)', glyph: '?', name: 'candidate' },
   doctrine:  { color: 'var(--doctrine)',  glyph: '¶', name: 'doctrine' },
   token:     { color: 'var(--token)',     glyph: '◆', name: 'token' },
+  question:  { color: 'var(--candidate)', glyph: '?', name: 'question' },
 };
 
 export const EDGE = {

@@ -53,6 +53,16 @@ def health(root: Path | None = None) -> dict:
     if not vocab:
         return {"words": [], "counts": {}}
 
+    # What the vocabulary is answerable TO. Reported here because a word that
+    # answers no question is a health finding of exactly the kind this file
+    # exists for — and the one no vendor's tooling looks for.
+    try:
+        from montology_ontology import coverage as _coverage
+
+        cover = _coverage()
+    except Exception:  # noqa: BLE001 — an absent instrument is not a verdict
+        cover = {}
+
     carried: Counter[str] = Counter()
     for d in declarations(root)["decls"]:
         carried[norm(d["name"].split(".")[-1])] += 1
@@ -107,7 +117,8 @@ def health(root: Path | None = None) -> dict:
 
     order = {"dead": 0, "prose-only": 1, "thin": 2, "unnamed": 3, "carried": 4}
     out.sort(key=lambda r: (order[r["state"]], r["in_code"] + r["in_prose"]))
-    return {"words": out, "counts": Counter(r["state"] for r in out)}
+    return {"words": out, "counts": Counter(r["state"] for r in out),
+            "coverage": cover}
 
 
 def render(r: dict, *, verbose: bool = False) -> list[str]:
@@ -134,6 +145,24 @@ def render(r: dict, *, verbose: bool = False) -> list[str]:
             out.append(f"    {w['name']:<26} {(w['code'] or ''):<16} {w['why']}")
         if len(unnamed) > len(show):
             out.append(f"    … and {len(unnamed) - len(show)} more (--verbose)")
+    # Both directions. The second one is the one no vendor's tooling looks for:
+    # a word nobody asked for is how a glossary grows into something unread.
+    cover = r.get("coverage") or {}
+    if cover.get("note"):
+        out += ["", f"COVERAGE — {cover['note']}"]
+    elif cover:
+        out.append("")
+        out.append(f"COVERAGE — {cover['questions']} competency question(s)")
+        if cover["unanswered"]:
+            out.append(f"    {len(cover['unanswered'])} question(s) no word answers:")
+            for q in cover["unanswered"][:6]:
+                out.append(f"        {q['text']}")
+        if cover["unmotivated"]:
+            show = cover["unmotivated"] if verbose else cover["unmotivated"][:10]
+            out.append(f"    {len(cover['unmotivated'])} word(s) no question motivates: "
+                       + ", ".join(show)
+                       + (" …" if len(cover["unmotivated"]) > len(show) else ""))
+
     out.append("")
     out.append(f"ok — {sum(c.values())} word(s): {c.get('carried', 0)} carried, "
                f"{c.get('unnamed', 0)} unnamed, {c.get('thin', 0)} thin, "
