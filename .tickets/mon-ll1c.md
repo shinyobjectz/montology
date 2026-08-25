@@ -1,6 +1,6 @@
 ---
 id: mon-ll1c
-status: in_progress
+status: closed
 deps: []
 links: []
 created: 2026-08-25T19:38:08Z
@@ -30,3 +30,9 @@ Shape: {nodes: [...], edges: [...], stats: {...}, fingerprint: sha256}. The fing
 
 `monty canvas graph` prints valid JSON for montology (26 words) and qubie (99 words, 5,237 declarations) in under two seconds, every edge type present, candidates marked as suggestions, and the fingerprint matching what `monty sync` computes. Tests pin the shape.
 
+
+## Notes
+
+**2026-08-25T19:48:08Z**
+
+Landed. montology: 27 words / 61 nodes / 219 edges. qubie: 99 words, 5237 declarations, 1.9s — inside the two-second acceptance. Two real findings the graph surfaced on qubie the moment it could be seen: a rename CHAIN (walkthrough -> show-do -> guided-walkthrough, where show-do is both a live target and a retired term) and 'intelligence -> brain' routed at register 'all' with no scope, which the gates flag correctly reports as unable to gate. CORRECTION to the epic's wording: a word node does NOT carry 'declarations that resolve to it'. In montology's model a declaration wearing an enforced word's name is a COLLISION; code answers to a word through a bearing. The node carries collides / excepted / at instead, which is both correct and more useful. Also fixed: the [semantics] repair text still named socialite-ml.

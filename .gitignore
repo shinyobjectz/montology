@@ -17,3 +17,6 @@ dist/
 # marketing-era leftovers on dev machines (not part of this repo)
 projects/
 design/node_modules/
+
+# the canvas toolchain is build-time only; the BUILD OUTPUT is committed
+canvas/node_modules/

@@ -137,3 +137,123 @@ def test_the_fingerprint_moves_only_when_the_graph_does(ws, onto_db):
     assert graph(with_scan=False)["fingerprint"] == first     # deterministic
     onto_db.add("run", "one execution of a task", kind="core", pos="noun")
     assert graph(with_scan=False)["fingerprint"] != first
+
+
+# ── the bundle is generated material, and gets the gate that requires ───────
+
+def test_a_workspace_without_sources_is_not_failed_for_lacking_them(ws, onto_db):
+    """Every install that is not this repo ships the bundle without canvas/.
+    Failing those would be failing them for not being us."""
+    from montology_canvas import lint
+
+    assert lint() == []
+
+
+def test_a_bundle_built_from_older_sources_is_stale(tmp_path, monkeypatch):
+    from montology_canvas import bundle
+
+    canvas = tmp_path / "canvas"
+    (canvas / "src").mkdir(parents=True)
+    (canvas / "package.json").write_text('{"name":"probe"}')
+    (canvas / "src" / "App.svelte").write_text("<p>one</p>")
+    monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
+    (tmp_path / ".monty").mkdir()
+
+    static = tmp_path / "static"
+    static.mkdir()
+    (static / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(bundle, "STATIC", static)
+    monkeypatch.setattr(bundle, "STAMP", static / "BUILD.json")
+
+    assert any("no provenance" in line for line in bundle.lint())   # never built
+    bundle.stamp()
+    assert bundle.lint()[0].startswith("canvas: bundle current")
+
+    (canvas / "src" / "App.svelte").write_text("<p>two</p>")        # source moves…
+    stale = bundle.lint()
+    assert stale and stale[0].startswith("FAIL canvas") and "STALE" in stale[0]
+    assert "just canvas" in stale[0]                                # the repair, attached
+
+
+def test_the_fingerprint_ignores_what_carries_no_meaning(tmp_path, monkeypatch):
+    """A dependency bump that changes no source changes no meaning. A hash that
+    moves for reasons nobody can see is a hash people learn to ignore."""
+    from montology_canvas import bundle
+
+    canvas = tmp_path / "canvas"
+    (canvas / "src").mkdir(parents=True)
+    (canvas / "package.json").write_text('{"name":"probe"}')
+    (canvas / "src" / "App.svelte").write_text("<p>one</p>")
+    before = bundle.source_fingerprint(canvas)
+
+    (canvas / "package-lock.json").write_text('{"lockfileVersion": 3}')
+    (canvas / "node_modules").mkdir()
+    (canvas / "node_modules" / "junk.js").write_text("// vendored")
+    assert bundle.source_fingerprint(canvas) == before
+
+
+# ── served on localhost, and only what belongs to it ────────────────────────
+
+def _get(url):
+    import urllib.error
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(url) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+
+
+def test_the_canvas_serves_its_bundle_and_its_graph(ws, onto_db, monkeypatch):
+    import json
+    import threading
+
+    import importlib
+
+    from montology_canvas import serve
+
+    # the package re-exports serve() over the module of the same name, so the
+    # module has to be asked for by import rather than by attribute
+    serve_mod = importlib.import_module("montology_canvas.serve")
+
+    static = ws / "static"
+    static.mkdir()
+    (static / "index.html").write_text("<html>the canvas</html>")
+    monkeypatch.setattr(serve_mod, "STATIC", static)
+
+    onto_db.add("cell", "the box a run executes in", kind="core", pos="noun")
+    url = {}
+    ready = threading.Event()
+
+    def note(u):
+        url["at"] = u
+        ready.set()
+
+    t = threading.Thread(target=lambda: serve(open_browser=False, with_scan=False, _ready=note),
+                         daemon=True)
+    t.start()
+    assert ready.wait(10)
+    base = url["at"]
+
+    assert _get(base) == (200, "<html>the canvas</html>")
+    code, body = _get(base + "api/graph")
+    assert code == 200 and json.loads(body)["stats"]["words"] == 1
+
+    # the bundle is the ONLY thing this server may hand out
+    code, body = _get(base + "../../../etc/passwd")
+    assert code == 404 and "bundle" in body
+
+
+def test_serving_without_a_bundle_says_how_to_get_one(ws, onto_db, monkeypatch):
+    import importlib
+
+    from montology_canvas import serve
+
+    # the package re-exports serve() over the module of the same name, so the
+    # module has to be asked for by import rather than by attribute
+    serve_mod = importlib.import_module("montology_canvas.serve")
+
+    monkeypatch.setattr(serve_mod, "STATIC", ws / "nothing-here")
+    got = serve(open_browser=False)
+    assert "not in this install" in got and "just canvas" in got

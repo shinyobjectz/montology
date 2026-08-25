@@ -387,12 +387,13 @@ def scan(candidates: int = typer.Option(0, "--candidates", help="List the top N 
 @app.command()
 def lint() -> None:
     """The gate: collisions, code resolution, design drift, prose drift. Exit 1 on FAIL."""
+    from montology_canvas import lint as canvas_lint
     from montology_gen import lint as gen_lint
     from montology_scan import design_lint, lint as scan_lint
 
     from ._ui import emit_all
 
-    lines = scan_lint() + design_lint() + gen_lint()
+    lines = scan_lint() + design_lint() + gen_lint() + canvas_lint()
     emit_all(lines)
     if any(line.startswith("FAIL") or line.endswith("FAILED") for line in lines):
         raise typer.Exit(1)
@@ -720,6 +721,28 @@ def serve(http: bool = typer.Option(False, help="Streamable HTTP instead of stdi
 
     sys.argv = ["montology-mcp"] + (["--http"] if http else [])
     serve_main()
+
+
+@canvas_app.callback(invoke_without_command=True)
+def canvas_root(ctx: typer.Context,
+                no_open: bool = typer.Option(False, "--no-open", help="Print the URL only; do not open a browser."),
+                no_scan: bool = typer.Option(False, "--no-scan", help="The vocabulary only — skip the tree-sitter sweep."),
+                port: int = typer.Option(0, "--port", help="Bind a fixed port (0 = ephemeral).")) -> None:
+    """Serve the ontology as a graph on localhost, until you interrupt it."""
+    if ctx.invoked_subcommand:
+        return
+    from montology_canvas import serve
+
+    typer.echo(serve(open_browser=not no_open, port=port, with_scan=not no_scan,
+                     _ready=lambda url: typer.echo(f"canvas  {url}   (ctrl-c to close)")))
+
+
+@canvas_app.command("stamp")
+def canvas_stamp_cmd() -> None:
+    """Record which sources produced the built bundle — run after a build."""
+    from montology_canvas import stamp
+
+    typer.echo(stamp())
 
 
 @canvas_app.command("graph")

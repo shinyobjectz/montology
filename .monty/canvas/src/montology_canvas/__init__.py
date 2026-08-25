@@ -5,6 +5,8 @@ same functions the CLI calls, so every law applies identically whether a human
 typed it or dragged it.
 """
 
+from .bundle import lint, stamp
 from .graph import graph
+from .serve import serve
 
-__all__ = ["graph"]
+__all__ = ["graph", "lint", "serve", "stamp"]

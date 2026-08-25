@@ -13,6 +13,12 @@ default:
 setup:
     uv sync
 
+# Build the canvas bundle from canvas/ and stamp its provenance (needs Node;
+# the OUTPUT is committed, so `monty canvas` works without one)
+canvas:
+    cd canvas && npm install --no-fund --no-audit --silent && npx vite build
+    uv run monty canvas stamp
+
 # What must pass before a commit
 check:
     uv run python -m compileall -q .monty && echo "syntax ok"

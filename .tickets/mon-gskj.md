@@ -1,6 +1,6 @@
 ---
 id: mon-gskj
-status: open
+status: in_progress
 deps: []
 links: []
 created: 2026-08-25T19:38:08Z

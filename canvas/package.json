@@ -1,0 +1,17 @@
+{
+  "name": "montology-canvas-ui",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "The canvas: montology's graph, rendered. Built output is committed into the Python package — see the generated-material rule in the repo.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "svelte": "^5.56.10",
+    "vite": "^8.2.2"
+  }
+}
