@@ -16,6 +16,7 @@
   let focus = $state(null);      // the node the canvas is answering about
   let selected = $state(null);   // what the detail rail is showing
   let authoring = $state(false);
+  let mode = $state('core');   // core | all — see the disclosure note in layout.js
   // What each node measured. Collected once per render; the layout uses it on
   // the next pass, which settles immediately because a size does not depend on
   // a position.
@@ -45,7 +46,8 @@
 
   const view = $derived.by(() => {
     if (!graph) return { pos: new Map(), shown: new Set() };
-    return focus ? focusLayout(graph, focus.id, sizes) : overviewLayout(graph, { measured: sizes });
+    return focus ? focusLayout(graph, focus.id, sizes)
+                 : overviewLayout(graph, { measured: sizes, mode });
   });
 
   const shownNodes = $derived(graph ? graph.nodes.filter((n) => view.shown.has(n.id)) : []);
@@ -130,6 +132,14 @@
           all words
         </button>
         {#if focus}<span class="sep">›</span><span class="crumb on mono">{focus.label}</span>{/if}
+        {#if !focus}
+          <button class="mode mono" onclick={() => (mode = mode === 'core' ? 'all' : 'core')}>
+            {mode === 'core' ? 'the core' : 'everything'}
+          </button>
+          {#if mode === 'core' && view.quiet}
+            <span class="quietnote mono">{view.quiet} word(s) in no relation — hidden</span>
+          {/if}
+        {/if}
         {#if graph.proposals?.length}
           <select class="pick mono" bind:value={proposal}>
             <option value="">the vocabulary as it is</option>
@@ -232,6 +242,9 @@
   .sep { color: var(--dim); font-size: .72rem; }
   .pick { font-size: .66rem; margin-left: .6rem; max-width: 260px; padding: .05rem .25rem;
           border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .mode { font-size: .66rem; margin-left: .5rem; padding: .05rem .4rem; cursor: pointer;
+          border-radius: 4px; border: 1px solid var(--accent); background: none; color: var(--accent); }
+  .quietnote { font-size: .62rem; color: var(--dim); margin-left: .4rem; }
   .author { font-size: .68rem; margin-left: .6rem; padding: .1rem .4rem; cursor: pointer;
             border-radius: 4px; border: 1px solid var(--line); background: none; color: var(--dim); }
   .author.on { color: var(--accent); border-color: var(--accent); }

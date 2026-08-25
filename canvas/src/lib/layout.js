@@ -92,19 +92,20 @@ export function focusLayout(graph, focusId, measured) {
   return { pos, shown: seen };
 }
 
-/** The overview: the whole graph, not just the spine.
+/** The overview: the SHAPE of the vocabulary, not all of it.
  *
- *  This placed ONLY words, so every term, ruling and question went unpositioned
- *  and every edge touching one was filtered out — qubie drew 36 containment
- *  edges out of 93 and read as a tree, because two thirds of the graph was
- *  invisible. A retired name is placed beside the word it points at and a
- *  ruling beside the word it rules, so the relation is short, local and
- *  legible instead of a line across the screen.
+ *  Drawing all 192 of qubie's nodes produced a hairball that taught nobody
+ *  anything — 35 of its 110 words connect to nothing at all and only 16 have
+ *  more than two edges, so "everything" is mostly disconnected dots around a
+ *  small core that they hide.
  *
- *  Groups pack down a column and wrap to the next, the way a glossary sets on
- *  a page: 110 words in one tall stack fit the screen at 13%, which is a smear.
+ *  This is montology's own disclosure doctrine, which the words skill already
+ *  follows and this view did not: the resident surface is a ROUTING TABLE, not
+ *  the vocabulary. So the default is the core — the groups, and the flat words
+ *  that are actually in a relation — and what is left out is COUNTED and said,
+ *  never silently dropped. `all` is one click away for when you want it.
  */
-export function overviewLayout(graph, { columnHeight = 1050, measured } = {}) {
+export function overviewLayout(graph, { columnHeight = 1050, measured, mode = 'core' } = {}) {
   const words = graph.nodes.filter((n) => n.kind === 'word');
   const kids = new Map();
   for (const w of words) {
@@ -116,10 +117,22 @@ export function overviewLayout(graph, { columnHeight = 1050, measured } = {}) {
   const tops = words.filter((w) => !w.data.owner || !known.has(w.data.owner))
                     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const grouped = tops.filter((t) => (kids.get(t.label) || []).length);
-  const flat = tops.filter((t) => !(kids.get(t.label) || []).length);
+  // "in a relation" means something other than merely living somewhere:
+  // containment is the skeleton and every child has one, so counting it would
+  // call the whole vocabulary connected.
+  const related = new Set();
+  for (const e of graph.edges) {
+    if (e.kind === 'contains') continue;
+    related.add(e.source);
+    related.add(e.target);
+  }
 
-  const COL_W = NODE_GAP_X + 3 * (240 + NODE_GAP_X);   // satellites · parent · children
+  const grouped = tops.filter((t) => (kids.get(t.label) || []).length);
+  let flat = tops.filter((t) => !(kids.get(t.label) || []).length);
+  const quiet = mode === 'core' ? flat.filter((w) => !related.has(w.id)) : [];
+  if (mode === 'core') flat = flat.filter((w) => related.has(w.id));
+
+  const COL_W = NODE_GAP_X + 3 * (240 + NODE_GAP_X);
   const SAT = 240 + NODE_GAP_X;
   const pos = new Map();
   const shown = new Set();
@@ -141,34 +154,59 @@ export function overviewLayout(graph, { columnHeight = 1050, measured } = {}) {
     y += height + 34;
   }
 
-  for (let i = 0; i < flat.length; i += 2) {
-    const pair = flat.slice(i, i + 2);
-    const h = Math.max(...pair.map((n) => nodeHeight(n, measured)));
+  for (const w of flat) {
+    const h = nodeHeight(w, measured);
     wrap(h + 16);
-    const x = col * COL_W;
-    pair.forEach((n, j) => place(n, x + SAT + j * SAT, y + h / 2));
+    place(w, col * COL_W + SAT, y + h / 2);
     y += h + 16;
   }
 
-  // Now the rest of the graph, hung off whatever it is about. A dead name sits
-  // to the LEFT of the word it became, a ruling to the left of the word it
-  // rules — the same reading the focused view uses, kept consistent so the two
-  // views teach the same thing.
-  const anchored = (node) => {
-    for (const e of graph.out.get(node.id) ?? []) if (pos.has(e.target)) return pos.get(e.target);
-    for (const e of graph.inn.get(node.id) ?? []) if (pos.has(e.source)) return pos.get(e.source);
+  // Satellites hang to the LEFT of what they are about — the same reading the
+  // focused view uses. Occupancy is tracked per COLUMN and not per anchor,
+  // which is what went wrong before: two anchors at nearby heights each kept
+  // their own tidy offset and both wrote into the same strip of screen.
+  const anchorOf = (node) => {
+    for (const e of graph.out.get(node.id) ?? []) if (pos.has(e.target)) return e.target;
+    for (const e of graph.inn.get(node.id) ?? []) if (pos.has(e.source)) return e.source;
     return null;
   };
-  const taken = new Map();
+  // Seeded with everything already placed. Tracking only the satellites was the
+  // last bug here: a satellite goes one column left of its anchor, that column
+  // can already hold WORDS, and a map that has never heard of them will hand
+  // out a slot straight on top of one.
+  const columns = new Map();          // x -> [[top, bottom], …] already taken
+  for (const [id, at] of pos) {
+    const node = graph.byId.get(id);
+    const h = nodeHeight(node, measured);
+    const taken = columns.get(at.x) ?? [];
+    taken.push([at.y - h / 2, at.y + h / 2]);
+    columns.set(at.x, taken);
+  }
+  for (const taken of columns.values()) taken.sort((p, q) => p[0] - q[0]);
+  const claim = (x, want, h) => {
+    const taken = columns.get(x) ?? [];
+    let top = want - h / 2;
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (const [a, b] of taken) {
+        if (top < b + 10 && top + h > a - 10) { top = b + 10; moved = true; }
+      }
+    }
+    taken.push([top, top + h]);
+    taken.sort((p, q) => p[0] - q[0]);
+    columns.set(x, taken);
+    return top + h / 2;
+  };
+
   for (const node of graph.nodes) {
     if (pos.has(node.id) || node.kind === 'word') continue;
-    const at = anchored(node);
-    if (!at) continue;                      // nothing to hang it on: leave it out
-    const slot = `${Math.round(at.x)}:${Math.round(at.y)}`;
-    const nth = taken.get(slot) ?? 0;
-    taken.set(slot, nth + 1);
-    place(node, at.x - SAT, at.y + nth * (nodeHeight(node, measured) + 10));
+    const anchor = anchorOf(node);
+    if (!anchor) continue;
+    const at = pos.get(anchor);
+    const x = at.x - SAT;
+    place(node, x, claim(x, at.y, nodeHeight(node, measured)));
   }
 
-  return { pos, shown };
+  return { pos, shown, quiet: quiet.length };
 }
