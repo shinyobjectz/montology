@@ -1,6 +1,6 @@
 ---
 id: mon-q8i6
-status: in_progress
+status: closed
 deps: [mon-by5n]
 links: []
 created: 2026-08-25T19:38:08Z
@@ -31,3 +31,9 @@ This adds one field to the word (rigidity) and one table. Resist adding the rest
 
 kind_of can be authored from the CLI and the canvas, cycles are refused with the path shown, a rigid-under-anti-rigid subsumption is refused with the OntoClean reason in plain words, and inherited rulings appear wherever the word's own rulings appear.
 
+
+## Notes
+
+**2026-08-25T20:07:46Z**
+
+Landed as GENUS, not kind_of — `kind` already means provenance here (whose word it is), and one root meaning two things is the failure the vocabulary exists to prevent. `genus` is also the older and more exact word: a definition is a genus narrowed by a differentia, which is what every definition in this database already is. Table not column, because a word may be a kind of more than one thing (composition over deep hierarchies — Palantir's own principle). Three checks: unknown word at either end, cycles (path shown, not just the verdict), and the one OntoClean metaproperty that is mechanically checkable — a rigid word may not be a kind of an anti-rigid one. Resisted the rest of OntoClean: identity and unity need judgement the tool cannot supply, and a metaproperty nobody fills in correctly is worse than none. Dogfooded with exactly ONE subsumption (exception is a kind of ruling) and nine rigidity judgements: montology's vocabulary is mostly flat and that is a finding, not a gap — inventing a hierarchy to have one is the over-modelling these tools exist to catch. The live proof, run against montology's own words: `monty onto genus word --is candidate` is REFUSED, because candidate is a ROLE a declared name plays until somebody defines it.

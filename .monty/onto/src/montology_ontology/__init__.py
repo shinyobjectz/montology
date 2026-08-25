@@ -10,6 +10,7 @@ from .chains import analyse as route_analyse
 from .chains import render as render_routes
 from .seed import seed
 from .semantics import audit as semantic_audit
+from .semantics import near_pairs
 from .semantics import similar as semantic_similar
 from .upstream import pinned_upstream, pull
 
@@ -17,4 +18,4 @@ __all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "amend", "amendments", "check"
            "doctrines", "except_add", "except_drop", "exceptions", "genera", "genus_add", "genus_chain",
            "genus_drop", "inherited", "rigidity_set",
            "overloads", "record_run", "rename_word", "renames",
-           "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "semantic_audit", "semantic_similar", "token_add", "tokens", "words"]
+           "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "near_pairs", "semantic_audit", "semantic_similar", "token_add", "tokens", "words"]

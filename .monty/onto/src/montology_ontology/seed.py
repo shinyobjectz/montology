@@ -24,7 +24,7 @@ WORDS = [
      "a decision written down in the database — because a decision that is not written down gets re-litigated",
      "why it is this way"),
     ("scan", "core", None, "scan",
-     "the tree-sitter sweep of a codebase: every declaration measured, every dependency surface and the seams between them, checked against the vocabulary",
+     "the parse-and-measure sweep of a codebase: every declaration measured, every dependency surface and the seams between them, checked against the vocabulary",
      "what the code claims"),
     ("collision", "core", "scan", "scan.collision",
      "a declaration named after a word that means something else — the failure scan exists to catch",

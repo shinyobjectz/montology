@@ -463,6 +463,23 @@ def onto_route(
     raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
+@onto_app.command("review")
+def onto_review(
+    threshold: float = typer.Option(0.70, "--threshold", help="Cosine above which two meanings count as one."),
+    spread: int = typer.Option(3, "--spread", help="Unrelated areas before a word looks like a God Object."),
+) -> None:
+    """The anti-patterns this vocabulary instantiates — named, evidenced, advisory.
+
+    Never fails a build. The gate is `monty lint`; this is a judgement, and a
+    judgement that fails a build is one people learn to route around.
+    """
+    from montology_scan import render_review, review
+
+    from ._ui import emit_all
+
+    emit_all(render_review(review(threshold=threshold, spread=spread)))
+
+
 @onto_app.command("genus")
 def onto_genus(
     word: str = typer.Argument("", help="The word that is a kind of something."),

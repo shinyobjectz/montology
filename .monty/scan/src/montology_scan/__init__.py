@@ -24,6 +24,8 @@ from .guard import run_hook as guard_hook
 from .rename import migrate
 from .styles import (design_candidates, design_lint, ingest_theme,
                      recipe_candidates, style_surface, tailwind_theme)
+from .review import render as render_review
+from .review import review
 from .health import health as word_health
 from .health import render as render_health
 from .stale import render as render_stale

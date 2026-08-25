@@ -95,6 +95,28 @@ def similar(query: str, top: int = 8) -> str:
 # calibrated live: montology's own 14 DISTINCT words top out at 0.49
 # pairwise, while a genuinely duplicated meaning scored 0.74 — 0.70 sits
 # in the measured gap with buffer on both sides
+def near_pairs(threshold: float = 0.70) -> list[dict] | str:
+    """Pairs of words whose MEANINGS sit closer than a threshold, as rows.
+
+    `audit` renders the same measurement as prose for a terminal; the review
+    needs it as data, and computing it twice in two places is how two answers
+    to one question start to disagree.
+    """
+    rows = _rows()
+    if not rows:
+        return []
+    vecs = _embed([f"{w['name']}: {w['definition']}" for w in rows])
+    if isinstance(vecs, str):
+        return vecs
+    sims = vecs @ vecs.T
+    out = []
+    for i in range(len(rows)):
+        for j in range(i + 1, len(rows)):
+            if sims[i, j] >= threshold:
+                out.append({"a": rows[i], "b": rows[j], "score": float(sims[i, j])})
+    return sorted(out, key=lambda p: -p["score"])
+
+
 def audit(dup_threshold: float = 0.70, candidates: list[dict] | None = None) -> str:
     """The semantic audit, all advisory: meanings that collide, candidates
     that already exist, org/local doubles, misfiled owners."""
