@@ -263,24 +263,32 @@ montology keeps a vetted registry of public taxonomies, browsable with
 MCP tool. Each entry carries two rulings: whether it is worth reaching for,
 and **whether you may ship against it**.
 
-> The licence column is the one that decides whether a vocabulary is safe to
-> build on, and it is the column every automated scan gets wrong here: the
-> IAB taxonomies declare CC BY 3.0 in their README and ship no `LICENSE`
-> file, so GitHub reports three of the five `core` entries as unlicensed.
-> They are usable — with attribution. `schemaorg` is share-alike, which is
-> the one licence in this list that can reach back into what you build.
+All 27 licences were checked against the source, so there is no "unknown"
+column to squint at. Four results are worth knowing before you reach for one:
+
+- **The IAB taxonomies declare CC BY 3.0 in a README and ship no `LICENSE`
+  file**, so GitHub — and every automated scan — reports three of the five
+  `core` entries as unlicensed. They are usable; attribution is required.
+- **`google-product` grants nothing.** A bare `.txt` with no licence and no
+  terms page; `developers.google.com`'s CC BY 4.0 policy does not reach it.
+  Published so you can build a feed — not permission to ship it in a product.
+- **`schemaorg` is share-alike**, the one licence here that can reach back
+  into a vocabulary you build on top of it.
+- **NAICS and SIC point at the Census and the SEC**, not at convenience
+  repackagings that declare no licence. The authority is a US federal work
+  and therefore public domain.
 
 ### `core` — Reach for these first.
 
 | taxonomy | domain | licence | commercial | source |
 |---|---|---|---|---|
-| **Google Product Taxonomy** | retail · e-commerce | none declared (Merchant Center terms) | ⚠️ verify | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
+| **Google Product Taxonomy** | retail · e-commerce | none — a bare .txt on www.google.com, no licence, no terms page, and developers.google.com's CC BY 4.0 site policy does not reach it | 🚫 unlicensed | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
 | **Google Topics API Taxonomy** | advertising · web platform | W3C Software and Document Licence | ✅ yes | [`google-topics`](https://github.com/patcg-individual-drafts/topics) |
 | **IAB Ad Product Taxonomy 2.0** | advertising · inventory | CC BY 3.0 | ✅ yes — attribution | [`iab-adproduct`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
 | **IAB Audience Taxonomy 1.1** | advertising · audience | CC BY 3.0 | ✅ yes — attribution | [`iab-audience`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
 | **IAB Content Taxonomy 3.1** | advertising · media | CC BY 3.0 | ✅ yes — attribution | [`iab-content`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
 
-- **google-product** — 5k+ categories every Shopping feed must speak; e-commerce lives here.
+- **google-product** — 5k+ categories every Shopping feed must speak; e-commerce lives here. Published FOR building feeds; that is not a licence to redistribute it inside your own product, and Google grants none.
 - **google-topics** — ~470 ad-relevant topics; small, curated, and what Chrome's interest signals emit.
 - **iab-adproduct** — Names the thing being sold; completes the IAB triple.
 - **iab-audience** — The segmentation counterpart to iab-content; audience descriptions marketers already use.
@@ -291,53 +299,52 @@ and **whether you may ship against it**.
 | taxonomy | domain | licence | commercial | source |
 |---|---|---|---|---|
 | **Google NLP Content Categories** | content classification | CC BY 4.0 (Google Cloud docs) | ✅ yes — attribution | [`google-nlp-categories`](https://cloud.google.com/natural-language/docs/categories) |
-| **NAICS (North American Industry Classification System)** | cross-industry · government | data: US public domain · packaging: none declared | ⚠️ verify | [`naics`](https://github.com/CompileInc/naics-codes) |
+| **NAICS (North American Industry Classification System)** | cross-industry · government | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`naics`](https://www.census.gov/naics/) |
 | **OpenOOH Venue Taxonomy** | advertising · out-of-home | Apache-2.0 | ✅ yes | [`openooh-venue`](https://github.com/openooh/venue-taxonomy) |
 | **Schema.org vocabulary (types + properties)** | cross-industry · web | CC BY-SA 3.0 | ⚠️ yes — share-alike | [`schemaorg`](https://schema.org/version/latest/schemaorg-current-https.jsonld) |
 | **Shopify Product Taxonomy** | retail · e-commerce | MIT | ✅ yes | [`shopify-product`](https://github.com/Shopify/product-taxonomy) |
-| **SIC codes** | cross-industry · government | data: US public domain · packaging: none declared | ⚠️ verify | [`sic`](https://github.com/CompileInc/sic-codes) |
+| **SIC codes** | cross-industry · government | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`sic`](https://www.sec.gov/corpfin/division-of-corporation-finance-standard-industrial-classification-sic-code-list) |
 
 - **google-nlp-categories** — ~620 labels Google's classifier emits — useful as a mapping TARGET, not a house vocabulary.
-- **naics** — Industry classification — firmographics for B2B. The underlying codes are US Census work and public domain; THIS packaging declares no licence, so take the data from the Census if the packaging matters to you.
+- **naics** — Industry classification — firmographics for B2B. Take it from the Census: the convenience repackaging at CompileInc/naics-codes declares no licence, and there is no reason to inherit that when the authority is public domain.
 - **openooh-venue** — Digital-out-of-home venue types; niche channel, real standard.
 - **schemaorg** — The universal web vocabulary every industry structures data in; 2,454 classes and properties, and what SEO structured-data work speaks.
 - **shopify-product** — 10k+ categories with attributes — richer than Google's tree; heavy, so opt-in.
-- **sic** — NAICS's predecessor, still what many registries file under; same split between public-domain data and unlicensed packaging.
+- **sic** — NAICS's predecessor, still what many registries file under. From the SEC for the same reason NAICS comes from the Census.
 
 ### `evaluate` — Known and promising — **not recommended yet**; the note says what question is open.
 
 | taxonomy | domain | licence | commercial | source |
 |---|---|---|---|---|
-| **IAB ↔ Google crosswalk (markomma)** | advertising · migration | unknown — source is gone | ⚠️ verify | [`adtech-crosswalk`](https://github.com/markomma/adtech-crosswalk) |
 | **Harvard Growth Lab classifications (ISIC/HS/SITC/O*NET)** | trade · occupations | BSD-3-Clause | ✅ yes | [`cid-classifications`](https://github.com/cid-harvard/classifications) |
 | **IABTechLab/iab-mapper (2.x → 3.0 mappings)** | advertising · migration | BSD-2-Clause | ✅ yes | [`iab-mapper`](https://github.com/IABTechLab/iab-mapper) |
-| **Industry Classification Benchmark (FTSE/Dow Jones)** | finance | none declared (ICB is proprietary to FTSE Russell) | ❌ no | [`icb`](https://gist.github.com/mysticmind/bf3acd436bbaddca62ca1f3e01e890c9) |
-| **IPTC Media Topics** | news · media | none established from the source | ⚠️ verify | [`iptc-media-topics`](https://iptc.org/standards/media-topics/) |
+| **Industry Classification Benchmark (FTSE/Dow Jones)** | finance | ICB is proprietary to FTSE Russell; the gist republishes it without a licence to do so | 🚫 proprietary | [`icb`](https://gist.github.com/mysticmind/bf3acd436bbaddca62ca1f3e01e890c9) |
+| **IPTC Media Topics** | news · media | CC BY 4.0 — IPTC states it for all NewsCodes | ✅ yes — attribution | [`iptc-media-topics`](https://iptc.org/standards/media-topics/) |
 | **wikidata-taxonomy (extraction CLI)** | general knowledge | MIT (the tool; Wikidata's own data is CC0) | ✅ yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
 
-- **adtech-crosswalk** — DEAD LINK as of 2026-09-01 (404). Bidirectional IAB/Google mappings would join two core sources; find a live equivalent before reopening this.
 - **cid-classifications** — Many systems, one cleaned repo — incl. O*NET occupations for workforce mapping. Heavy; take one system when a concrete need names it.
 - **iab-mapper** — Mappings, not a taxonomy — pertinent the day you meet 2.x codes in the wild.
 - **icb** — The open GICS-alternative investors reference — but a personal gist is not an authority, and ICB itself is FTSE Russell's property. Find a durable, licensed source before touching it.
 - **iptc-media-topics** — 1,200 terms, 13 languages, real standard — but RDF/SKOS parsing is its own project; decide when PR or content work needs it.
 - **wikidata-taxonomy** — A tool, not a dataset — could mint niche taxonomies on demand; decide if a real need appears.
 
-### `skip` — Considered and declined, with the reason, so nobody re-litigates it. Licences deliberately unresearched — a licence on something nobody should ingest is a fact with no job.
+### `skip` — Considered and declined, with the reason, so nobody re-litigates it. Licensed anyway — "we declined it" and "we never looked" are different sentences, and a blank field cannot tell them apart.
 
 | taxonomy | domain | licence | commercial | source |
 |---|---|---|---|---|
-| **classifast (UNSPSC/NAICS/ISIC/ETIM classifier)** | classification tooling | not researched (declined) | ⚠️ verify | [`classifast`](https://github.com/DmitryMatv/classifast) |
-| **DMOZ / Curlie web directory** | web directory | not researched (declined) | ⚠️ verify | [`dmoz-curlie`](https://curlie.org/) |
-| **Essential-AI web-content taxonomy** | ML data curation | not researched (declined) | ⚠️ verify | [`eai-taxonomy`](https://github.com/Essential-AI/eai-taxonomy) |
-| **InstructLab knowledge taxonomy** | ML tuning | not researched (declined) | ⚠️ verify | [`instructlab-taxonomy`](https://github.com/instructlab/taxonomy) |
-| **iPullRank IAB-as-JSON** | advertising | not researched (declined) | ⚠️ verify | [`ipullrank-iab-json`](https://github.com/iPullRank-dev/iab-taxonomy) |
-| **MISP threat-intel taxonomies** | security | not researched (declined) | ⚠️ verify | [`misp`](https://github.com/MISP/misp-taxonomies) |
-| **NAICS-GH labeled-repos dataset** | ML data | not researched (declined) | ⚠️ verify | [`naics-gh`](https://huggingface.co/datasets/aquiro1994/naics-gh) |
-| **ecosyste.ms OSS taxonomy** | open source | not researched (declined) | ⚠️ verify | [`oss-taxonomy`](https://github.com/ecosyste-ms/oss-taxonomy) |
-| **SIC/NAICS/GICS/Fama-French SAS crosswalk** | finance research | not researched (declined) | ⚠️ verify | [`sic-naics-finance-macros`](https://gist.github.com/mgao6767/4134ce36793b9e932a219ff07d7a3c7f) |
-| **Tabiya occupations/skills taxonomy** | occupations · skills | not researched (declined) | ⚠️ verify | [`tabiya`](https://docs.tabiya.org/our-tech-stack/inclusive-livelihoods-taxonomy/open-taxonomy-platform) |
+| **IAB ↔ Google crosswalk (markomma)** | advertising · migration | n/a — the repository no longer exists | — source gone | [`adtech-crosswalk`](https://github.com/markomma/adtech-crosswalk) |
+| **classifast (UNSPSC/NAICS/ISIC/ETIM classifier)** | classification tooling | MIT | ✅ yes | [`classifast`](https://github.com/DmitryMatv/classifast) |
+| **DMOZ / Curlie web directory** | web directory | CC BY 3.0 Unported | ✅ yes — attribution | [`dmoz-curlie`](https://curlie.org/) |
+| **Essential-AI web-content taxonomy** | ML data curation | none — the README's Licence section is an unfilled '[License information]' placeholder, so nothing is granted | 🚫 unlicensed | [`eai-taxonomy`](https://github.com/Essential-AI/eai-taxonomy) |
+| **InstructLab knowledge taxonomy** | ML tuning | Apache-2.0 | ✅ yes | [`instructlab-taxonomy`](https://github.com/instructlab/taxonomy) |
+| **iPullRank IAB-as-JSON** | advertising | MIT | ✅ yes | [`ipullrank-iab-json`](https://github.com/iPullRank-dev/iab-taxonomy) |
+| **MISP threat-intel taxonomies** | security | CC0 1.0 (dual-licensed, CC0 or BSD) | 🟢 public domain | [`misp`](https://github.com/MISP/misp-taxonomies) |
+| **NAICS-GH labeled-repos dataset** | ML data | CC BY 4.0 | ✅ yes — attribution | [`naics-gh`](https://huggingface.co/datasets/aquiro1994/naics-gh) |
+| **ecosyste.ms OSS taxonomy** | open source | CC0-1.0 | 🟢 public domain | [`oss-taxonomy`](https://github.com/ecosyste-ms/oss-taxonomy) |
+| **SIC/NAICS/GICS/Fama-French SAS crosswalk** | finance research | none — a gist carries no licence unless its author writes one, and this one does not | 🚫 unlicensed | [`sic-naics-finance-macros`](https://gist.github.com/mgao6767/4134ce36793b9e932a219ff07d7a3c7f) |
+| **Tabiya occupations/skills taxonomy** | occupations · skills | MIT for the platform code; the taxonomy itself derives from the EU's ESCO and carries the Commission's reuse terms | ✅ yes — attribution | [`tabiya`](https://docs.tabiya.org/our-tech-stack/inclusive-livelihoods-taxonomy/open-taxonomy-platform) |
 
-*Licences are recorded as PUBLISHED BY THE SOURCE and were last checked 2026-09-01. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
+*All 27 licences were checked against the source on 2026-09-01 and are recorded AS PUBLISHED. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
 
 The registry is a **catalogue, not an ingest** in this era: it tells you what
 exists, whether it is real, and whether you may use it. Wiring a source into

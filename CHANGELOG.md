@@ -59,8 +59,13 @@ that section is long on purpose.
   whether they may build on a vocabulary. Checking turned up two things
   worth knowing: the IAB taxonomies declare CC BY 3.0 in a README and ship
   no `LICENSE` file, so every automated scan reports three of the five
-  `core` entries as unlicensed when they are usable with attribution; and
-  `schemaorg` is share-alike. Also rendered at the bottom of the README.
+  `core` entries as unlicensed when they are usable with attribution;
+  `google-product` grants nothing at all; and `schemaorg` is share-alike.
+  All 27 were checked against the source — there is no "unknown" verdict,
+  because that word hid "nobody looked" and "the publisher grants nothing"
+  behind one field. NAICS and SIC now cite the Census and the SEC rather
+  than unlicensed repackagings, which makes them outright public domain.
+  Also rendered at the bottom of the README.
 
 ### Changed
 

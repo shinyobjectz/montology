@@ -17,20 +17,29 @@ THE SECOND RULING IS THE LICENCE, and it is here because it was NOT here
 for the registry's whole first life. Every earlier version carried only
 relevance ("is this a real taxonomy, does it fit"), which is the question
 that matters least to somebody deciding whether they may SHIP against it.
-Two things fell out of actually checking:
+
+All 27 were checked, so there is no "unknown" verdict to hide behind.
+Four things fell out of doing it:
 
   * the IAB taxonomies — three of the five `core` entries — declare CC BY
-    3.0 in their repo README and no LICENSE file, so every automated
+    3.0 in their repo README and ship no LICENSE file, so every automated
     licence scan reports them as unlicensed. Attribution is required and
     almost nobody knows it.
+  * `google-product` grants nothing: a bare .txt on www.google.com with no
+    licence and no terms page, and developers.google.com's CC BY 4.0 site
+    policy does not reach it. It is published so you can build a feed;
+    that is not permission to ship it inside your own product.
   * `schemaorg` is CC BY-SA 3.0. Share-alike is a real constraint on a
-    derived vocabulary, and it is the one licence in this list that can
-    reach back into what a user builds on top of it.
+    derived vocabulary, and it is the one licence here that can reach back
+    into what a user builds on top of it.
+  * NAICS and SIC now point at the Census and the SEC rather than at
+    convenience repackagings that declare no licence. The authority is a
+    US federal work and therefore public domain; there was never a reason
+    to inherit somebody's unlicensed copy of it.
 
 `commercial` is the practical verdict and `licence` is the evidence for
-it. `"verify"` means exactly that: montology could not establish terms
-from the source itself, so nobody should ship against it on our say-so.
-An UNSTATED licence is never read as a permissive one.
+it. An UNSTATED licence is never read as a permissive one — `unlicensed`
+means the publisher grants nothing, which is a finding, not a gap.
 
 None of this is legal advice, and the registry says so in the one place it
 matters — the verdict is a starting point for your own check, not a
@@ -43,16 +52,29 @@ from dataclasses import dataclass
 from typing import Literal
 
 Status = Literal["core", "extra", "evaluate", "skip"]
-Commercial = Literal["yes", "yes-attribution", "yes-sharealike", "verify", "no"]
+Commercial = Literal["public-domain", "yes", "yes-attribution", "yes-sharealike",
+                     "unlicensed", "proprietary", "gone"]
 
 #: What each `commercial` verdict actually obliges you to do.
+#:
+#: There is deliberately no "unknown" here. An earlier cut of this registry
+#: had one, and it hid two completely different states behind one word:
+#: "nobody looked" and "we looked and the publisher grants nothing". The
+#: second is a finding — `google-product` is the live example, a bare .txt
+#: with no licence and no terms page — and it is the finding a person most
+#: needs, because the absence of a licence is not permission.
 COMMERCIAL_MEANING: dict[str, str] = {
-    "yes": "usable commercially, no strings this registry could find",
+    "public-domain": "no rights reserved (CC0, or a US federal work) — use freely",
+    "yes": "permissive licence, no obligations beyond keeping the notice",
     "yes-attribution": "usable commercially IF you credit the source",
     "yes-sharealike": "usable commercially, but derivatives inherit the licence — "
                       "check before folding it into a vocabulary you ship",
-    "verify": "terms could not be established from the source — check before shipping",
-    "no": "not usable commercially on the terms as published",
+    "unlicensed": "CHECKED: the publisher grants no licence at all, so ordinary "
+                  "copyright applies and you may not redistribute it. Consuming "
+                  "it for the purpose it is published for is a separate question "
+                  "from shipping it inside your own product.",
+    "proprietary": "someone's property, licensed commercially — not free to use",
+    "gone": "the source no longer resolves; nothing to license",
 }
 
 
@@ -96,8 +118,12 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "google-product", "Google Product Taxonomy",
         "https://www.google.com/basepages/producttype/taxonomy.en-US.txt",
         "txt", "core",
-        "5k+ categories every Shopping feed must speak; e-commerce lives here.",
-        "none declared (Merchant Center terms)", "verify", "retail · e-commerce",
+        "5k+ categories every Shopping feed must speak; e-commerce lives here. "
+        "Published FOR building feeds; that is not a licence to redistribute it "
+        "inside your own product, and Google grants none.",
+        "none — a bare .txt on www.google.com, no licence, no terms page, and "
+        "developers.google.com's CC BY 4.0 site policy does not reach it",
+        "unlicensed", "retail · e-commerce",
     ),
     TaxonomySource(
         "google-topics", "Google Topics API Taxonomy",
@@ -139,21 +165,21 @@ SOURCES: tuple[TaxonomySource, ...] = (
     ),
     TaxonomySource(
         "naics", "NAICS (North American Industry Classification System)",
-        "https://github.com/CompileInc/naics-codes",
+        "https://www.census.gov/naics/",
         "json", "extra",
-        "Industry classification — firmographics for B2B. The underlying codes are "
-        "US Census work and public domain; THIS packaging declares no licence, so "
-        "take the data from the Census if the packaging matters to you.",
-        "data: US public domain · packaging: none declared", "verify",
+        "Industry classification — firmographics for B2B. Take it from the Census: "
+        "the convenience repackaging at CompileInc/naics-codes declares no licence, "
+        "and there is no reason to inherit that when the authority is public domain.",
+        "US federal work — public domain (17 U.S.C. §105)", "public-domain",
         "cross-industry · government",
     ),
     TaxonomySource(
         "sic", "SIC codes",
-        "https://github.com/CompileInc/sic-codes",
+        "https://www.sec.gov/corpfin/division-of-corporation-finance-standard-industrial-classification-sic-code-list",
         "json", "extra",
-        "NAICS's predecessor, still what many registries file under; same split "
-        "between public-domain data and unlicensed packaging.",
-        "data: US public domain · packaging: none declared", "verify",
+        "NAICS's predecessor, still what many registries file under. From the SEC "
+        "for the same reason NAICS comes from the Census.",
+        "US federal work — public domain (17 U.S.C. §105)", "public-domain",
         "cross-industry · government",
     ),
 
@@ -172,7 +198,8 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "rdf", "evaluate",
         "1,200 terms, 13 languages, real standard — but RDF/SKOS parsing is its own "
         "project; decide when PR or content work needs it.",
-        "none established from the source", "verify", "news · media",
+        "CC BY 4.0 — IPTC states it for all NewsCodes", "yes-attribution",
+        "news · media",
     ),
     TaxonomySource(
         "iab-mapper", "IABTechLab/iab-mapper (2.x → 3.0 mappings)",
@@ -196,32 +223,33 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "The open GICS-alternative investors reference — but a personal gist is not "
         "an authority, and ICB itself is FTSE Russell's property. Find a durable, "
         "licensed source before touching it.",
-        "none declared (ICB is proprietary to FTSE Russell)", "no", "finance",
+        "ICB is proprietary to FTSE Russell; the gist republishes it without "
+        "a licence to do so", "proprietary", "finance",
     ),
+    # ── skip: considered, declined — with the licence checked anyway, because
+    #    "we declined it" and "we never looked" are different sentences and a
+    #    reader cannot tell them apart from a blank field.
     TaxonomySource(
         "adtech-crosswalk", "IAB ↔ Google crosswalk (markomma)",
         "https://github.com/markomma/adtech-crosswalk",
-        "json", "evaluate",
-        "DEAD LINK as of 2026-09-01 (404). Bidirectional IAB/Google mappings would "
-        "join two core sources; find a live equivalent before reopening this.",
-        "unknown — source is gone", "verify", "advertising · migration",
+        "json", "skip",
+        "404 as of 2026-09-01. Bidirectional IAB/Google mappings would join two "
+        "core sources; this one is gone, so find a live equivalent to reopen it.",
+        "n/a — the repository no longer exists", "gone", "advertising · migration",
     ),
-
-    # ── skip: considered, declined. Licences deliberately NOT researched —
-    #    a licence on something nobody should ingest is a fact with no job.
     TaxonomySource(
         "ipullrank-iab-json", "iPullRank IAB-as-JSON",
         "https://github.com/iPullRank-dev/iab-taxonomy",
         "json", "skip",
         "Repackaging of what the official TSVs already give; a second copy is a drift risk.",
-        "not researched (declined)", "verify", "advertising",
+        "MIT", "yes", "advertising",
     ),
     TaxonomySource(
         "eai-taxonomy", "Essential-AI web-content taxonomy",
         "https://github.com/Essential-AI/eai-taxonomy",
         "json", "skip",
         "Built for pretraining-data curation; wrong audience for its categories.",
-        "not researched (declined)", "verify", "ML data curation",
+        "none — the README's Licence section is an unfilled '[License information]' placeholder, so nothing is granted", "unlicensed", "ML data curation",
     ),
     TaxonomySource(
         "oss-taxonomy", "ecosyste.ms OSS taxonomy",
@@ -229,7 +257,7 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "yaml", "skip",
         "Classifies open-source projects; no user vocabulary joins against it yet. "
         "Reopens with a concrete use.",
-        "not researched (declined)", "verify", "open source",
+        "CC0-1.0", "public-domain", "open source",
     ),
     TaxonomySource(
         "misp", "MISP threat-intel taxonomies",
@@ -237,21 +265,21 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "json", "skip",
         "Security tagging for CERTs; no business-vocabulary surface. Revisit only if "
         "trust-and-safety work lands.",
-        "not researched (declined)", "verify", "security",
+        "CC0 1.0 (dual-licensed, CC0 or BSD)", "public-domain", "security",
     ),
     TaxonomySource(
         "classifast", "classifast (UNSPSC/NAICS/ISIC/ETIM classifier)",
         "https://github.com/DmitryMatv/classifast",
         "json", "skip",
         "An app that classifies against standards, not the standards themselves.",
-        "not researched (declined)", "verify", "classification tooling",
+        "MIT", "yes", "classification tooling",
     ),
     TaxonomySource(
         "naics-gh", "NAICS-GH labeled-repos dataset",
         "https://huggingface.co/datasets/aquiro1994/naics-gh",
         "csv", "skip",
         "An ML training dataset, not a taxonomy; naics itself is the source here.",
-        "not researched (declined)", "verify", "ML data",
+        "CC BY 4.0", "yes-attribution", "ML data",
     ),
     TaxonomySource(
         "sic-naics-finance-macros", "SIC/NAICS/GICS/Fama-French SAS crosswalk",
@@ -259,35 +287,39 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "csv", "skip",
         "Finance-research tooling in SAS; the crosswalk idea returns via "
         "cid-classifications if mapping work lands.",
-        "not researched (declined)", "verify", "finance research",
+        "none — a gist carries no licence unless its author writes one, and this "
+        "one does not", "unlicensed", "finance research",
     ),
     TaxonomySource(
         "instructlab-taxonomy", "InstructLab knowledge taxonomy",
         "https://github.com/instructlab/taxonomy",
         "yaml", "skip",
         "A tuning-data organisation scheme, not a domain vocabulary.",
-        "not researched (declined)", "verify", "ML tuning",
+        "Apache-2.0", "yes", "ML tuning",
     ),
     TaxonomySource(
         "dmoz-curlie", "DMOZ / Curlie web directory",
         "https://curlie.org/",
         "rdf", "skip",
         "Legacy; Topics API is the modern descendant of this idea.",
-        "not researched (declined)", "verify", "web directory",
+        "CC BY 3.0 Unported", "yes-attribution", "web directory",
     ),
     TaxonomySource(
         "tabiya", "Tabiya occupations/skills taxonomy",
         "https://docs.tabiya.org/our-tech-stack/inclusive-livelihoods-taxonomy/open-taxonomy-platform",
         "json", "skip",
         "Occupations and livelihoods; adjacent at best — revisit with a concrete use.",
-        "not researched (declined)", "verify", "occupations · skills",
+        "MIT for the platform code; the taxonomy itself derives from the EU's "
+        "ESCO and carries the Commission's reuse terms", "yes-attribution",
+        "occupations · skills",
     ),
 )
 
 DISCLAIMER = (
-    "Licences are recorded as PUBLISHED BY THE SOURCE and were last checked "
-    "2026-09-01. This is a starting point for your own diligence, not legal "
-    "advice — terms change, and an unstated licence is never a permissive one."
+    "All 27 licences were checked against the source on 2026-09-01 and are "
+    "recorded AS PUBLISHED. This is a starting point for your own diligence, "
+    "not legal advice — terms change, and an unstated licence is never a "
+    "permissive one."
 )
 
 
