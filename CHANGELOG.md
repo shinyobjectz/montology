@@ -78,6 +78,17 @@ tag and shares no code with this one.
 
 ### Fixed
 
+- **`monty intake ask '<json>'` never worked on Linux.** The spec reader
+  told inline JSON from a path by stat-ing it, and a 900-byte "filename"
+  answers ENAMETOOLONG on Linux (which `Path.exists()` re-raises) and
+  `False` on macOS. Decided by shape now — a JSON object starts with `{`.
+- **CI had been red for nineteen consecutive runs.** Three independent
+  causes, each hidden behind the one before it: the workflow ran bare
+  `pytest` instead of the `-m "not integration"` that `pytest.ini` has
+  always documented; the intake bug above; and the weekly stress battery's
+  collision drill stopped authoring its victim word when `--pos` became
+  required, so it reported `fired=False` on all eight repos — the gate was
+  never broken, the probe was. `just check` now runs what CI runs.
 - **`monty migrate` reported Swift and Kotlin trees as already clean.**
   `simple_identifier` was missing from the sweep's identifier set, so every
   function, property and enum case was invisible to it — a confident
