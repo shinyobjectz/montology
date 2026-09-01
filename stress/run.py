@@ -218,8 +218,36 @@ def main() -> None:
     report = "\n".join(lines) + "\n"
     (MONTY_ROOT / "stress" / "REPORT.md").write_text(report)
     print("\n" + report)
-    bad = [r for r in rows if any("FAIL" in str(v) or "CRASH" in str(v) for v in r.values())]
+    bad = [r["repo"] for r in rows if _failed(r)]
+    if bad:
+        print(f"\nFAILED: {', '.join(bad)}")
     sys.exit(1 if bad else 0)
+
+
+def _failed(row: dict) -> bool:
+    """Did this repo fail a PROPERTY, judged per property?
+
+    This was a substring scan for "FAIL" across every value in the row, and
+    it could not survive its own drill succeeding: a passing collision test
+    reports `ok (Module → FAIL@test_cli.py → allow → green)`, because saying
+    which file the gate fired on is the evidence that it fired. The scan read
+    that FAIL and failed the run — so the battery could report every property
+    green and still exit 1, which is the shape of failure nobody investigates
+    because the table above it looks fine.
+
+    Each property is now judged on its own field by its own rule. `vitals` is
+    deliberately absent: tended, drifting and untended are all truthful
+    verdicts about somebody else's repo, and none of them is our bug.
+    """
+    if not str(row.get("init", "")).startswith("ok"):
+        return True
+    if row.get("errors") not in (0, None):
+        return True
+    for field in ("collision", "migrate"):
+        value = str(row.get(field, ""))
+        if value and not value.startswith(("ok", "skipped")):
+            return True
+    return False
 
 
 if __name__ == "__main__":
