@@ -29,6 +29,27 @@ def intake_folder(tmp_path, monkeypatch):
     return ws / ".monty" / "answers"
 
 
+def test_a_spec_is_told_from_a_path_by_its_shape_not_by_a_stat(tmp_path):
+    """The regression that kept CI red for three weeks. Deciding
+    inline-JSON-vs-path with `Path(source).exists()` stats a 900-byte
+    "filename": Linux raises ENAMETOOLONG and macOS returns False, so the
+    bug was invisible on the machine it was written on and fatal on every
+    Linux runner. A `{` is the whole test."""
+    from montology_intake.spec import load_spec
+
+    inline = json.dumps(SPEC)
+    assert len(inline) > 255, "the case only bites past a path component's limit"
+    assert load_spec(inline) == SPEC
+    assert load_spec("  " + inline + "  ") == SPEC      # whitespace is not a path
+
+    on_disk = tmp_path / "phase.json"
+    on_disk.write_text(inline)
+    assert load_spec(str(on_disk)) == SPEC
+
+    with pytest.raises(OSError):                        # a path that is not there
+        load_spec(str(tmp_path / "nope.json"))
+
+
 def test_spec_validation_carries_repairs():
     assert validate_spec(SPEC) == []
     bad = {"phase": "Domain!", "questions": [{"id": "x", "type": "choice", "label": "?"},

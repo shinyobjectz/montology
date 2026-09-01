@@ -65,15 +65,25 @@ def validate_spec(spec: dict) -> list[str]:
 
 
 def load_spec(source: str) -> dict:
-    """A spec from a JSON string, a path, or '-' for stdin."""
+    """A spec from a JSON string, a path, or '-' for stdin.
+
+    Which one it is, is decided by SHAPE — a JSON object starts with `{`
+    and a path does not. The obvious version asked the filesystem instead
+    (`Path(source).exists()`), and that is a probe, not a test: handed a
+    spec inline, it stats a 900-byte "filename". Linux answers ENAMETOOLONG
+    and `exists()` re-raises it (only ENOENT/ENOTDIR/EBADF/ELOOP are
+    swallowed); macOS answers False and the bug is invisible. So passing a
+    spec inline worked on the machine it was written on and failed on every
+    Linux runner — which is exactly how it reached CI and stayed there.
+    """
     if source == "-":
         import sys
 
         return json.loads(sys.stdin.read())
-    p = Path(source)
-    if p.exists():
-        return json.loads(p.read_text())
-    return json.loads(source)
+    text = source.strip()
+    if text.startswith("{"):
+        return json.loads(text)
+    return json.loads(Path(text).read_text())
 
 
 def intake_dir() -> Path:
