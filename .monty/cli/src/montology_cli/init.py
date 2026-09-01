@@ -37,12 +37,22 @@ SECTION_END = "<!-- montology:end -->"
 CLAUDE_SECTION = """{begin}
 ## The vocabulary (montology)
 
-This repo's words live in a database, not a doc. Before naming ANYTHING —
-a class, a concept, a tag — check it: `monty onto check <name>`. The full
-vocabulary is the `words` skill (generated — never hand-edit; `monty sync`
-re-renders it). `monty lint` fails the build on collisions between code
-and vocabulary; a FAIL line carries its repair. `monty scan --candidates`
-lists recurring declared names that want a definition.
+This repo's words live in a database, not a doc, and they cover ALL of the
+code — every language the scan parses, backend and infra as much as UI.
+Before naming ANYTHING — a class, struct, function, type, module, table,
+column, endpoint, event or plain concept — check it: `monty onto check
+<name>`. FREE means yours; TAKEN shows what you would collide with; RULED
+shows what to say instead.
+
+- The full vocabulary is `.claude/skills/words/SKILL.md` — GENERATED from
+  `.monty/ontology.db`; never hand-edit it, `monty sync` re-renders it.
+- `monty lint` fails the build on collisions between code and vocabulary.
+  Every FAIL line carries its repair — apply it, do not work around it.
+- `monty scan --candidates` lists recurring declared names that want a
+  definition; `monty explain` is the one-shot orientation on this repo.
+- `monty config` shows what this workspace is tuned to and changes it.
+
+Design tokens are in here too, as one kind of word — not the subject.
 {end}"""
 
 CODEX_MCP_NOTE = (
@@ -125,6 +135,20 @@ def _append_section(path: Path, made: list[str]) -> None:
     made.append(str(path.name) + (" (section appended)" if text else ""))
 
 
+def _guard_command() -> str:
+    """How this machine runs the guard: the CLI when it is on PATH, else
+    the workspace's pinned engine through uvx."""
+    return "monty guard" if shutil.which("monty") else \
+        f"uvx --from '{engine_spec()}' monty guard"
+
+
+# Every tool that can put text on disk. NotebookEdit was missing for as long
+# as the hook existed, so a name written into a .ipynb cell walked past a
+# firewall the repo believed was closed — a gate with a door in it teaches
+# the agent the gate is optional.
+WRITE_TOOLS = "Write|Edit|MultiEdit|NotebookEdit"
+
+
 def _merge_guard_hook(root: Path, made: list[str]) -> None:
     """The firewall into .claude/settings.json — merge-safe: existing hooks
     survive; ours appends once."""
@@ -136,16 +160,49 @@ def _merge_guard_hook(root: Path, made: list[str]) -> None:
         except json.JSONDecodeError:
             made.append("SKIPPED .claude/settings.json: does not parse — add the guard hook yourself")
             return
-    cmd = "monty guard" if shutil.which("monty") else \
-        f"uvx --from '{engine_spec()}' monty guard"
     hooks = data.setdefault("hooks", {}).setdefault("PreToolUse", [])
-    if any("monty guard" in json.dumps(h) for h in hooks):
-        return
-    hooks.append({"matcher": "Write|Edit|MultiEdit",
-                  "hooks": [{"type": "command", "command": cmd}]})
+    for entry in hooks:
+        if "monty guard" in json.dumps(entry):
+            # An older init wired the narrower matcher; widen it in place
+            # rather than appending a second hook that runs the same check.
+            if entry.get("matcher") == "Write|Edit|MultiEdit":
+                entry["matcher"] = WRITE_TOOLS
+                settings.write_text(json.dumps(data, indent=2) + "\n")
+                made.append(".claude/settings.json (guard hook widened to notebooks)")
+            return
+    hooks.append({"matcher": WRITE_TOOLS,
+                  "hooks": [{"type": "command", "command": _guard_command()}]})
     settings.parent.mkdir(exist_ok=True)
     settings.write_text(json.dumps(data, indent=2) + "\n")
     made.append(".claude/settings.json (guard hook: agents cannot write drift)")
+
+
+def _merge_cursor_hooks(root: Path, made: list[str]) -> None:
+    """The same firewall, in Cursor's dialect.
+
+    Cursor wiring was MCP-only for a long time, which meant the half of
+    montology that runs after the fact worked there and the half that runs
+    before the write did not — the same repo enforced under one agent and
+    advisory under another, with nothing saying so. `preToolUse` is
+    Cursor's pre-write event; it honours exit 2, and the guard also emits
+    the JSON verdict Cursor reads, so the model gets the repair either way.
+    """
+    hooks_file = root / ".cursor" / "hooks.json"
+    data: dict = {"version": 1}
+    if hooks_file.exists():
+        try:
+            data = json.loads(hooks_file.read_text())
+        except json.JSONDecodeError:
+            made.append("SKIPPED .cursor/hooks.json: does not parse — add the guard hook yourself")
+            return
+    data.setdefault("version", 1)
+    entries = data.setdefault("hooks", {}).setdefault("preToolUse", [])
+    if any("monty guard" in json.dumps(e) for e in entries):
+        return
+    entries.append({"command": _guard_command(), "matcher": WRITE_TOOLS})
+    hooks_file.parent.mkdir(parents=True, exist_ok=True)
+    hooks_file.write_text(json.dumps(data, indent=2) + "\n")
+    made.append(".cursor/hooks.json (guard hook: agents cannot write drift)")
 
 
 def wire_agents(root: Path, agents: tuple[str, ...]) -> dict:
@@ -157,6 +214,7 @@ def wire_agents(root: Path, agents: tuple[str, ...]) -> dict:
         _merge_guard_hook(root, made)
     if "cursor" in agents:
         _merge_mcp(root / ".cursor" / "mcp.json", made)
+        _merge_cursor_hooks(root, made)
     if "cursor" in agents or "codex" in agents:
         _append_section(root / "AGENTS.md", made)
     if "codex" in agents:
@@ -215,10 +273,15 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
         summary["created"].append(got.splitlines()[0])
         summary["notes"].extend(got.splitlines()[1:])
 
-    # THE WEDGE: a Tailwind theme is a design vocabulary the repo already
-    # wrote — adopt it so the very first lint is worth reading
+    # If the repo happens to have a Tailwind theme, that is a design
+    # vocabulary it already wrote down — adopting it costs nothing and makes
+    # the first lint concrete. A repo with no UI never sees this branch, and
+    # nothing downstream assumes it fired: design values are ONE KIND of word
+    # here, and leading with them taught every agent that read the output
+    # that montology was a CSS tool.
     from montology_scan import ingest_theme, tailwind_theme
 
+    theme_found = False
     try:
         if tailwind_theme(target):
             do_ingest = True
@@ -228,6 +291,7 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
                     "(the theme becomes the law)?", default=True)
             if do_ingest:
                 summary["created"].append(ingest_theme(target).splitlines()[0])
+                theme_found = True
     except Exception as e:  # noqa: BLE001 — a broken config never blocks init
         summary["notes"].append(f"tailwind ingest skipped ({type(e).__name__})")
 
@@ -261,9 +325,16 @@ def init_command(path: str = ".", name: str = "", yes: bool = False,
     if not as_json:
         from ._ui import next_steps
 
-        next_steps([
-            ("monty lint", "the gate — drift with receipts; put it in CI"),
-            ("monty design candidates", "the values your styles want named"),
+        # The order is the advice: orient, mine the CODE's vocabulary, then
+        # the gate. Design comes last and only when this repo actually has
+        # a theme — a suggestion that does not apply is one that misteaches.
+        steps = [
+            ("monty explain", "the X-ray — what this repo is, in one pass"),
             ("monty scan --candidates", "the words your code is asking for"),
-            ("monty onto audit", "semantic hearing — meanings that collide"),
-        ])
+            ("monty lint", "the gate — drift with receipts; put it in CI"),
+            ("monty config", "what this workspace is tuned to, and how to change it"),
+        ]
+        if theme_found:
+            steps.append(("monty design candidates",
+                          "the values your styles want named"))
+        next_steps(steps)

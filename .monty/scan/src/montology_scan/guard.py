@@ -41,17 +41,35 @@ from .surface import DECL_QUERIES, LANG_BY_EXT, _scan_config
 
 
 def _proposed_text(payload: dict) -> tuple[str, str]:
-    """(file_path, the text being written) from a hook payload. Covers
-    Write (content), Edit (new_string), MultiEdit (edits[].new_string)."""
-    tool_input = payload.get("tool_input", {})
-    path = tool_input.get("file_path", "")
-    if "content" in tool_input:
-        return path, tool_input["content"]
-    if "new_string" in tool_input:
-        return path, tool_input["new_string"]
-    if "edits" in tool_input:
-        return path, "\n".join(e.get("new_string", "") for e in tool_input["edits"])
+    """(file_path, the text being written) from a hook payload.
+
+    Harnesses disagree about the envelope and agree about the inside.
+    Claude Code wraps the edit in `tool_input`; Cursor's `preToolUse` uses
+    the same wrapper, and its file hooks put the fields at the top level.
+    So the wrapper is unwrapped if present and the SHAPE is read either
+    way — Write (content), Edit (new_string), MultiEdit (edits[]) — rather
+    than keying off which harness is calling. A guard that only understood
+    one harness would fail open in the other and never say so.
+    """
+    body = payload.get("tool_input") or payload
+    path = body.get("file_path") or payload.get("file_path") or ""
+    if "content" in body:
+        return path, body["content"]
+    if "new_string" in body:
+        return path, body["new_string"]
+    edits = body.get("edits") or payload.get("edits")
+    if edits:
+        return path, "\n".join(e.get("new_string", "") for e in edits)
     return path, ""
+
+
+def _is_cursor(payload: dict) -> bool:
+    """Cursor stamps every hook payload with its own event name and version;
+    Claude Code sends `hook_event_name` in PascalCase. Only the RESPONSE
+    shape depends on this — exit 2 denies in both, and the JSON verdict
+    Cursor also reads is additive."""
+    return bool(payload.get("cursor_version")) or \
+        payload.get("hook_event_name", "")[:1].islower()
 
 
 def _declared_names(path: str, text: str) -> list[tuple[str, str]]:
@@ -191,12 +209,19 @@ def run_hook(stdin_text: str, err=None, out=None) -> int:
     _log(root, path, "deny" if blocking else ("advisory" if advisory else "allow"),
          blocking + advisory)
     if blocking:
-        err("montology guard: this edit introduces vocabulary drift —")
-        for b in blocking:
-            err(f"  • {b}")
-        for a in advisory:
-            err(f"  (advisory) {a}")
-        err("Fix the flagged names/values and retry the edit.")
+        repair = ("montology guard: this edit introduces vocabulary drift —\n"
+                  + "\n".join(f"  • {b}" for b in blocking)
+                  + "".join(f"\n  (advisory) {a}" for a in advisory)
+                  + "\nFix the flagged names/values and retry the edit.")
+        for line in repair.splitlines():
+            err(line)
+        if _is_cursor(payload):
+            # Cursor honours exit 2, and ALSO reads a verdict on stdout — the
+            # agent_message is what reaches the model, and a denial the model
+            # never sees is a denial it cannot repair.
+            out(json.dumps({"permission": "deny",
+                            "user_message": "montology: vocabulary drift blocked",
+                            "agent_message": repair}))
         return 2
     for a in advisory:
         out(f"montology guard (advisory): {a}")
