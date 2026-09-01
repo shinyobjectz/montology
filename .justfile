@@ -25,7 +25,7 @@ check:
     uv run python -c "import json; json.load(open('.plugin/plugin.json')); json.load(open('.plugin/mcp.json')); print('plugin manifests parse')"
     diff -rq .plugin/skills skills > /dev/null && echo "skills/ mirror in sync"
     uv run monty lint
-    uv run pytest tests -q
+    uv run pytest tests -q -m "not integration"
 
 test:
     uv run pytest tests

@@ -6,10 +6,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync
       - run: uv run python -m compileall -q .monty && echo "syntax ok"
       - run: uv run python -c "import json; json.load(open('.plugin/plugin.json')); json.load(open('.plugin/mcp.json'))"
       - run: uv run monty lint
-      - run: uv run pytest tests -q
+      # `integration` needs pulled models / live endpoints — pytest.ini has
+      # said "deselect in CI" since the marker was added, and this step did
+      # not, which is what turned the badge red on 2026-08-10 and kept it red.
+      - run: uv run pytest tests -q -m "not integration"
