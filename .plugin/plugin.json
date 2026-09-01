@@ -1,7 +1,20 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "montology",
-  "description": "Design-system and vocabulary drift, enforced: the Tailwind theme becomes tokens in one command, rogue values get receipts with the nearest token, and a repo's words live in a database rendered to agent context \u2014 one org ontology inheritable across every repo.",
+  "description": "A repo's vocabulary as a database, enforced against the code by a tree-sitter scan in every language it declares — Python, TypeScript, Go, Rust, Swift, Java, Ruby, Elixir, C/C++. Check a name before declaring it, mine the words a codebase is already asking for, propagate a rename by token, and inherit one org ontology across every repo. Design tokens are one kind of word among many.",
   "version": "0.2.0",
-  "homepage": "https://github.com/shinyobjectz/montology"
+  "homepage": "https://github.com/shinyobjectz/montology",
+  "keywords": [
+    "ontology",
+    "vocabulary",
+    "naming",
+    "tree-sitter",
+    "lint",
+    "refactor",
+    "rename",
+    "monorepo",
+    "agent",
+    "mcp",
+    "design-tokens"
+  ]
 }

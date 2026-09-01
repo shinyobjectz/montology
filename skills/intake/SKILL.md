@@ -1,6 +1,6 @@
 ---
 name: intake
-description: How a workspace's vocabulary starts — phased questions served to the people who own the code as a clean one-question-at-a-time form in their browser (a local HTML file, no hosted service), answers returned to the agent on disk, each round written from the last and from what the code itself declares, closing with one glossary page rendered from the ontology. Use right after `monty init`, when a repo has few or no words, when someone says "let's define our terms", or before any rename, migration or design-token adoption in a codebase whose vocabulary was never written down.
+description: The guided walkthrough for a codebase that has just installed montology (or has never written its vocabulary down) — phased questions served to the people who own the code as a clean one-question-at-a-time form in their browser (a local HTML file, no hosted service), answers returned to the agent on disk, each round written from the last and from what the code itself declares, closing with one glossary page rendered from the ontology. Use right after `monty init`, when someone asks how to START using montology or set up an ontology in a new repo, when a repo has few or no words, when someone says "let's define our terms", or before any rename, migration or design-token adoption in a codebase whose vocabulary was never written down.
 ---
 
 # The intake: the words come from the people, the gate comes from the db
