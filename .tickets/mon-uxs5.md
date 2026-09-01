@@ -9,20 +9,37 @@ priority: 1
 assignee: shinyobjectz
 tags: [ontology, research, agents, software, taxonomy]
 ---
-# The agent-architecture ontology: author the one that does not exist
+# The agent-architecture ontology: the layer over the vocabulary that exists
 
-The taxonomy library now carries 56 vetted sources across 14 domains, and
-searching it for the domain montology's own users work in — agents, tools,
-memory, planning, handoffs — returns nothing. That is not a gap in our
-research. It is the state of the field: FIPA's agent standards are two
-decades old and dormant, and nothing replaced them. What exists for AI is
-RISK vocabulary (`mitre-atlas`, `owasp-llm`) and DATASET metadata
-(`croissant`) — neither is architecture.
+CORRECTED 2026-09-01, BEFORE ANY WORK STARTED. This epic was opened on the
+claim that no agent vocabulary exists. That was wrong, and finding out how
+wrong is the most useful thing that has happened to it.
 
-So this is the first ontology montology authors rather than joins, and the
-case for doing it is that we are unusually well placed: we ship the gate
-that would enforce it, we dogfood it on ourselves, and the users who would
-adopt it are the ones already running agents against our guard.
+**OpenTelemetry's GenAI semantic conventions** (`otel-genai`, Apache-2.0,
+commits landing daily) normatively define `gen_ai.agent.{id,name,version,
+description}`, `gen_ai.tool.{name,type,description,call.arguments,
+call.result}`, `gen_ai.memory.{store.id,record.id,query.text}`,
+`gen_ai.conversation.{id,compacted}`, and the operations `create_agent`,
+`invoke_agent`, `execute_tool`, `chat`, `embeddings`. Agents, tools, memory,
+conversations and operations — the exact four things this ticket was opened
+to say had no names.
+
+So the gap is REAL but much narrower, and it is a different KIND of gap.
+What `otel-genai` gives is a flat namespace of telemetry attributes: no
+subsumption, no metaproperties, no relations, and nothing a gate can
+enforce. What it cannot answer is whether "orchestrator" is a kind of agent
+or a role an agent plays; whether a session is a continuant or an occurrent;
+which of two names for the same thing wins. Those are ontology questions,
+and they are montology's actual lane.
+
+**The work is therefore not to invent a vocabulary. It is to give an adopted
+one the ontological layer and the gate it lacks** — which is a far more
+defensible project than the one this ticket originally described, and much
+harder to do badly, because the terms are no longer ours to choose.
+
+We are unusually well placed to do it: we ship the gate that would enforce
+it, we dogfood it on ourselves, and the users who would adopt it are the
+ones already running agents against our guard.
 
 The case AGAINST, which has to be answered before any of this ships:
 authoring a domain ontology is exactly what `mon-by5n` decided montology
@@ -100,14 +117,18 @@ to ask and could not. Reject any question invented to justify a term.
 
 ## Phase 2 — reuse before minting (NeOn scenario 2/3)
 
-For every concept the questions demand, search the 56 sources BEFORE
+For every concept the questions demand, search the 57 sources BEFORE
 authoring: `monty onto sources`, `monty onto check`, `monty onto similar`.
 The honest expectation is that a real fraction is already covered:
 
+- **otel-genai** — START HERE. It already names agents, tools, memory,
+  conversations and the operations between them. A term it has is a term we
+  must not re-mint under another spelling; the most likely failure of this
+  whole epic is authoring `tool_invocation` next to its `execute_tool`.
 - **PROV-O** — agent, activity, entity, `wasGeneratedBy`, `actedOnBehalfOf`.
-  This is the big one. Provenance is most of what an agent trace IS, and
-  W3C standardised it in 2013. Any term we mint that PROV-O already has is
-  a term we got wrong.
+  Provenance is most of what an agent TRACE is, and W3C standardised it in
+  2013. Where otel-genai says what a field is called, PROV-O says what the
+  relation between two of them IS — which is the half otel does not have.
 - **BFO / RO** — continuant vs occurrent settles whether a "session" is a
   thing or a happening, which is the argument every agent codebase has.
 - **otel-semconv** — spans, services, attributes: agent runs are traces,
@@ -118,7 +139,7 @@ The honest expectation is that a real fraction is already covered:
 
 Acceptance: a written REUSE MAP — every competency question mapped to an
 existing term or explicitly marked as a gap, with the reason. A gap
-claimed without a search of all 56 is not a gap.
+claimed without a search of all 57 is not a gap.
 
 ## Phase 3 — mint only the residue, under the enforceability test
 
@@ -176,7 +197,8 @@ vendor's vocabulary nobody adopted.
 - [ ] `mon-by5n`'s enforceability test is answered IN WRITING for this
       domain before Phase 3 mints anything
 - [ ] 15–25 competency questions recorded via `onto ask`
-- [ ] a reuse map covering every question against all 56 sources
+- [ ] a reuse map covering every question against all 57 sources,
+      `otel-genai` and PROV-O first
 - [ ] every minted term carries pos, test, rigidity, genus and a named
       scan that finds it
 - [ ] coverage measured on ≥5 real agent codebases, misses listed
@@ -187,7 +209,9 @@ vendor's vocabulary nobody adopted.
 
 The likeliest outcome is not failure but DILUTION: that we author forty
 plausible terms, none of which a scan can find, and end up with the
-diagram `mon-by5n` refused. The mitigation is that Phase 3's first test is
+diagram `mon-by5n` refused. The correction above sharpens this — with
+`otel-genai` in hand, a minted term now has to justify itself against an
+adopted standard, not against an empty field. The mitigation is that Phase 3's first test is
 mechanical, and the second is a measurement. If the coverage number comes
 back low, the answer is to publish the reuse map and the questions and
 NOT the ontology — which would still be a real contribution, because the

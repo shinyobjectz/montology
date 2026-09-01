@@ -256,7 +256,7 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-**56 public ontologies and taxonomies across 14 domains**,
+**57 public ontologies and taxonomies across 14 domains**,
 each checked for whether it is real, whether it is maintained, and whether
 **you may ship against it**. Browse with `monty onto sources [group]` or the
 `ontology_sources` MCP tool.
@@ -490,20 +490,22 @@ one-third things nobody should use reads as a search result, not a
 recommendation. Those declines and their reasons live in the git history of
 `.monty/onto/src/montology_ontology/sources.py`.
 
-**One gap stated rather than papered over:** there is no mature ontology for
-AGENT ARCHITECTURE — agents, tools, memory, planning, handoffs. FIPA's agent
-standards are two decades old and dormant, and nothing has replaced them.
-What exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and
-dataset metadata (`croissant`), not architecture. If you are naming the parts
-of an agent system, you are genuinely early, and montology's own gate is the
-tool for it — there is no standard to join yet.
+**The state of agent-architecture vocabulary, stated precisely.** There is no
+formal *ontology* for agents, tools, memory and planning — FIPA's agent
+standards are two decades dormant and nothing replaced them. But there IS an
+operationalized, actively maintained vocabulary: **OpenTelemetry's GenAI
+semantic conventions** (`otel-genai`) normatively define `gen_ai.agent.*`,
+`gen_ai.tool.*`, `gen_ai.memory.*`, `gen_ai.conversation.*` and named
+operations — `create_agent`, `invoke_agent`, `execute_tool`. Agents, tools,
+memory and conversations, Apache-2.0, shipping commits daily.
 
-That gap is now a plan rather than a shrug: [`mon-uxs5`](.tickets/mon-uxs5.md)
-is the epic to author one, following the LOT methodology with NeOn's
-reuse-first scenarios, and governed by the rule that already decides what
-montology will and will not model — **an edge nothing can check is a
-diagram**. Its second phase is a reuse map against all 56 sources here,
-because a term PROV-O already has is a term we would get wrong by minting.
+What it is not is an ontology: telemetry attributes have no subsumption, no
+metaproperties, and nothing a gate can enforce. So the gap is narrower and
+more specific than "nothing exists" — it is the ontological layer over a
+vocabulary the industry has already adopted. That is what
+[`mon-uxs5`](.tickets/mon-uxs5.md) plans: LOT methodology with NeOn's
+reuse-first scenarios, governed by the rule that already decides what
+montology will model — **an edge nothing can check is a diagram**.
 
 *Every licence here was checked against its source on 2026-09-01 and is recorded AS PUBLISHED. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
 

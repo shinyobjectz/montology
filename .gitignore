@@ -20,3 +20,6 @@ design/node_modules/
 
 # the canvas toolchain is build-time only; the BUILD OUTPUT is committed
 canvas/node_modules/
+
+# agent worktrees (scratch copies of this repo)
+.claude/worktrees/

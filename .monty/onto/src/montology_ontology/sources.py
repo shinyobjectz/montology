@@ -404,6 +404,22 @@ SOURCES: tuple[TaxonomySource, ...] = (
 
     # ── AI, ML & data science ───────────────────────────────────────────
     TaxonomySource(
+        "otel-genai", "OpenTelemetry GenAI Semantic Conventions",
+        "https://github.com/open-telemetry/semantic-conventions-genai",
+        "yaml", "AI, ML & data science", "ready",
+        "The agent vocabulary that does exist, and the reason the entry below "
+        "this one is not the whole story: gen_ai.agent.*, gen_ai.tool.* (name, "
+        "type, call arguments and result), gen_ai.memory.* (store, record, "
+        "query), gen_ai.conversation.*, and named operations — create_agent, "
+        "invoke_agent, execute_tool, chat, embeddings. Agents, tools, memory "
+        "and conversations, normatively specified and shipping commits daily. "
+        "It is a set of TELEMETRY ATTRIBUTES rather than an ontology — no "
+        "subsumption, no metaproperties, nothing a gate can enforce — which is "
+        "the gap `mon-uxs5` is about, and it is a much narrower gap than "
+        "'nothing exists'.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
         "croissant", "Croissant — ML dataset metadata (MLCommons)",
         "https://github.com/mlcommons/croissant",
         "json", "AI, ML & data science", "ready",

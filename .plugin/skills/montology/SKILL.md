@@ -211,7 +211,7 @@ embeddings (~30 MB, numpy-only) power it:
 
 ## The taxonomy library: don't invent what an industry already agreed
 
-`monty onto sources [group]` (or `ontology_sources`) lists 56 public
+`monty onto sources [group]` (or `ontology_sources`) lists 57 public
 ontologies across 14 domains, grouped by who they are for: **core** (any
 business — Schema.org, NAICS/SIC, Dublin Core, SKOS, PROV-O, QUDT, BFO,
 RO), health & life sciences, finance, retail, advertising, agriculture,
@@ -230,11 +230,17 @@ derived from it; and **`google-product` grants nothing at all** — never
 present it as safe to redistribute, and point at `shopify-product`
 instead when someone needs a product taxonomy they can ship.
 
-There is NO mature ontology for agent architecture — agents, tools,
-memory, planning, handoffs. Say so rather than reaching for a near-miss:
-what exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and
-dataset metadata (`croissant`). Naming the parts of an agent system is
-genuinely early work, and montology's own gate is the tool for it.
+For AGENT ARCHITECTURE, point at **`otel-genai`** — OpenTelemetry's
+GenAI semantic conventions normatively define `gen_ai.agent.*`,
+`gen_ai.tool.*`, `gen_ai.memory.*`, `gen_ai.conversation.*` and the
+operations `create_agent`, `invoke_agent`, `execute_tool`. It is the
+adopted vocabulary for agents, tools and memory, and a team naming those
+things should join it rather than mint synonyms.
+
+Be precise about what it is NOT: telemetry attributes, so no subsumption,
+no metaproperties, nothing a gate enforces. There is still no formal
+agent ONTOLOGY — FIPA is two decades dormant. If someone needs the
+ontological layer, that is montology's own gate plus `mon-uxs5`.
 
 ## Structural search
 
