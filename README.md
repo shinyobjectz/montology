@@ -14,7 +14,7 @@ repair. It is a vocabulary layer for **all** of your code, not a styling
 tool; a repo with no UI in it uses every part of this except the last.
 
 ```sh
-# the CLI — works today, from nothing but `uv`
+# the CLI
 uvx --from "git+https://github.com/shinyobjectz/montology#subdirectory=.monty/cli" monty init
 
 # the agent skill (Claude Code, Cursor, and friends)
@@ -25,9 +25,6 @@ npm install -g montology
 ```
 
 ![monty init + lint: theme adopted, drift receipted](docs/demo.gif)
-
-[**Changelog**](CHANGELOG.md) · [Research notes](research/FINDINGS.md) ·
-[Surfaces](docs/SURFACES.md)
 
 ## Sixty seconds to a drift report
 
@@ -163,21 +160,12 @@ Three instruments make a repo's meaning a *tracked quantity*:
   on its own tending. Track it per repo the way you track CI.
 - **`monty drift`** — the telescope: the git history sampled into
   lexicon, palette and convergence curves (`--csv` for the research
-  lane). First observation, excalidraw's full history: the palette
-  fragmented ~10× in two years (4→11→27→42 distinct colors) while
-  declarations merely doubled — and their one-off CSS-variable cleanup
-  did not hold. Flask's concept lexicon, by contrast: 49 concepts in 15
-  years, flat since 2019. **Convergence is a property of tending, not
-  of software.**
+  lane). On excalidraw's full history the palette fragmented ~10× in two
+  years (4→11→27→42 distinct colors) while declarations merely doubled.
+  Flask's concept lexicon: 49 concepts in 15 years, flat since 2019.
 - **`monty guard --stats`** — repair-following, measured: every hook
   denial followed by a clean edit within 30 minutes is a complied
-  denial. The compliance dataset accumulates from ordinary use; every
-  hooked workspace is a passive experiment in whether enforcement
-  closes the literature's *text-action disconnect*.
-
-The research notes — instruments, first measurements, prior art, open
-protocols — live in [`research/FINDINGS.md`](research/FINDINGS.md), and
-what has changed release to release is in [`CHANGELOG.md`](CHANGELOG.md).
+  denial.
 
 ## Semantic hearing
 
@@ -256,7 +244,7 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-57 public ontologies and taxonomies, licence-verified, grouped by domain.
+62 public ontologies and taxonomies, licence-verified, grouped by domain.
 Browse with `monty onto sources [group]`.
 
 ### core — any business, any industry
@@ -301,14 +289,19 @@ Browse with `monty onto sources [group]`.
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
+| AdCOM — Advertising Common Object Model (IAB Tech Lab) | CC BY 3.0 (stated in the repo README, no LICENSE file) | yes — attribution | [`adcom`](https://github.com/InteractiveAdvertisingBureau/AdCOM) |
 | Google NLP Content Categories | CC BY 4.0 (Google Cloud docs) | yes — attribution | [`google-nlp-categories`](https://cloud.google.com/natural-language/docs/categories) |
 | Google Topics API Taxonomy | W3C Software and Document Licence | yes | [`google-topics`](https://github.com/patcg-individual-drafts/topics) |
 | IAB Ad Product Taxonomy 2.0 | CC BY 3.0 (as above) | yes — attribution | [`iab-adproduct`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
 | IAB Audience Taxonomy 1.1 | CC BY 3.0 (as above) | yes — attribution | [`iab-audience`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
 | IAB Content Taxonomy 3.1 | CC BY 3.0 (stated in the repo README, no LICENSE file — so every automated scan calls it unlicensed) | yes — attribution | [`iab-content`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
+| The Open Graph protocol | Open Web Foundation Agreement 0.9 | yes | [`open-graph`](https://ogp.me/) |
 | OpenOOH Venue Taxonomy | Apache-2.0 | yes | [`openooh-venue`](https://github.com/openooh/venue-taxonomy) |
+| OpenRTB (IAB Tech Lab) | CC BY 3.0 (stated in the repo README, no LICENSE file) | yes — attribution | [`openrtb`](https://github.com/InteractiveAdvertisingBureau/openrtb) |
+| Curlie (the DMOZ successor) web directory | CC BY 3.0 Unported | yes — attribution | [`dmoz-curlie`](https://curlie.org/) |
 | IABTechLab/iab-mapper (2.x → 3.0 mappings) | BSD-2-Clause | yes | [`iab-mapper`](https://github.com/IABTechLab/iab-mapper) |
 | IPTC Media Topics | CC BY 4.0 — IPTC states it for all NewsCodes | yes — attribution | [`iptc-media-topics`](https://iptc.org/standards/media-topics/) |
+| IAB taxonomies as JSON (iPullRank) | MIT | yes | [`ipullrank-iab-json`](https://github.com/iPullRank-dev/iab-taxonomy) |
 
 ### agriculture & food
 
@@ -385,7 +378,6 @@ Browse with `monty onto sources [group]`.
 | ontology | licence | commercial | source |
 |---|---|---|---|
 | wikidata-taxonomy (extraction CLI) | MIT (the tool; Wikidata's own data is CC0) | yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
-
 ## Contributors
 
 ```sh
@@ -394,5 +386,3 @@ uv sync && just              # the action surface
 just check                   # the gate (montology lints itself, strictly:
                              # its own toml sets collisions = "enforce")
 ```
-
-Changes go in [`CHANGELOG.md`](CHANGELOG.md) under `Unreleased`.

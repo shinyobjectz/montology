@@ -228,6 +228,52 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "CC BY 4.0 (Google Cloud docs)", "yes-attribution",
     ),
     TaxonomySource(
+        "openrtb", "OpenRTB (IAB Tech Lab)",
+        "https://github.com/InteractiveAdvertisingBureau/openrtb",
+        "json", "advertising & media", "ready",
+        "The protocol programmatic advertising transacts in — bid request, "
+        "impression, deal, seat. If your system touches an exchange, these "
+        "are the nouns it is already speaking on the wire.",
+        "CC BY 3.0 (stated in the repo README, no LICENSE file)", "yes-attribution",
+    ),
+    TaxonomySource(
+        "adcom", "AdCOM — Advertising Common Object Model (IAB Tech Lab)",
+        "https://github.com/InteractiveAdvertisingBureau/AdCOM",
+        "json", "advertising & media", "ready",
+        "The objects an ad transaction is made of — placement, media, "
+        "context, audience — factored out of OpenRTB so they can be reused "
+        "outside a bid request.",
+        "CC BY 3.0 (stated in the repo README, no LICENSE file)", "yes-attribution",
+    ),
+    TaxonomySource(
+        "open-graph", "The Open Graph protocol",
+        "https://ogp.me/",
+        "markdown", "advertising & media", "ready",
+        "How a page describes itself when it is shared — type, title, image, "
+        "and the object types under them (article, product, video, profile). "
+        "The vocabulary every social preview and link unfurl reads.",
+        "Open Web Foundation Agreement 0.9", "yes",
+    ),
+    TaxonomySource(
+        "ipullrank-iab-json", "IAB taxonomies as JSON (iPullRank)",
+        "https://github.com/iPullRank-dev/iab-taxonomy",
+        "json", "advertising & media", "evaluate",
+        "The IAB content taxonomy as JSON, for when the official TSVs are the "
+        "wrong shape. The open question is drift: it is a second copy of "
+        "something that gets versioned, so check it against the official "
+        "release before trusting it.",
+        "MIT", "yes",
+    ),
+    TaxonomySource(
+        "dmoz-curlie", "Curlie (the DMOZ successor) web directory",
+        "https://curlie.org/",
+        "rdf", "advertising & media", "evaluate",
+        "A human-curated topic tree over the open web, and the ancestor of "
+        "every content taxonomy here. The open question is currency — Topics "
+        "API is the modern descendant — but the depth is real where it exists.",
+        "CC BY 3.0 Unported", "yes-attribution",
+    ),
+    TaxonomySource(
         "iptc-media-topics", "IPTC Media Topics",
         "https://iptc.org/standards/media-topics/",
         "rdf", "advertising & media", "evaluate",
