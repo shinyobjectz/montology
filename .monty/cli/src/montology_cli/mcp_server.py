@@ -143,21 +143,37 @@ def structural_search(pattern: str, lang: str = "") -> str:
 
 
 @mcp.tool
-def ontology_sources(group: str = "") -> str:
+def ontology_sources(group: str = "", search: str = "", refresh: bool = False) -> str:
     """Public taxonomies worth joining, grouped by who they are for —
     `core` (any business, any industry), `advertising & media`,
     `retail & e-commerce`, `trade & occupations`, `general knowledge`;
     empty for all. Reach for one when a user's vocabulary needs to join an
     industry standard rather than invent a synonym.
 
+    `search` queries TWO TIERS and the answer must keep them apart. The
+    shortlist was read here: it carries a relevance ruling and a checked
+    commercial verdict, and it is what you recommend. The harvested index
+    is OBO Foundry's registry lifted verbatim — a title, a blurb and a
+    licence LABEL, with nobody's judgement attached. Relay a tier-2 hit as
+    "this exists, here is what its publisher claims", never as a
+    recommendation, and never call its licence checked. `refresh`
+    re-fetches the registry; without it the cached copy answers offline.
+
     ALWAYS relay the licence with the recommendation. The IAB entries are
     CC BY 3.0 and need attribution (their repo has no LICENSE file, so
     automated scans call them unlicensed); `schemaorg` is share-alike; and
     `google-product` grants nothing at all — never present it as safe to
     redistribute."""
-    from montology_ontology import render_sources
+    from montology_ontology import render_harvest, render_search, render_sources
 
-    return "\n".join(render_sources(group))
+    out: list[str] = []
+    if refresh:
+        out += render_harvest(refresh=True)
+    if search:
+        out += render_search(search)
+    elif not refresh:
+        out += render_sources(group)
+    return "\n".join(out)
 
 
 @mcp.tool
