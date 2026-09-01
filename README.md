@@ -256,286 +256,136 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-**57 public ontologies and taxonomies across 14 domains**,
-each checked for whether it is real, whether it is maintained, and whether
-**you may ship against it**. Browse with `monty onto sources [group]` or the
-`ontology_sources` MCP tool.
+57 public ontologies and taxonomies, licence-verified, grouped by domain.
+Browse with `monty onto sources [group]`.
 
-Two of them are more than an address: `monty onto sources ingest prov-o`
-and `monty onto sources ingest schemaorg` load those vocabularies into
-`.monty/ontology.db` as **adopted** words — 80 PROV-O terms, 2,322
-Schema.org classes and properties — so that `monty onto check Activity`
-answers "that is PROV-O's word, not yours" rather than "free". The payload
-is cached under `.monty/cache/`, so every run after the first is offline;
-your own words are never overwritten; and the licence travels with every
-answer, which for Schema.org's CC BY-SA 3.0 is the difference between a
-vocabulary you may read and one you may ship.
-
-Your vocabulary rarely starts from nothing. Where an industry has already
-agreed on a word, joining that standard beats minting a synonym — and where
-it hasn't, montology's own gate is what keeps yours honest.
-
-**How these were chosen.** There are thousands of ontologies —
-[BioPortal](https://bioportal.bioontology.org/) alone lists 1,283 — but they
-are overwhelmingly life-sciences, because genomics forced that field to agree
-on words and no comparable pressure existed elsewhere. So this is a curated
-shortlist, not a dump: entries had to be actively maintained, used by people
-other than their authors, and carry a licence permitting commercial use. Most
-of the rigorous ones follow the
-[OBO Foundry principles](https://obofoundry.org/principles/fp-000-summary.html)
-— open licence, versioning, textual definitions, stable identifiers, a named
-authority — which is the closest thing this field has to a quality bar, and
-close to what montology enforces on your own vocabulary.
-
-**The second tier, for when the shortlist has no answer.** "What should I
-join?" and "does one already exist for this?" are different questions, and
-answering the second from a 56-row list answers it wrong. So
-`monty onto sources --search <query>` searches the shortlist *and* a
-harvested index: the 177 active OBO Foundry ontologies that declare a
-licence, lifted verbatim from
-[its registry](https://obofoundry.org/registry/ontologies.jsonld) and
-cached under `.monty/cache/` so it works offline. The two tiers print under
-separate headings and mean different things — tier 1 was read here and
-carries a verdict; tier 2 is what its publisher says about itself, with
-nobody's judgement attached. `--refresh` re-fetches and reports the
-arithmetic: what came in, what stayed, and which filter dropped the rest
-(unmaintained, no declared licence, or already in the shortlist).
-
-**Three licence findings worth knowing before you reach for anything:**
-
-- **The IAB taxonomies declare CC BY 3.0 in a README and ship no `LICENSE`
-  file**, so GitHub and every automated scan report them as unlicensed.
-  They are usable; attribution is required.
-- **`google-product` grants nothing.** A bare `.txt` with no licence and no
-  terms page — published so you can build a feed, which is not permission to
-  ship it inside a product. Use `shopify-product` instead. It is the only 🚫
-  on this page, and it is here as a warning.
-- **`schemaorg`, `edam` and `owasp-llm` are share-alike** — the licences that
-  can reach back into a vocabulary you build on top of them.
-
-### `core` — any business, any industry
+### core — any business, any industry
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **BFO — Basic Formal Ontology** | CC BY 4.0 | ✅ yes — attribution | [`bfo`](https://obofoundry.org/ontology/bfo.html) |
-| **DCMI Metadata Terms (Dublin Core)** | CC BY 4.0 | ✅ yes — attribution | [`dublin-core`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) |
-| **NAICS (North American Industry Classification System)** | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`naics`](https://www.census.gov/naics/) |
-| **PROV-O — the Provenance Ontology (W3C)** | W3C Software and Document Licence | ✅ yes | [`prov-o`](https://www.w3.org/TR/prov-o/) |
-| **QUDT — Quantities, Units, Dimensions and Types** | CC BY 4.0 | ✅ yes — attribution | [`qudt`](https://github.com/qudt/qudt-public-repo) |
-| **RO — the Relation Ontology** | CC0 1.0 | 🟢 public domain | [`ro`](https://obofoundry.org/ontology/ro.html) |
-| **Schema.org vocabulary (types + properties)** | CC BY-SA 3.0 | ⚠️ yes — share-alike | [`schemaorg`](https://schema.org/version/latest/schemaorg-current-https.jsonld) |
-| **SIC codes** | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`sic`](https://www.sec.gov/corpfin/division-of-corporation-finance-standard-industrial-classification-sic-code-list) |
-| **SKOS — Simple Knowledge Organization System (W3C)** | W3C Software and Document Licence | ✅ yes | [`skos`](https://www.w3.org/TR/skos-reference/) |
-
-- **bfo** — The upper ontology (ISO/IEC 21838-2) most serious domain ontologies sit on: continuant vs occurrent, the distinctions you otherwise argue about from scratch. Reach for it when your ontology needs a spine.
-- **dublin-core** — The 25-year-old lingua franca for describing ANY resource — title, creator, date, subject, rights. If your system has records, it already half-speaks this.
-- **naics** — What industry is this? Firmographics for B2B, and the answer every registry and filing expects. Take it from the Census: the convenience repackagings declare no licence, and the authority is public domain.
-- **prov-o** — Who made this, from what, and when. Every audit, lineage and reproducibility story reinvents this badly; it is already standard.
-- **qudt** — Units and what they measure, done properly. Any system carrying a number with a unit has this problem, and almost all of them solve it with a string column.
-- **ro** — Standard relations — part_of, derives_from, participates_in — so your edges mean what everyone else's edges mean. The counterpart to BFO's nouns, and montology's own `onto relate` is the same idea.
-- **schemaorg** — The universal web vocabulary every industry structures data in — 2,454 classes and properties, and what SEO structured-data work speaks. If you join one thing on this page, join this.
-- **sic** — NAICS's predecessor, still what many registries and filings use. From the SEC for the same reason NAICS comes from the Census.
-- **skos** — Not a vocabulary but the standard SHAPE of one: concepts, broader/narrower, preferred and alternate labels. Half the taxonomies on this page are published in it, and it is what to publish yours in.
+| BFO — Basic Formal Ontology | CC BY 4.0 | yes — attribution | [`bfo`](https://obofoundry.org/ontology/bfo.html) |
+| DCMI Metadata Terms (Dublin Core) | CC BY 4.0 | yes — attribution | [`dublin-core`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) |
+| NAICS (North American Industry Classification System) | US federal work — public domain (17 U.S.C. §105) | public domain | [`naics`](https://www.census.gov/naics/) |
+| PROV-O — the Provenance Ontology (W3C) | W3C Software and Document Licence | yes | [`prov-o`](https://www.w3.org/TR/prov-o/) |
+| QUDT — Quantities, Units, Dimensions and Types | CC BY 4.0 | yes — attribution | [`qudt`](https://github.com/qudt/qudt-public-repo) |
+| RO — the Relation Ontology | CC0 1.0 | public domain | [`ro`](https://obofoundry.org/ontology/ro.html) |
+| Schema.org vocabulary (types + properties) | CC BY-SA 3.0 | yes — share-alike | [`schemaorg`](https://schema.org/version/latest/schemaorg-current-https.jsonld) |
+| SIC codes | US federal work — public domain (17 U.S.C. §105) | public domain | [`sic`](https://www.sec.gov/corpfin/division-of-corporation-finance-standard-industrial-classification-sic-code-list) |
+| SKOS — Simple Knowledge Organization System (W3C) | W3C Software and Document Licence | yes | [`skos`](https://www.w3.org/TR/skos-reference/) |
 
 ### health & life sciences
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **ChEBI — Chemical Entities of Biological Interest** | CC BY 4.0 | ✅ yes — attribution | [`chebi`](https://obofoundry.org/ontology/chebi.html) |
-| **Human Disease Ontology** | CC0 1.0 | 🟢 public domain | [`doid`](https://obofoundry.org/ontology/doid.html) |
-| **Gene Ontology** | CC BY 4.0 | ✅ yes — attribution | [`go`](https://obofoundry.org/ontology/go.html) |
-| **Mondo Disease Ontology** | CC BY 4.0 | ✅ yes — attribution | [`mondo`](https://obofoundry.org/ontology/mondo.html) |
-| **NCI Thesaurus (OBO edition)** | CC BY 4.0 | ✅ yes — attribution | [`ncit`](https://obofoundry.org/ontology/ncit.html) |
-| **Uberon multi-species anatomy ontology** | CC BY 3.0 | ✅ yes — attribution | [`uberon`](https://obofoundry.org/ontology/uberon.html) |
-
-- **chebi** — Molecules and their roles, from EMBL-EBI. What to join if anything in your system is a compound, a drug or an ingredient.
-- **doid** — The long-standing disease vocabulary Mondo builds on; CC0, so the one to take when attribution is inconvenient.
-- **go** — The most-used ontology in science, full stop: molecular function, biological process, cellular component. The proof that a maintained vocabulary compounds in value.
-- **mondo** — One disease vocabulary merging OMIM, Orphanet, DOID and NCIt — built precisely because those disagreed. The reference for naming a disease.
-- **ncit** — The US National Cancer Institute's reference terminology — broad clinical and biomedical coverage, far past oncology.
-- **uberon** — Anatomy across species, cross-referenced to the species-specific ones. The anatomical vocabulary with the widest reach.
+| ChEBI — Chemical Entities of Biological Interest | CC BY 4.0 | yes — attribution | [`chebi`](https://obofoundry.org/ontology/chebi.html) |
+| Human Disease Ontology | CC0 1.0 | public domain | [`doid`](https://obofoundry.org/ontology/doid.html) |
+| Gene Ontology | CC BY 4.0 | yes — attribution | [`go`](https://obofoundry.org/ontology/go.html) |
+| Mondo Disease Ontology | CC BY 4.0 | yes — attribution | [`mondo`](https://obofoundry.org/ontology/mondo.html) |
+| NCI Thesaurus (OBO edition) | CC BY 4.0 | yes — attribution | [`ncit`](https://obofoundry.org/ontology/ncit.html) |
+| Uberon multi-species anatomy ontology | CC BY 3.0 | yes — attribution | [`uberon`](https://obofoundry.org/ontology/uberon.html) |
 
 ### finance
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **FIBO — Financial Industry Business Ontology** | MIT | ✅ yes | [`fibo`](https://github.com/edmcouncil/fibo) |
-
-- **fibo** — The EDM Council's model of financial instruments, entities, contracts and market roles — the serious answer to what a 'counterparty' or a 'derivative' IS. MIT-licensed, which is unusual for finance and the reason this replaced the proprietary ICB that used to sit here.
+| FIBO — Financial Industry Business Ontology | MIT | yes | [`fibo`](https://github.com/edmcouncil/fibo) |
 
 ### retail & e-commerce
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **Google Product Taxonomy** | none — a bare .txt on www.google.com, no licence, no terms page, and developers.google.com's CC BY 4.0 site policy does not reach it | 🚫 unlicensed | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
-| **Shopify Product Taxonomy** | MIT | ✅ yes | [`shopify-product`](https://github.com/Shopify/product-taxonomy) |
-
-- **google-product** — 5k+ categories every Shopping feed must speak. Listed because you will need it and because the licence is a trap: published FOR building feeds, which is not permission to ship it inside your own product. Reach for shopify-product when you need one you may redistribute.
-- **shopify-product** — 10k+ categories with attributes — richer than Google's tree, and the one in this pair you may actually redistribute.
+| Google Product Taxonomy | none — a bare .txt on www.google.com, no licence, no terms page, and developers.google.com's CC BY 4.0 site policy does not reach it | no — unlicensed | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
+| Shopify Product Taxonomy | MIT | yes | [`shopify-product`](https://github.com/Shopify/product-taxonomy) |
 
 ### advertising & media
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **Google NLP Content Categories** | CC BY 4.0 (Google Cloud docs) | ✅ yes — attribution | [`google-nlp-categories`](https://cloud.google.com/natural-language/docs/categories) |
-| **Google Topics API Taxonomy** | W3C Software and Document Licence | ✅ yes | [`google-topics`](https://github.com/patcg-individual-drafts/topics) |
-| **IAB Ad Product Taxonomy 2.0** | CC BY 3.0 (as above) | ✅ yes — attribution | [`iab-adproduct`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
-| **IAB Audience Taxonomy 1.1** | CC BY 3.0 (as above) | ✅ yes — attribution | [`iab-audience`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
-| **IAB Content Taxonomy 3.1** | CC BY 3.0 (stated in the repo README, no LICENSE file — so every automated scan calls it unlicensed) | ✅ yes — attribution | [`iab-content`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
-| **OpenOOH Venue Taxonomy** | Apache-2.0 | ✅ yes | [`openooh-venue`](https://github.com/openooh/venue-taxonomy) |
-| **IABTechLab/iab-mapper (2.x → 3.0 mappings)** *(evaluate)* | BSD-2-Clause | ✅ yes | [`iab-mapper`](https://github.com/IABTechLab/iab-mapper) |
-| **IPTC Media Topics** *(evaluate)* | CC BY 4.0 — IPTC states it for all NewsCodes | ✅ yes — attribution | [`iptc-media-topics`](https://iptc.org/standards/media-topics/) |
-
-- **google-nlp-categories** — ~620 labels Google's classifier emits — useful as a mapping TARGET, not a house vocabulary.
-- **google-topics** — ~470 ad-relevant topics; small, curated, and what Chrome's interest signals emit.
-- **iab-adproduct** — Names the thing being sold; completes the IAB triple.
-- **iab-audience** — The segmentation counterpart to iab-content; audience descriptions marketers already use.
-- **iab-content** — THE contextual-targeting and brand-safety vocabulary; what OpenRTB speaks.
-- **openooh-venue** — Digital-out-of-home venue types; niche channel, real standard.
-- **iab-mapper** — Mappings, not a taxonomy — the open question is whether you have 2.x codes in the wild. Pertinent the day you meet one.
-- **iptc-media-topics** — 1,200 terms, 13 languages, a real standard — the open question is RDF/SKOS parsing, which is its own project. Decide when PR or content work needs it.
+| Google NLP Content Categories | CC BY 4.0 (Google Cloud docs) | yes — attribution | [`google-nlp-categories`](https://cloud.google.com/natural-language/docs/categories) |
+| Google Topics API Taxonomy | W3C Software and Document Licence | yes | [`google-topics`](https://github.com/patcg-individual-drafts/topics) |
+| IAB Ad Product Taxonomy 2.0 | CC BY 3.0 (as above) | yes — attribution | [`iab-adproduct`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
+| IAB Audience Taxonomy 1.1 | CC BY 3.0 (as above) | yes — attribution | [`iab-audience`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
+| IAB Content Taxonomy 3.1 | CC BY 3.0 (stated in the repo README, no LICENSE file — so every automated scan calls it unlicensed) | yes — attribution | [`iab-content`](https://github.com/InteractiveAdvertisingBureau/Taxonomies) |
+| OpenOOH Venue Taxonomy | Apache-2.0 | yes | [`openooh-venue`](https://github.com/openooh/venue-taxonomy) |
+| IABTechLab/iab-mapper (2.x → 3.0 mappings) | BSD-2-Clause | yes | [`iab-mapper`](https://github.com/IABTechLab/iab-mapper) |
+| IPTC Media Topics | CC BY 4.0 — IPTC states it for all NewsCodes | yes — attribution | [`iptc-media-topics`](https://iptc.org/standards/media-topics/) |
 
 ### agriculture & food
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **AGRO — the Agronomy Ontology** | CC BY 4.0 | ✅ yes — attribution | [`agro`](https://obofoundry.org/ontology/agro.html) |
-| **FoodOn — the Food Ontology** | CC BY 4.0 | ✅ yes — attribution | [`foodon`](https://obofoundry.org/ontology/foodon.html) |
-
-- **agro** — Agronomic practices, traits and inputs; joins FoodOn upstream of the plate.
-- **foodon** — Food products, sources and processing — for menus, supply chains, nutrition and recall traceability alike.
+| AGRO — the Agronomy Ontology | CC BY 4.0 | yes — attribution | [`agro`](https://obofoundry.org/ontology/agro.html) |
+| FoodOn — the Food Ontology | CC BY 4.0 | yes — attribution | [`foodon`](https://obofoundry.org/ontology/foodon.html) |
 
 ### environment & climate
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **ENVO — the Environment Ontology** | CC0 1.0 | 🟢 public domain | [`envo`](https://obofoundry.org/ontology/envo.html) |
-
-- **envo** — Biomes, environmental materials and features — the vocabulary for where something is, in ESG, climate and sustainability reporting.
+| ENVO — the Environment Ontology | CC0 1.0 | public domain | [`envo`](https://obofoundry.org/ontology/envo.html) |
 
 ### software & infrastructure
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **AsyncAPI Specification** | Apache-2.0 | ✅ yes | [`asyncapi`](https://www.asyncapi.com/docs/reference/specification/latest) |
-| **CDEvents (Continuous Delivery Foundation)** | Apache-2.0 | ✅ yes | [`cdevents`](https://cdevents.dev/) |
-| **Conventional Commits** | MIT | ✅ yes | [`conventional-commits`](https://www.conventionalcommits.org/) |
-| **OWASP CycloneDX** | Apache-2.0 | ✅ yes | [`cyclonedx`](https://cyclonedx.org/specification/overview/) |
-| **JSON Schema** | BSD-style (JSON Schema Specification Authors) | ✅ yes | [`json-schema`](https://json-schema.org/specification) |
-| **OpenAPI Specification** | Apache-2.0 | ✅ yes | [`openapi`](https://spec.openapis.org/oas/latest.html) |
-| **OpenTelemetry Semantic Conventions** | Apache-2.0 | ✅ yes | [`otel-semconv`](https://opentelemetry.io/docs/specs/semconv/) |
-| **purl — Package URL specification** | MIT | ✅ yes | [`purl`](https://github.com/package-url/purl-spec) |
-| **Semantic Versioning** | CC BY 3.0 | ✅ yes — attribution | [`semver`](https://semver.org/) |
-| **SPDX — specification and licence list** | Community Specification Licence 1.0; pre-existing portions CC BY 3.0 | ✅ yes — attribution | [`spdx`](https://spdx.org/licenses/) |
-| **SWO — the Software Ontology** | CC BY 4.0 | ✅ yes — attribution | [`swo`](https://obofoundry.org/ontology/swo.html) |
-| **DOAP — Description of a Project** *(evaluate)* | Apache-2.0 | ✅ yes | [`doap`](https://github.com/ewilderj/doap) |
-| **OASIS TOSCA (Topology and Orchestration Specification)** *(evaluate)* | Apache-2.0 | ✅ yes | [`tosca`](https://github.com/oasis-open/tosca-community-contributions) |
-
-- **asyncapi** — OpenAPI's counterpart for event-driven systems: channels, messages, operations, bindings. The names for the half of a distributed system that is not request/response.
-- **cdevents** — A common vocabulary for what happens in a pipeline — build queued, artifact published, service deployed — so tools from different vendors describe the same event the same way.
-- **conventional-commits** — A tiny, near-universal taxonomy of CHANGE: feat, fix, refactor, chore, and what each implies for a version. The smallest useful vocabulary on this page and probably the most widely adopted.
-- **cyclonedx** — Bill of materials for software, services, hardware and ML models — what a component IS, what it depends on and where it came from.
-- **json-schema** — How to say what a document must look like — the shape language OpenAPI, AsyncAPI and Croissant all build on.
-- **openapi** — The vocabulary of an HTTP API — operation, path, parameter, schema, response, security scheme. Whatever your service calls these things internally, this is what its consumers call them.
-- **otel-semconv** — The one to reach for. Names services, hosts, containers, cloud providers, HTTP, RPC, databases, messaging and their attributes — the vocabulary your telemetry already emits, which makes it the vocabulary your infrastructure already speaks whether you wrote it down or not.
-- **purl** — One identity for a package across every ecosystem: pkg:npm/foo@1.2.3. The join key the whole supply chain agreed on, and the answer to 'is this the same dependency' across tools.
-- **semver** — What MAJOR, MINOR and PATCH mean — a three-term vocabulary that ends the argument about whether a change is breaking.
-- **spdx** — The canonical identifiers for software licences (`Apache-2.0`, `CC-BY-4.0`) plus the SBOM spec around them. Every licence string in montology's own registry is an SPDX id.
-- **swo** — What a piece of software IS — its licence, version, inputs, outputs and the task it performs. OBO-reviewed, which almost nothing else in this group is.
-- **doap** — The RDF vocabulary for describing a software project — repository, release, maintainer, language. A finished, stable spec rather than an abandoned one, but the open question is whether you need RDF at all when purl and SPDX cover identity and licensing already.
-- **tosca** — A vendor-neutral vocabulary for cloud application topology — nodes, relationships, capabilities, requirements. The open question is adoption: it is a real OASIS standard that most teams have replaced with their orchestrator's own nouns.
+| AsyncAPI Specification | Apache-2.0 | yes | [`asyncapi`](https://www.asyncapi.com/docs/reference/specification/latest) |
+| CDEvents (Continuous Delivery Foundation) | Apache-2.0 | yes | [`cdevents`](https://cdevents.dev/) |
+| Conventional Commits | MIT | yes | [`conventional-commits`](https://www.conventionalcommits.org/) |
+| OWASP CycloneDX | Apache-2.0 | yes | [`cyclonedx`](https://cyclonedx.org/specification/overview/) |
+| JSON Schema | BSD-style (JSON Schema Specification Authors) | yes | [`json-schema`](https://json-schema.org/specification) |
+| OpenAPI Specification | Apache-2.0 | yes | [`openapi`](https://spec.openapis.org/oas/latest.html) |
+| OpenTelemetry Semantic Conventions | Apache-2.0 | yes | [`otel-semconv`](https://opentelemetry.io/docs/specs/semconv/) |
+| purl — Package URL specification | MIT | yes | [`purl`](https://github.com/package-url/purl-spec) |
+| Semantic Versioning | CC BY 3.0 | yes — attribution | [`semver`](https://semver.org/) |
+| SPDX — specification and licence list | Community Specification Licence 1.0; pre-existing portions CC BY 3.0 | yes — attribution | [`spdx`](https://spdx.org/licenses/) |
+| SWO — the Software Ontology | CC BY 4.0 | yes — attribution | [`swo`](https://obofoundry.org/ontology/swo.html) |
+| DOAP — Description of a Project | Apache-2.0 | yes | [`doap`](https://github.com/ewilderj/doap) |
+| OASIS TOSCA (Topology and Orchestration Specification) | Apache-2.0 | yes | [`tosca`](https://github.com/oasis-open/tosca-community-contributions) |
 
 ### security
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **CVE — Common Vulnerabilities and Exposures** | CC0 1.0 | 🟢 public domain | [`cve`](https://www.cve.org/) |
-| **CWE — Common Weakness Enumeration** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`cwe`](https://cwe.mitre.org/) |
-| **MITRE D3FEND — defensive countermeasures** | MIT | ✅ yes | [`d3fend`](https://d3fend.mitre.org/) |
-| **MITRE ATT&CK** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`mitre-attack`](https://attack.mitre.org/) |
-
-- **cve** — The identifier for a specific vulnerability instance — the WHICH to CWE's what-class-of-bug. CC0, so nothing constrains reuse.
-- **cwe** — The classification of software weakness TYPES — what class of bug this is, as opposed to CVE's which instance. What every scanner reports in.
-- **d3fend** — The counterpart to ATT&CK: what you DO about a technique, as a real ontology with typed relations back to the attacks it addresses.
-- **mitre-attack** — Adversary tactics and techniques — the vocabulary every detection, threat-intel and red-team report already speaks. MITRE grants a royalty-free commercial licence explicitly.
+| CVE — Common Vulnerabilities and Exposures | CC0 1.0 | public domain | [`cve`](https://www.cve.org/) |
+| CWE — Common Weakness Enumeration | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | yes — attribution | [`cwe`](https://cwe.mitre.org/) |
+| MITRE D3FEND — defensive countermeasures | MIT | yes | [`d3fend`](https://d3fend.mitre.org/) |
+| MITRE ATT&CK | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | yes — attribution | [`mitre-attack`](https://attack.mitre.org/) |
 
 ### AI, ML & data science
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **Croissant — ML dataset metadata (MLCommons)** | Apache-2.0 | ✅ yes | [`croissant`](https://github.com/mlcommons/croissant) |
-| **EDAM — data, operations, formats and identifiers** | CC BY-SA 4.0 | ⚠️ yes — share-alike | [`edam`](https://edamontology.org/) |
-| **MITRE ATLAS — adversarial threats to AI systems** | Apache-2.0 | ✅ yes | [`mitre-atlas`](https://atlas.mitre.org/) |
-| **OWASP Top 10 for LLM Applications** | CC BY-SA 4.0 | ⚠️ yes — share-alike | [`owasp-llm`](https://genai.owasp.org/llm-top-10/) |
-| **STATO — the Statistical Methods Ontology** | CC BY 3.0 | ✅ yes — attribution | [`stato`](https://obofoundry.org/ontology/stato.html) |
-
-- **croissant** — Describes an ML dataset: its records, fields, splits, provenance and licence. Built on Schema.org, adopted by Hugging Face, Kaggle and OpenML — the closest thing to a standard a dataset has.
-- **edam** — What an analysis DOES and what it consumes and produces: operations, data types, formats, identifiers. Grew up in bioinformatics and the operation/format halves are domain-neutral.
-- **mitre-atlas** — ATT&CK's shape applied to machine learning: prompt injection, model evasion, data poisoning, model theft, named and structured. The nearest thing to a settled vocabulary for how AI systems get attacked.
-- **owasp-llm** — The risk vocabulary LLM application teams actually cite — prompt injection, insecure output handling, excessive agency. A ranked list rather than an ontology, and it is what people mean by these terms.
-- **stato** — Names statistical tests, distributions, model parameters and what a result means — so 'significant' and 'confidence interval' stop being whatever the last analyst meant by them.
+| Croissant — ML dataset metadata (MLCommons) | Apache-2.0 | yes | [`croissant`](https://github.com/mlcommons/croissant) |
+| EDAM — data, operations, formats and identifiers | CC BY-SA 4.0 | yes — share-alike | [`edam`](https://edamontology.org/) |
+| MITRE ATLAS — adversarial threats to AI systems | Apache-2.0 | yes | [`mitre-atlas`](https://atlas.mitre.org/) |
+| OpenTelemetry GenAI Semantic Conventions | Apache-2.0 | yes | [`otel-genai`](https://github.com/open-telemetry/semantic-conventions-genai) |
+| OWASP Top 10 for LLM Applications | CC BY-SA 4.0 | yes — share-alike | [`owasp-llm`](https://genai.owasp.org/llm-top-10/) |
+| STATO — the Statistical Methods Ontology | CC BY 3.0 | yes — attribution | [`stato`](https://obofoundry.org/ontology/stato.html) |
 
 ### geography
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **GeoNames ontology + gazetteer** | CC BY 4.0 | ✅ yes — attribution | [`geonames`](https://www.geonames.org/ontology/documentation.html) |
-
-- **geonames** — 11M+ place names with a feature-type vocabulary (country, city, admin division, landmark). The open answer to 'what kind of place is this'.
+| GeoNames ontology + gazetteer | CC BY 4.0 | yes — attribution | [`geonames`](https://www.geonames.org/ontology/documentation.html) |
 
 ### trade & occupations
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **Harvard Growth Lab classifications (ISIC/HS/SITC/O*NET)** *(evaluate)* | BSD-3-Clause | ✅ yes | [`cid-classifications`](https://github.com/cid-harvard/classifications) |
-
-- **cid-classifications** — Many systems in one cleaned repo — incl. O*NET occupations for workforce mapping. The open question is which one you need: it is heavy, and taking all of it is taking four vocabularies you did not ask for.
+| Harvard Growth Lab classifications (ISIC/HS/SITC/O*NET) | BSD-3-Clause | yes | [`cid-classifications`](https://github.com/cid-harvard/classifications) |
 
 ### research & information
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **DCAT — Data Catalog Vocabulary (W3C)** | W3C Software and Document Licence | ✅ yes | [`dcat`](https://www.w3.org/TR/vocab-dcat-3/) |
-| **IAO — Information Artifact Ontology** | CC BY 4.0 | ✅ yes — attribution | [`iao`](https://obofoundry.org/ontology/iao.html) |
-
-- **dcat** — How to describe a dataset and a catalogue of them — what every government open-data portal publishes in, and what a data catalogue should not reinvent.
-- **iao** — Documents, datasets, identifiers, measurements — what an information thing IS, as opposed to what it is about. The distinction most data models blur.
+| DCAT — Data Catalog Vocabulary (W3C) | W3C Software and Document Licence | yes | [`dcat`](https://www.w3.org/TR/vocab-dcat-3/) |
+| IAO — Information Artifact Ontology | CC BY 4.0 | yes — attribution | [`iao`](https://obofoundry.org/ontology/iao.html) |
 
 ### general knowledge
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
-| **wikidata-taxonomy (extraction CLI)** *(evaluate)* | MIT (the tool; Wikidata's own data is CC0) | ✅ yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
+| wikidata-taxonomy (extraction CLI) | MIT (the tool; Wikidata's own data is CC0) | yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
 
-- **wikidata-taxonomy** — A tool, not a dataset — it mints a niche taxonomy out of Wikidata on demand. The open question is whether the niche you need is actually in there; Wikidata's coverage is wide and its depth is uneven.
-An entry marked *(evaluate)* is promising with a question still open;
-the note says which. Declined candidates are not listed — a registry that is
-one-third things nobody should use reads as a search result, not a
-recommendation. Those declines and their reasons live in the git history of
-`.monty/onto/src/montology_ontology/sources.py`.
-
-**The state of agent-architecture vocabulary, stated precisely.** There is no
-formal *ontology* for agents, tools, memory and planning — FIPA's agent
-standards are two decades dormant and nothing replaced them. But there IS an
-operationalized, actively maintained vocabulary: **OpenTelemetry's GenAI
-semantic conventions** (`otel-genai`) normatively define `gen_ai.agent.*`,
-`gen_ai.tool.*`, `gen_ai.memory.*`, `gen_ai.conversation.*` and named
-operations — `create_agent`, `invoke_agent`, `execute_tool`. Agents, tools,
-memory and conversations, Apache-2.0, shipping commits daily.
-
-What it is not is an ontology: telemetry attributes have no subsumption, no
-metaproperties, and nothing a gate can enforce. So the gap is narrower and
-more specific than "nothing exists" — it is the ontological layer over a
-vocabulary the industry has already adopted. That is what
-[`mon-uxs5`](.tickets/mon-uxs5.md) plans: LOT methodology with NeOn's
-reuse-first scenarios, governed by the rule that already decides what
-montology will model — **an edge nothing can check is a diagram**.
-
-*Every licence here was checked against its source on 2026-09-01 and is recorded AS PUBLISHED. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
-
-The registry is a **catalogue, not an ingest** in this era: it tells you what
-exists, whether it is real, and whether you may use it. Wiring a source into
-`.monty/ontology.db` is per-source work.
 ## Contributors
 
 ```sh
