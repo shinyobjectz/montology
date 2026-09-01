@@ -211,7 +211,7 @@ embeddings (~30 MB, numpy-only) power it:
 
 ## The taxonomy library: don't invent what an industry already agreed
 
-`monty onto sources [group]` (or `ontology_sources`) lists 49 public
+`monty onto sources [group]` (or `ontology_sources`) lists 56 public
 ontologies across 14 domains, grouped by who they are for: **core** (any
 business — Schema.org, NAICS/SIC, Dublin Core, SKOS, PROV-O, QUDT, BFO,
 RO), health & life sciences, finance, retail, advertising, agriculture,

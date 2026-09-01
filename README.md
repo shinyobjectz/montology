@@ -256,7 +256,7 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-**49 public ontologies and taxonomies across 14 domains**,
+**56 public ontologies and taxonomies across 14 domains**,
 each checked for whether it is real, whether it is maintained, and whether
 **you may ship against it**. Browse with `monty onto sources [group]` or the
 `ontology_sources` MCP tool.
@@ -393,17 +393,29 @@ close to what montology enforces on your own vocabulary.
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
+| **AsyncAPI Specification** | Apache-2.0 | ✅ yes | [`asyncapi`](https://www.asyncapi.com/docs/reference/specification/latest) |
+| **CDEvents (Continuous Delivery Foundation)** | Apache-2.0 | ✅ yes | [`cdevents`](https://cdevents.dev/) |
+| **Conventional Commits** | MIT | ✅ yes | [`conventional-commits`](https://www.conventionalcommits.org/) |
 | **OWASP CycloneDX** | Apache-2.0 | ✅ yes | [`cyclonedx`](https://cyclonedx.org/specification/overview/) |
+| **JSON Schema** | BSD-style (JSON Schema Specification Authors) | ✅ yes | [`json-schema`](https://json-schema.org/specification) |
+| **OpenAPI Specification** | Apache-2.0 | ✅ yes | [`openapi`](https://spec.openapis.org/oas/latest.html) |
 | **OpenTelemetry Semantic Conventions** | Apache-2.0 | ✅ yes | [`otel-semconv`](https://opentelemetry.io/docs/specs/semconv/) |
 | **purl — Package URL specification** | MIT | ✅ yes | [`purl`](https://github.com/package-url/purl-spec) |
+| **Semantic Versioning** | CC BY 3.0 | ✅ yes — attribution | [`semver`](https://semver.org/) |
 | **SPDX — specification and licence list** | Community Specification Licence 1.0; pre-existing portions CC BY 3.0 | ✅ yes — attribution | [`spdx`](https://spdx.org/licenses/) |
 | **SWO — the Software Ontology** | CC BY 4.0 | ✅ yes — attribution | [`swo`](https://obofoundry.org/ontology/swo.html) |
 | **DOAP — Description of a Project** *(evaluate)* | Apache-2.0 | ✅ yes | [`doap`](https://github.com/ewilderj/doap) |
 | **OASIS TOSCA (Topology and Orchestration Specification)** *(evaluate)* | Apache-2.0 | ✅ yes | [`tosca`](https://github.com/oasis-open/tosca-community-contributions) |
 
+- **asyncapi** — OpenAPI's counterpart for event-driven systems: channels, messages, operations, bindings. The names for the half of a distributed system that is not request/response.
+- **cdevents** — A common vocabulary for what happens in a pipeline — build queued, artifact published, service deployed — so tools from different vendors describe the same event the same way.
+- **conventional-commits** — A tiny, near-universal taxonomy of CHANGE: feat, fix, refactor, chore, and what each implies for a version. The smallest useful vocabulary on this page and probably the most widely adopted.
 - **cyclonedx** — Bill of materials for software, services, hardware and ML models — what a component IS, what it depends on and where it came from.
+- **json-schema** — How to say what a document must look like — the shape language OpenAPI, AsyncAPI and Croissant all build on.
+- **openapi** — The vocabulary of an HTTP API — operation, path, parameter, schema, response, security scheme. Whatever your service calls these things internally, this is what its consumers call them.
 - **otel-semconv** — The one to reach for. Names services, hosts, containers, cloud providers, HTTP, RPC, databases, messaging and their attributes — the vocabulary your telemetry already emits, which makes it the vocabulary your infrastructure already speaks whether you wrote it down or not.
 - **purl** — One identity for a package across every ecosystem: pkg:npm/foo@1.2.3. The join key the whole supply chain agreed on, and the answer to 'is this the same dependency' across tools.
+- **semver** — What MAJOR, MINOR and PATCH mean — a three-term vocabulary that ends the argument about whether a change is breaking.
 - **spdx** — The canonical identifiers for software licences (`Apache-2.0`, `CC-BY-4.0`) plus the SBOM spec around them. Every licence string in montology's own registry is an SPDX id.
 - **swo** — What a piece of software IS — its licence, version, inputs, outputs and the task it performs. OBO-reviewed, which almost nothing else in this group is.
 - **doap** — The RDF vocabulary for describing a software project — repository, release, maintainer, language. A finished, stable spec rather than an abandoned one, but the open question is whether you need RDF at all when purl and SPDX cover identity and licensing already.
@@ -413,10 +425,12 @@ close to what montology enforces on your own vocabulary.
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
+| **CVE — Common Vulnerabilities and Exposures** | CC0 1.0 | 🟢 public domain | [`cve`](https://www.cve.org/) |
 | **CWE — Common Weakness Enumeration** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`cwe`](https://cwe.mitre.org/) |
 | **MITRE D3FEND — defensive countermeasures** | MIT | ✅ yes | [`d3fend`](https://d3fend.mitre.org/) |
 | **MITRE ATT&CK** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`mitre-attack`](https://attack.mitre.org/) |
 
+- **cve** — The identifier for a specific vulnerability instance — the WHICH to CWE's what-class-of-bug. CC0, so nothing constrains reuse.
 - **cwe** — The classification of software weakness TYPES — what class of bug this is, as opposed to CVE's which instance. What every scanner reports in.
 - **d3fend** — The counterpart to ATT&CK: what you DO about a technique, as a real ontology with typed relations back to the attacks it addresses.
 - **mitre-attack** — Adversary tactics and techniques — the vocabulary every detection, threat-intel and red-team report already speaks. MITRE grants a royalty-free commercial licence explicitly.
@@ -470,7 +484,6 @@ close to what montology enforces on your own vocabulary.
 | **wikidata-taxonomy (extraction CLI)** *(evaluate)* | MIT (the tool; Wikidata's own data is CC0) | ✅ yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
 
 - **wikidata-taxonomy** — A tool, not a dataset — it mints a niche taxonomy out of Wikidata on demand. The open question is whether the niche you need is actually in there; Wikidata's coverage is wide and its depth is uneven.
-
 An entry marked *(evaluate)* is promising with a question still open;
 the note says which. Declined candidates are not listed — a registry that is
 one-third things nobody should use reads as a search result, not a
@@ -484,6 +497,13 @@ What exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and
 dataset metadata (`croissant`), not architecture. If you are naming the parts
 of an agent system, you are genuinely early, and montology's own gate is the
 tool for it — there is no standard to join yet.
+
+That gap is now a plan rather than a shrug: [`mon-uxs5`](.tickets/mon-uxs5.md)
+is the epic to author one, following the LOT methodology with NeOn's
+reuse-first scenarios, and governed by the rule that already decides what
+montology will and will not model — **an edge nothing can check is a
+diagram**. Its second phase is a reuse map against all 56 sources here,
+because a term PROV-O already has is a term we would get wrong by minting.
 
 *Every licence here was checked against its source on 2026-09-01 and is recorded AS PUBLISHED. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
 

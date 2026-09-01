@@ -321,6 +321,58 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "yes-attribution",
     ),
     TaxonomySource(
+        "openapi", "OpenAPI Specification",
+        "https://spec.openapis.org/oas/latest.html",
+        "yaml", "software & infrastructure", "ready",
+        "The vocabulary of an HTTP API — operation, path, parameter, schema, "
+        "response, security scheme. Whatever your service calls these things "
+        "internally, this is what its consumers call them.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "asyncapi", "AsyncAPI Specification",
+        "https://www.asyncapi.com/docs/reference/specification/latest",
+        "yaml", "software & infrastructure", "ready",
+        "OpenAPI's counterpart for event-driven systems: channels, messages, "
+        "operations, bindings. The names for the half of a distributed system "
+        "that is not request/response.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "json-schema", "JSON Schema",
+        "https://json-schema.org/specification",
+        "json", "software & infrastructure", "ready",
+        "How to say what a document must look like — the shape language "
+        "OpenAPI, AsyncAPI and Croissant all build on.",
+        "BSD-style (JSON Schema Specification Authors)", "yes",
+    ),
+    TaxonomySource(
+        "cdevents", "CDEvents (Continuous Delivery Foundation)",
+        "https://cdevents.dev/",
+        "json", "software & infrastructure", "ready",
+        "A common vocabulary for what happens in a pipeline — build queued, "
+        "artifact published, service deployed — so tools from different vendors "
+        "describe the same event the same way.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "conventional-commits", "Conventional Commits",
+        "https://www.conventionalcommits.org/",
+        "markdown", "software & infrastructure", "ready",
+        "A tiny, near-universal taxonomy of CHANGE: feat, fix, refactor, chore, "
+        "and what each implies for a version. The smallest useful vocabulary on "
+        "this page and probably the most widely adopted.",
+        "MIT", "yes",
+    ),
+    TaxonomySource(
+        "semver", "Semantic Versioning",
+        "https://semver.org/",
+        "markdown", "software & infrastructure", "ready",
+        "What MAJOR, MINOR and PATCH mean — a three-term vocabulary that ends "
+        "the argument about whether a change is breaking.",
+        "CC BY 3.0", "yes-attribution",
+    ),
+    TaxonomySource(
         "swo", "SWO — the Software Ontology",
         "https://obofoundry.org/ontology/swo.html",
         "rdf", "software & infrastructure", "ready",
@@ -507,6 +559,14 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "is, as opposed to CVE's which instance. What every scanner reports in.",
         "MITRE royalty-free licence (research, development AND commercial; "
         "reproduce the copyright designation)", "yes-attribution",
+    ),
+    TaxonomySource(
+        "cve", "CVE — Common Vulnerabilities and Exposures",
+        "https://www.cve.org/",
+        "json", "security", "ready",
+        "The identifier for a specific vulnerability instance — the WHICH to "
+        "CWE's what-class-of-bug. CC0, so nothing constrains reuse.",
+        "CC0 1.0", "public-domain",
     ),
     TaxonomySource(
         "d3fend", "MITRE D3FEND — defensive countermeasures",

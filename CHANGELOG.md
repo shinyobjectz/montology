@@ -88,6 +88,15 @@ that section is long on purpose.
   ontology** — FIPA is two decades dormant and nothing replaced it — so
   what exists for AI is risk vocabulary and dataset metadata, not
   architecture. The README and the skill both say so.
+- **56 sources.** Software development filled out with the vocabularies teams
+  actually speak: OpenAPI, AsyncAPI, JSON Schema, CDEvents, Conventional
+  Commits and SemVer, plus CVE in security. `software & infrastructure` is
+  now the largest domain at 13.
+- **[`mon-uxs5`](.tickets/mon-uxs5.md)** — the epic to author the agent
+  architecture ontology that does not exist, following LOT with NeOn's
+  reuse-first scenarios, governed by `mon-by5n`'s rule that an edge nothing
+  can check is a diagram. Phase 2 is a reuse map against all 56 sources
+  before a single term is minted.
 
 ### Changed
 
