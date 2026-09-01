@@ -374,20 +374,22 @@ def onto_audit(threshold: float = typer.Option(0.70, "--threshold", help="Cosine
 
 
 @onto_app.command("sources")
-def onto_sources(status: str = typer.Argument("", help="core | extra | evaluate | skip. Omit for all.")) -> None:
+def onto_sources(group: str = typer.Argument("", help="core, or a domain group. Omit for all.")) -> None:
     """The public taxonomies montology knows about, with their licences.
 
-    A catalogue, not an ingest: each entry carries where the data lives,
-    whether it is worth reaching for, the licence AS PUBLISHED, and the
-    practical commercial verdict — because the question that decides
-    whether you may ship against a vocabulary is the licence, and it is
-    the one every automated scan gets wrong on the IAB set.
+    Grouped by who it is for: `core` is any business in any industry,
+    everything else names its domain. A catalogue, not an ingest — each
+    entry carries where the data lives, whether it is worth reaching for,
+    the licence AS PUBLISHED and the practical commercial verdict, because
+    the question that decides whether you may ship against a vocabulary is
+    the licence, and it is the one every automated scan gets wrong on the
+    IAB set.
     """
     from montology_ontology import render_sources
 
     from ._ui import emit_all
 
-    emit_all(render_sources(status))
+    emit_all(render_sources(group))
 
 
 @onto_app.command("list")

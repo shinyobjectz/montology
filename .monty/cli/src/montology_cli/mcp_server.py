@@ -143,17 +143,21 @@ def structural_search(pattern: str, lang: str = "") -> str:
 
 
 @mcp.tool
-def ontology_sources(status: str = "") -> str:
-    """Public taxonomies montology knows about (status: core | extra |
-    evaluate | skip; empty for all) — the domain each covers, where the
-    data lives, the licence as published, and whether it is commercially
-    usable. Reach for one when a user's vocabulary needs to join an
-    industry standard rather than be invented. Relay the licence with the
-    recommendation: three of the five `core` entries are CC BY 3.0 and
-    require attribution, and `schemaorg` is share-alike."""
+def ontology_sources(group: str = "") -> str:
+    """Public taxonomies worth joining, grouped by who they are for —
+    `core` (any business, any industry), `advertising & media`,
+    `retail & e-commerce`, `trade & occupations`, `general knowledge`;
+    empty for all. Reach for one when a user's vocabulary needs to join an
+    industry standard rather than invent a synonym.
+
+    ALWAYS relay the licence with the recommendation. The IAB entries are
+    CC BY 3.0 and need attribution (their repo has no LICENSE file, so
+    automated scans call them unlicensed); `schemaorg` is share-alike; and
+    `google-product` grants nothing at all — never present it as safe to
+    redistribute."""
     from montology_ontology import render_sources
 
-    return "\n".join(render_sources(status))
+    return "\n".join(render_sources(group))
 
 
 @mcp.tool

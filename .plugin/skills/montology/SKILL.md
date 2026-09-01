@@ -211,20 +211,21 @@ embeddings (~30 MB, numpy-only) power it:
 
 ## The taxonomy library: don't invent what an industry already agreed
 
-`monty onto sources [core|extra|evaluate|skip]` (or `ontology_sources`)
-lists the public taxonomies montology has vetted — IAB, Google Product
-and Topics, Schema.org, Shopify, NAICS/SIC, Harvard's trade and
-occupation classifications and more, across advertising, retail, finance,
-news and government. Consult it BEFORE authoring a word in a domain that
-already has a standard: joining one beats minting a synonym, and
-`monty onto collide <term> <system> …` records whose word it is.
+`monty onto sources [group]` (or `ontology_sources`) lists the public
+taxonomies worth joining, grouped by who they are for: **core** (any
+business — Schema.org, NAICS, SIC), advertising & media, retail &
+e-commerce, trade & occupations, general knowledge. Consult it BEFORE
+authoring a word in a domain that already has a standard: joining one
+beats minting a synonym, and `monty onto collide <term> <system> …`
+records whose word it is.
 
 Each entry carries the licence AS PUBLISHED and a commercial verdict.
-**Relay both with any recommendation** — three of the five `core` entries
-are CC BY 3.0 and need attribution (their repo has no LICENSE file, so
-every automated scan calls them unlicensed), `schemaorg` is share-alike,
-and anything marked `verify` has terms montology could not establish.
-Never present a `verify` or a `skip` as safe to ship against.
+**Relay both with any recommendation.** The IAB entries are CC BY 3.0 and
+need attribution (their repo has no LICENSE file, so automated scans call
+them unlicensed); `schemaorg` is share-alike, which reaches into anything
+derived from it; and **`google-product` grants nothing at all** — never
+present it as safe to redistribute, and point at `shopify-product`
+instead when someone needs a product taxonomy they can ship.
 
 ## Structural search
 
