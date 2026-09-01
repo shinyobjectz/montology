@@ -211,10 +211,12 @@ embeddings (~30 MB, numpy-only) power it:
 
 ## The taxonomy library: don't invent what an industry already agreed
 
-`monty onto sources [group]` (or `ontology_sources`) lists the public
-taxonomies worth joining, grouped by who they are for: **core** (any
-business — Schema.org, NAICS, SIC), advertising & media, retail &
-e-commerce, trade & occupations, general knowledge. Consult it BEFORE
+`monty onto sources [group]` (or `ontology_sources`) lists 35 public
+ontologies across 12 domains, grouped by who they are for: **core** (any
+business — Schema.org, NAICS/SIC, Dublin Core, SKOS, PROV-O, QUDT, BFO,
+RO), health & life sciences, finance, retail, advertising, agriculture,
+environment, security, geography, trade & occupations, research &
+information, general knowledge. Consult it BEFORE
 authoring a word in a domain that already has a standard: joining one
 beats minting a synonym, and `monty onto collide <term> <system> …`
 records whose word it is.

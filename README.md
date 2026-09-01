@@ -256,42 +256,102 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-Your vocabulary rarely starts from nothing. Where an industry has already
-agreed on a word, joining that standard beats minting a synonym — so
-montology keeps a shortlist of public taxonomies, grouped by who they are
-for and browsable with `monty onto sources [group]` or the
-`ontology_sources` MCP tool.
+**35 public ontologies and taxonomies across 12 domains**,
+each one checked for whether it is real, whether it is maintained, and
+whether **you may ship against it**. Browse with `monty onto sources [group]`
+or the `ontology_sources` MCP tool.
 
-It is a **shortlist on purpose**: a registry that lists everything is a
-search engine, and nobody needs another one. Every licence was checked
-against its source, so there is no "unknown" column to squint at — and
-three results are worth knowing before you reach for anything:
+Your vocabulary rarely starts from nothing. Where an industry has already
+agreed on a word, joining that standard beats minting a synonym — and where
+it hasn't, montology's own gate is what keeps yours honest.
+
+**How these were chosen.** There are thousands of ontologies out there —
+[BioPortal](https://bioportal.bioontology.org/) alone lists 1,283 — but they
+are overwhelmingly life-sciences, because genomics forced that field to agree
+on words and no comparable pressure existed elsewhere. So this is a curated
+shortlist, not a dump: entries had to be actively maintained, used by people
+other than their authors, and carry a licence that permits commercial use.
+Most of the rigorous ones follow the
+[OBO Foundry principles](https://obofoundry.org/principles/fp-000-summary.html)
+— open licence, versioning, textual definitions, stable identifiers, a named
+authority — which is the closest thing this field has to a quality bar, and
+very close to what montology enforces on your own vocabulary.
+
+**Three licence findings worth knowing before you reach for anything:**
 
 - **The IAB taxonomies declare CC BY 3.0 in a README and ship no `LICENSE`
   file**, so GitHub and every automated scan report them as unlicensed.
   They are usable; attribution is required.
 - **`google-product` grants nothing.** A bare `.txt` with no licence and no
-  terms page. Published so you can build a feed — not permission to ship it
-  inside a product. Reach for `shopify-product` when you need one you may
-  redistribute.
+  terms page — published so you can build a feed, which is not permission to
+  ship it inside a product. Use `shopify-product` when you need one you may
+  redistribute. It is the only 🚫 on this page, and it is here as a warning.
 - **`schemaorg` is share-alike**, the one licence here that can reach back
   into a vocabulary you build on top of it.
 
 ### `core` — any business, any industry
 
-| taxonomy | licence | commercial | source |
+| ontology | licence | commercial | source |
 |---|---|---|---|
+| **BFO — Basic Formal Ontology** | CC BY 4.0 | ✅ yes — attribution | [`bfo`](https://obofoundry.org/ontology/bfo.html) |
+| **DCMI Metadata Terms (Dublin Core)** | CC BY 4.0 | ✅ yes — attribution | [`dublin-core`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) |
 | **NAICS (North American Industry Classification System)** | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`naics`](https://www.census.gov/naics/) |
+| **PROV-O — the Provenance Ontology (W3C)** | W3C Software and Document Licence | ✅ yes | [`prov-o`](https://www.w3.org/TR/prov-o/) |
+| **QUDT — Quantities, Units, Dimensions and Types** | CC BY 4.0 | ✅ yes — attribution | [`qudt`](https://github.com/qudt/qudt-public-repo) |
+| **RO — the Relation Ontology** | CC0 1.0 | 🟢 public domain | [`ro`](https://obofoundry.org/ontology/ro.html) |
 | **Schema.org vocabulary (types + properties)** | CC BY-SA 3.0 | ⚠️ yes — share-alike | [`schemaorg`](https://schema.org/version/latest/schemaorg-current-https.jsonld) |
 | **SIC codes** | US federal work — public domain (17 U.S.C. §105) | 🟢 public domain | [`sic`](https://www.sec.gov/corpfin/division-of-corporation-finance-standard-industrial-classification-sic-code-list) |
+| **SKOS — Simple Knowledge Organization System (W3C)** | W3C Software and Document Licence | ✅ yes | [`skos`](https://www.w3.org/TR/skos-reference/) |
 
+- **bfo** — The upper ontology (ISO/IEC 21838-2) most serious domain ontologies sit on: continuant vs occurrent, the distinctions you otherwise argue about from scratch. Reach for it when your ontology needs a spine.
+- **dublin-core** — The 25-year-old lingua franca for describing ANY resource — title, creator, date, subject, rights. If your system has records, it already half-speaks this.
 - **naics** — What industry is this? Firmographics for B2B, and the answer every registry and filing expects. Take it from the Census: the convenience repackagings declare no licence, and the authority is public domain.
+- **prov-o** — Who made this, from what, and when. Every audit, lineage and reproducibility story reinvents this badly; it is already standard.
+- **qudt** — Units and what they measure, done properly. Any system carrying a number with a unit has this problem, and almost all of them solve it with a string column.
+- **ro** — Standard relations — part_of, derives_from, participates_in — so your edges mean what everyone else's edges mean. The counterpart to BFO's nouns, and montology's own `onto relate` is the same idea.
 - **schemaorg** — The universal web vocabulary every industry structures data in — 2,454 classes and properties, and what SEO structured-data work speaks. If you join one thing on this page, join this.
 - **sic** — NAICS's predecessor, still what many registries and filings use. From the SEC for the same reason NAICS comes from the Census.
+- **skos** — Not a vocabulary but the standard SHAPE of one: concepts, broader/narrower, preferred and alternate labels. Half the taxonomies on this page are published in it, and it is what to publish yours in.
+
+### health & life sciences
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **ChEBI — Chemical Entities of Biological Interest** | CC BY 4.0 | ✅ yes — attribution | [`chebi`](https://obofoundry.org/ontology/chebi.html) |
+| **Human Disease Ontology** | CC0 1.0 | 🟢 public domain | [`doid`](https://obofoundry.org/ontology/doid.html) |
+| **Gene Ontology** | CC BY 4.0 | ✅ yes — attribution | [`go`](https://obofoundry.org/ontology/go.html) |
+| **Mondo Disease Ontology** | CC BY 4.0 | ✅ yes — attribution | [`mondo`](https://obofoundry.org/ontology/mondo.html) |
+| **NCI Thesaurus (OBO edition)** | CC BY 4.0 | ✅ yes — attribution | [`ncit`](https://obofoundry.org/ontology/ncit.html) |
+| **Uberon multi-species anatomy ontology** | CC BY 3.0 | ✅ yes — attribution | [`uberon`](https://obofoundry.org/ontology/uberon.html) |
+
+- **chebi** — Molecules and their roles, from EMBL-EBI. What to join if anything in your system is a compound, a drug or an ingredient.
+- **doid** — The long-standing disease vocabulary Mondo builds on; CC0, so the one to take when attribution is inconvenient.
+- **go** — The most-used ontology in science, full stop: molecular function, biological process, cellular component. The proof that a maintained vocabulary compounds in value.
+- **mondo** — One disease vocabulary merging OMIM, Orphanet, DOID and NCIt — built precisely because those disagreed. The reference for naming a disease.
+- **ncit** — The US National Cancer Institute's reference terminology — broad clinical and biomedical coverage, far past oncology.
+- **uberon** — Anatomy across species, cross-referenced to the species-specific ones. The anatomical vocabulary with the widest reach.
+
+### finance
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **FIBO — Financial Industry Business Ontology** | MIT | ✅ yes | [`fibo`](https://github.com/edmcouncil/fibo) |
+
+- **fibo** — The EDM Council's model of financial instruments, entities, contracts and market roles — the serious answer to what a 'counterparty' or a 'derivative' IS. MIT-licensed, which is unusual for finance and the reason this replaced the proprietary ICB that used to sit here.
+
+### retail & e-commerce
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **Google Product Taxonomy** | none — a bare .txt on www.google.com, no licence, no terms page, and developers.google.com's CC BY 4.0 site policy does not reach it | 🚫 unlicensed | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
+| **Shopify Product Taxonomy** | MIT | ✅ yes | [`shopify-product`](https://github.com/Shopify/product-taxonomy) |
+
+- **google-product** — 5k+ categories every Shopping feed must speak. Listed because you will need it and because the licence is a trap: published FOR building feeds, which is not permission to ship it inside your own product. Reach for shopify-product when you need one you may redistribute.
+- **shopify-product** — 10k+ categories with attributes — richer than Google's tree, and the one in this pair you may actually redistribute.
 
 ### advertising & media
 
-| taxonomy | licence | commercial | source |
+| ontology | licence | commercial | source |
 |---|---|---|---|
 | **Google NLP Content Categories** | CC BY 4.0 (Google Cloud docs) | ✅ yes — attribution | [`google-nlp-categories`](https://cloud.google.com/natural-language/docs/categories) |
 | **Google Topics API Taxonomy** | W3C Software and Document Licence | ✅ yes | [`google-topics`](https://github.com/patcg-individual-drafts/topics) |
@@ -311,27 +371,61 @@ three results are worth knowing before you reach for anything:
 - **iab-mapper** — Mappings, not a taxonomy — the open question is whether you have 2.x codes in the wild. Pertinent the day you meet one.
 - **iptc-media-topics** — 1,200 terms, 13 languages, a real standard — the open question is RDF/SKOS parsing, which is its own project. Decide when PR or content work needs it.
 
-### retail & e-commerce
+### agriculture & food
 
-| taxonomy | licence | commercial | source |
+| ontology | licence | commercial | source |
 |---|---|---|---|
-| **Google Product Taxonomy** | none — a bare .txt on www.google.com, no licence, no terms page, and developers.google.com's CC BY 4.0 site policy does not reach it | 🚫 unlicensed | [`google-product`](https://www.google.com/basepages/producttype/taxonomy.en-US.txt) |
-| **Shopify Product Taxonomy** | MIT | ✅ yes | [`shopify-product`](https://github.com/Shopify/product-taxonomy) |
+| **AGRO — the Agronomy Ontology** | CC BY 4.0 | ✅ yes — attribution | [`agro`](https://obofoundry.org/ontology/agro.html) |
+| **FoodOn — the Food Ontology** | CC BY 4.0 | ✅ yes — attribution | [`foodon`](https://obofoundry.org/ontology/foodon.html) |
 
-- **google-product** — 5k+ categories every Shopping feed must speak. Listed because you will need it and because the licence is a trap: published FOR building feeds, which is not permission to ship it inside your own product. Reach for shopify-product when you need one you may redistribute.
-- **shopify-product** — 10k+ categories with attributes — richer than Google's tree, and the one in this pair you may actually redistribute.
+- **agro** — Agronomic practices, traits and inputs; joins FoodOn upstream of the plate.
+- **foodon** — Food products, sources and processing — for menus, supply chains, nutrition and recall traceability alike.
+
+### environment & climate
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **ENVO — the Environment Ontology** | CC0 1.0 | 🟢 public domain | [`envo`](https://obofoundry.org/ontology/envo.html) |
+
+- **envo** — Biomes, environmental materials and features — the vocabulary for where something is, in ESG, climate and sustainability reporting.
+
+### security
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **MITRE ATT&CK** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`mitre-attack`](https://attack.mitre.org/) |
+
+- **mitre-attack** — Adversary tactics and techniques — the vocabulary every detection, threat-intel and red-team report already speaks. MITRE grants a royalty-free commercial licence explicitly.
+
+### geography
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **GeoNames ontology + gazetteer** | CC BY 4.0 | ✅ yes — attribution | [`geonames`](https://www.geonames.org/ontology/documentation.html) |
+
+- **geonames** — 11M+ place names with a feature-type vocabulary (country, city, admin division, landmark). The open answer to 'what kind of place is this'.
 
 ### trade & occupations
 
-| taxonomy | licence | commercial | source |
+| ontology | licence | commercial | source |
 |---|---|---|---|
 | **Harvard Growth Lab classifications (ISIC/HS/SITC/O*NET)** *(evaluate)* | BSD-3-Clause | ✅ yes | [`cid-classifications`](https://github.com/cid-harvard/classifications) |
 
 - **cid-classifications** — Many systems in one cleaned repo — incl. O*NET occupations for workforce mapping. The open question is which one you need: it is heavy, and taking all of it is taking four vocabularies you did not ask for.
 
-### General Knowledge
+### research & information
 
-| taxonomy | licence | commercial | source |
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **DCAT — Data Catalog Vocabulary (W3C)** | W3C Software and Document Licence | ✅ yes | [`dcat`](https://www.w3.org/TR/vocab-dcat-3/) |
+| **IAO — Information Artifact Ontology** | CC BY 4.0 | ✅ yes — attribution | [`iao`](https://obofoundry.org/ontology/iao.html) |
+
+- **dcat** — How to describe a dataset and a catalogue of them — what every government open-data portal publishes in, and what a data catalogue should not reinvent.
+- **iao** — Documents, datasets, identifiers, measurements — what an information thing IS, as opposed to what it is about. The distinction most data models blur.
+
+### general knowledge
+
+| ontology | licence | commercial | source |
 |---|---|---|---|
 | **wikidata-taxonomy (extraction CLI)** *(evaluate)* | MIT (the tool; Wikidata's own data is CC0) | ✅ yes | [`wikidata-taxonomy`](https://github.com/nichtich/wikidata-taxonomy) |
 

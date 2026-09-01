@@ -62,9 +62,16 @@ COMMERCIAL_MEANING: dict[str, str] = {
 #: Groups in the order they should be read: everyone first, then by domain.
 GROUPS: tuple[str, ...] = (
     "core",
-    "advertising & media",
+    "health & life sciences",
+    "finance",
     "retail & e-commerce",
+    "advertising & media",
+    "agriculture & food",
+    "environment & climate",
+    "security",
+    "geography",
     "trade & occupations",
+    "research & information",
     "general knowledge",
 )
 
@@ -109,6 +116,59 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "NAICS's predecessor, still what many registries and filings use. From "
         "the SEC for the same reason NAICS comes from the Census.",
         "US federal work — public domain (17 U.S.C. §105)", "public-domain",
+    ),
+    TaxonomySource(
+        "dublin-core", "DCMI Metadata Terms (Dublin Core)",
+        "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/",
+        "rdf", "core", "ready",
+        "The 25-year-old lingua franca for describing ANY resource — title, "
+        "creator, date, subject, rights. If your system has records, it already "
+        "half-speaks this.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "skos", "SKOS — Simple Knowledge Organization System (W3C)",
+        "https://www.w3.org/TR/skos-reference/",
+        "rdf", "core", "ready",
+        "Not a vocabulary but the standard SHAPE of one: concepts, broader/"
+        "narrower, preferred and alternate labels. Half the taxonomies on this "
+        "page are published in it, and it is what to publish yours in.",
+        "W3C Software and Document Licence", "yes",
+    ),
+    TaxonomySource(
+        "prov-o", "PROV-O — the Provenance Ontology (W3C)",
+        "https://www.w3.org/TR/prov-o/",
+        "rdf", "core", "ready",
+        "Who made this, from what, and when. Every audit, lineage and "
+        "reproducibility story reinvents this badly; it is already standard.",
+        "W3C Software and Document Licence", "yes",
+    ),
+    TaxonomySource(
+        "qudt", "QUDT — Quantities, Units, Dimensions and Types",
+        "https://github.com/qudt/qudt-public-repo",
+        "rdf", "core", "ready",
+        "Units and what they measure, done properly. Any system carrying a "
+        "number with a unit has this problem, and almost all of them solve it "
+        "with a string column.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "bfo", "BFO — Basic Formal Ontology",
+        "https://obofoundry.org/ontology/bfo.html",
+        "rdf", "core", "ready",
+        "The upper ontology (ISO/IEC 21838-2) most serious domain ontologies "
+        "sit on: continuant vs occurrent, the distinctions you otherwise argue "
+        "about from scratch. Reach for it when your ontology needs a spine.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "ro", "RO — the Relation Ontology",
+        "https://obofoundry.org/ontology/ro.html",
+        "rdf", "core", "ready",
+        "Standard relations — part_of, derives_from, participates_in — so your "
+        "edges mean what everyone else's edges mean. The counterpart to BFO's "
+        "nouns, and montology's own `onto relate` is the same idea.",
+        "CC0 1.0", "public-domain",
     ),
 
     # ── advertising & media ─────────────────────────────────────────────
@@ -218,6 +278,140 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "demand. The open question is whether the niche you need is actually in "
         "there; Wikidata's coverage is wide and its depth is uneven.",
         "MIT (the tool; Wikidata's own data is CC0)", "yes",
+    ),
+
+    # ── health & life sciences ──────────────────────────────────────────
+    TaxonomySource(
+        "mondo", "Mondo Disease Ontology",
+        "https://obofoundry.org/ontology/mondo.html",
+        "rdf", "health & life sciences", "ready",
+        "One disease vocabulary merging OMIM, Orphanet, DOID and NCIt — built "
+        "precisely because those disagreed. The reference for naming a disease.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "doid", "Human Disease Ontology",
+        "https://obofoundry.org/ontology/doid.html",
+        "rdf", "health & life sciences", "ready",
+        "The long-standing disease vocabulary Mondo builds on; CC0, so the one "
+        "to take when attribution is inconvenient.",
+        "CC0 1.0", "public-domain",
+    ),
+    TaxonomySource(
+        "ncit", "NCI Thesaurus (OBO edition)",
+        "https://obofoundry.org/ontology/ncit.html",
+        "rdf", "health & life sciences", "ready",
+        "The US National Cancer Institute's reference terminology — broad "
+        "clinical and biomedical coverage, far past oncology.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "go", "Gene Ontology",
+        "https://obofoundry.org/ontology/go.html",
+        "rdf", "health & life sciences", "ready",
+        "The most-used ontology in science, full stop: molecular function, "
+        "biological process, cellular component. The proof that a maintained "
+        "vocabulary compounds in value.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "chebi", "ChEBI — Chemical Entities of Biological Interest",
+        "https://obofoundry.org/ontology/chebi.html",
+        "rdf", "health & life sciences", "ready",
+        "Molecules and their roles, from EMBL-EBI. What to join if anything in "
+        "your system is a compound, a drug or an ingredient.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "uberon", "Uberon multi-species anatomy ontology",
+        "https://obofoundry.org/ontology/uberon.html",
+        "rdf", "health & life sciences", "ready",
+        "Anatomy across species, cross-referenced to the species-specific ones. "
+        "The anatomical vocabulary with the widest reach.",
+        "CC BY 3.0", "yes-attribution",
+    ),
+
+    # ── finance ─────────────────────────────────────────────────────────
+    TaxonomySource(
+        "fibo", "FIBO — Financial Industry Business Ontology",
+        "https://github.com/edmcouncil/fibo",
+        "rdf", "finance", "ready",
+        "The EDM Council's model of financial instruments, entities, contracts "
+        "and market roles — the serious answer to what a 'counterparty' or a "
+        "'derivative' IS. MIT-licensed, which is unusual for finance and the "
+        "reason this replaced the proprietary ICB that used to sit here.",
+        "MIT", "yes",
+    ),
+
+    # ── agriculture & food ──────────────────────────────────────────────
+    TaxonomySource(
+        "foodon", "FoodOn — the Food Ontology",
+        "https://obofoundry.org/ontology/foodon.html",
+        "rdf", "agriculture & food", "ready",
+        "Food products, sources and processing — for menus, supply chains, "
+        "nutrition and recall traceability alike.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "agro", "AGRO — the Agronomy Ontology",
+        "https://obofoundry.org/ontology/agro.html",
+        "rdf", "agriculture & food", "ready",
+        "Agronomic practices, traits and inputs; joins FoodOn upstream of the "
+        "plate.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+
+    # ── environment & climate ───────────────────────────────────────────
+    TaxonomySource(
+        "envo", "ENVO — the Environment Ontology",
+        "https://obofoundry.org/ontology/envo.html",
+        "rdf", "environment & climate", "ready",
+        "Biomes, environmental materials and features — the vocabulary for "
+        "where something is, in ESG, climate and sustainability reporting.",
+        "CC0 1.0", "public-domain",
+    ),
+
+    # ── security ────────────────────────────────────────────────────────
+    TaxonomySource(
+        "mitre-attack", "MITRE ATT&CK",
+        "https://attack.mitre.org/",
+        "json", "security", "ready",
+        "Adversary tactics and techniques — the vocabulary every detection, "
+        "threat-intel and red-team report already speaks. MITRE grants a "
+        "royalty-free commercial licence explicitly.",
+        "MITRE royalty-free licence (research, development AND commercial; "
+        "reproduce the copyright designation)", "yes-attribution",
+    ),
+
+    # ── geography ───────────────────────────────────────────────────────
+    TaxonomySource(
+        "geonames", "GeoNames ontology + gazetteer",
+        "https://www.geonames.org/ontology/documentation.html",
+        "rdf", "geography", "ready",
+        "11M+ place names with a feature-type vocabulary (country, city, "
+        "admin division, landmark). The open answer to 'what kind of place "
+        "is this'.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+
+    # ── research & information ──────────────────────────────────────────
+    TaxonomySource(
+        "iao", "IAO — Information Artifact Ontology",
+        "https://obofoundry.org/ontology/iao.html",
+        "rdf", "research & information", "ready",
+        "Documents, datasets, identifiers, measurements — what an information "
+        "thing IS, as opposed to what it is about. The distinction most data "
+        "models blur.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "dcat", "DCAT — Data Catalog Vocabulary (W3C)",
+        "https://www.w3.org/TR/vocab-dcat-3/",
+        "rdf", "research & information", "ready",
+        "How to describe a dataset and a catalogue of them — what every "
+        "government open-data portal publishes in, and what a data catalogue "
+        "should not reinvent.",
+        "W3C Software and Document Licence", "yes",
     ),
 )
 

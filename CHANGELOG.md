@@ -66,6 +66,17 @@ that section is long on purpose.
   behind one field. NAICS and SIC now cite the Census and the SEC rather
   than unlicensed repackagings, which makes them outright public domain.
   Also rendered at the bottom of the README.
+- **35 ontologies across 12 domains.** Grouped by who they are for, with
+  `core` meaning any business in any industry — Schema.org, NAICS/SIC,
+  Dublin Core, SKOS, PROV-O, QUDT, BFO and RO. New domains: health & life
+  sciences (GO, Mondo, DOID, NCIt, ChEBI, Uberon), finance (FIBO, MIT —
+  which replaced the proprietary ICB), agriculture & food, environment &
+  climate, security (MITRE ATT&CK), geography (GeoNames), and research &
+  information (IAO, DCAT). Curated rather than harvested: BioPortal alone
+  lists 1,283 ontologies, but they are overwhelmingly life-sciences, so
+  dumping them in would have made the library larger and LESS multi-domain.
+  Entries had to be maintained, used beyond their authors, and carry a
+  licence permitting commercial use.
 
 ### Changed
 
