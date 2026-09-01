@@ -28,6 +28,7 @@ LANG_BY_EXT = {
     ".cs": "csharp",
     ".php": "php",
     ".lua": "lua",
+    ".gd": "gdscript",
 }
 
 # what counts as "a declaration" per language: (query, capture kind label)
@@ -117,6 +118,20 @@ DECL_QUERIES: dict[str, str] = {
         (class_specifier name: (type_identifier) @name.class)
         (struct_specifier name: (type_identifier) @name.struct)
     """,
+    # GDScript (Godot 4). `class_name Foo` names the script itself — the
+    # word the rest of the project uses — so it is a class; an inner
+    # `class Bar:` is also a class. A signal is a named thing people say out
+    # loud ("the died signal"), so it counts; a plain `var` is a member and
+    # counts as a variable, an `@export var` no differently.
+    "gdscript": """
+        (class_name_statement (name) @name.class)
+        (class_definition (name) @name.class)
+        (function_definition (name) @name.function)
+        (signal_statement (name) @name.signal)
+        (const_statement (name) @name.const)
+        (variable_statement (name) @name.variable)
+        (enum_definition (name) @name.enum)
+    """,
 }
 
 # What a name is DECLARED TO BE, where the language says so out loud.
@@ -159,6 +174,12 @@ TYPE_QUERIES: dict[str, str] = {
     "swift": """
         (typealias_declaration name: (type_identifier) @type.name
                                name: (_) @type.value)
+    """,
+    # GDScript: `var health: int` says the type out loud; `var x := 1` and an
+    # untyped `var y` say nothing and are not matched. Constants likewise.
+    "gdscript": """
+        (variable_statement (name) @type.name (type) @type.value)
+        (const_statement (name) @type.name (type) @type.value)
     """,
 }
 
