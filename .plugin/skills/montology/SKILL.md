@@ -222,6 +222,17 @@ authoring a word in a domain that already has a standard: joining one
 beats minting a synonym, and `monty onto collide <term> <system> …`
 records whose word it is.
 
+`monty onto sources --search <query>` (or `ontology_sources(search=…)`)
+searches that shortlist AND a second, harvested tier: 177 active OBO
+Foundry ontologies indexed straight from the registry. **The two are not
+interchangeable and must not be relayed as one.** A shortlist hit was
+read here and carries a ruling and a checked verdict — recommend it. A
+harvested hit is a title, a blurb and a licence LABEL nobody here
+verified — say "this exists, here is what its publisher claims", never
+"use this", and never call its licence checked. `--refresh` re-fetches
+the registry into `.monty/cache/`; without it the cached copy answers
+offline.
+
 Each entry carries the licence AS PUBLISHED and a commercial verdict.
 **Relay both with any recommendation.** The IAB entries are CC BY 3.0 and
 need attribution (their repo has no LICENSE file, so automated scans call

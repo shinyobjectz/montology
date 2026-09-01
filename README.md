@@ -277,6 +277,20 @@ of the rigorous ones follow the
 authority — which is the closest thing this field has to a quality bar, and
 close to what montology enforces on your own vocabulary.
 
+**The second tier, for when the shortlist has no answer.** "What should I
+join?" and "does one already exist for this?" are different questions, and
+answering the second from a 56-row list answers it wrong. So
+`monty onto sources --search <query>` searches the shortlist *and* a
+harvested index: the 177 active OBO Foundry ontologies that declare a
+licence, lifted verbatim from
+[its registry](https://obofoundry.org/registry/ontologies.jsonld) and
+cached under `.monty/cache/` so it works offline. The two tiers print under
+separate headings and mean different things — tier 1 was read here and
+carries a verdict; tier 2 is what its publisher says about itself, with
+nobody's judgement attached. `--refresh` re-fetches and reports the
+arithmetic: what came in, what stayed, and which filter dropped the rest
+(unmaintained, no declared licence, or already in the shortlist).
+
 **Three licence findings worth knowing before you reach for anything:**
 
 - **The IAB taxonomies declare CC BY 3.0 in a README and ship no `LICENSE`

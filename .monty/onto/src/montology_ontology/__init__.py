@@ -21,6 +21,12 @@ from .semantics import near_pairs
 from .semantics import similar as semantic_similar
 from .sources import (SOURCES, by_group as sources_by_group,
                       groups as source_groups, render as render_sources)
+# tier 2, aliased apart from tier 1 on purpose: `harvest` already belongs to
+# the questions in this namespace, and `search_index` sitting beside
+# `render_sources` is the tier split showing up where a caller has to choose.
+from .index import (Harvest, IndexEntry, harvest as harvest_index,
+                    render_harvest, render_search,
+                    search as search_index)
 from .upstream import pinned_upstream, pull
 
 __all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "answer", "apply_intent", "ask", "relate", "relations", "unrelate",
@@ -29,4 +35,4 @@ __all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "answer", "apply_intent", "ask
            "doctrines", "except_add", "except_drop", "exceptions", "genera", "genus_add", "genus_chain",
            "genus_drop", "inherited", "rigidity_set",
            "overloads", "record_run", "rename_word", "renames",
-           "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "near_pairs", "semantic_audit", "semantic_similar", "SOURCES", "sources_by_group", "source_groups", "render_sources", "token_add", "tokens", "words"]
+           "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "near_pairs", "semantic_audit", "semantic_similar", "SOURCES", "sources_by_group", "source_groups", "render_sources", "Harvest", "IndexEntry", "harvest_index", "render_harvest", "render_search", "search_index", "token_add", "tokens", "words"]

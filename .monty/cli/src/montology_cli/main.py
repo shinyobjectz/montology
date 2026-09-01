@@ -374,7 +374,11 @@ def onto_audit(threshold: float = typer.Option(0.70, "--threshold", help="Cosine
 
 
 @onto_app.command("sources")
-def onto_sources(group: str = typer.Argument("", help="core, or a domain group. Omit for all.")) -> None:
+def onto_sources(
+    group: str = typer.Argument("", help="core, or a domain group. Omit for all."),
+    search: str = typer.Option("", "--search", help="Search BOTH tiers: the shortlist and the harvested index."),
+    refresh: bool = typer.Option(False, "--refresh", help="Re-fetch the OBO Foundry registry into the cache."),
+) -> None:
     """The public taxonomies montology knows about, with their licences.
 
     Grouped by who it is for: `core` is any business in any industry,
@@ -384,12 +388,22 @@ def onto_sources(group: str = typer.Argument("", help="core, or a domain group. 
     the question that decides whether you may ship against a vocabulary is
     the licence, and it is the one every automated scan gets wrong on the
     IAB set.
+
+    `--search` also reaches the SECOND tier: the harvested OBO Foundry
+    index, which is 177 ontologies nobody here read, printed under its own
+    heading and never mixed into the shortlist. It answers "does one
+    already exist for this?" — not "should I use it?".
     """
-    from montology_ontology import render_sources
+    from montology_ontology import render_harvest, render_search, render_sources
 
     from ._ui import emit_all
 
-    emit_all(render_sources(group))
+    if refresh:
+        emit_all(render_harvest(refresh=True))
+    if search:
+        emit_all(render_search(search))
+    elif not refresh:
+        emit_all(render_sources(group))
 
 
 @onto_app.command("list")
