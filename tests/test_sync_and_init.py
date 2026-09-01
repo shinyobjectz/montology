@@ -104,6 +104,29 @@ def _body(text: str) -> str:
     return parse_frontmatter(text)[1]
 
 
+def test_the_rendered_page_is_named_by_the_config_not_the_directory(tmp_path):
+    """A gate that fires on `mv` teaches people the gate is noise.
+
+    The page carries the workspace's name, and it was read off the directory
+    basename — so renaming the checkout, or opening it in a git worktree
+    (which names the directory after the branch), made `monty lint` report
+    the words skill as HAND-EDITED. That accuses the one file nobody is
+    allowed to edit of having been edited, and it found a real user: an
+    agent working in a worktree hit it immediately.
+    """
+    from montology_gen.engine import workspace_name
+
+    ws = tmp_path / "agent-9f3c2a"          # what a worktree directory looks like
+    (ws / ".monty").mkdir(parents=True)
+    assert workspace_name(ws) == "agent-9f3c2a", "no config: the directory is all there is"
+
+    (ws / ".monty" / "montology.toml").write_text('name = "acme"\n')
+    assert workspace_name(ws) == "acme"     # the config outranks the directory
+
+    (ws / ".monty" / "montology.toml").write_text('name = "   "\n')
+    assert workspace_name(ws) == "agent-9f3c2a", "a blank name is not a name"
+
+
 def test_gist_is_the_first_sentence_never_a_new_claim():
     from montology_gen import gist
 

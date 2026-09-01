@@ -416,10 +416,30 @@ def render_words_skill(repo_name: str) -> str:
     return render_pages(repo_name)[0]
 
 
+def workspace_name(ws) -> str:
+    """What this workspace is CALLED, which is not what its directory is.
+
+    The rendered page carries the name, so reading it off the directory made
+    the generated file depend on where the repo happens to sit. Rename the
+    checkout — or open it in a git worktree, which names the directory after
+    the branch — and `monty lint` reports the words skill as HAND-EDITED,
+    accusing the one file nobody is allowed to edit of having been edited.
+    A gate that fires on a `mv` teaches people the gate is noise.
+
+    `monty init` already writes `name` into montology.toml and `--name`
+    already sets it, so the answer was on disk the whole time. The directory
+    remains the fallback for a workspace whose config predates this.
+    """
+    from montology_core import settings as cfg
+
+    name = cfg.read(ws).get("name")
+    return str(name).strip() if isinstance(name, str) and name.strip() else ws.name
+
+
 def sync(write: bool = True) -> str:
     """Render the disclosure tree into the workspace. The only writer of it."""
     ws = workspace_root()
-    text, pages, demoted = render_pages(ws.name)
+    text, pages, demoted = render_pages(workspace_name(ws))
     if not write:
         return text
 
@@ -458,7 +478,7 @@ def lint() -> list[str]:
     failed = False
 
     target = ws / SKILL_REL
-    expected, pages, demoted = render_pages(ws.name)
+    expected, pages, demoted = render_pages(workspace_name(ws))
     cap, why = body_cap()
 
     if target.exists():
