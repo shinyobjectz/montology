@@ -256,26 +256,26 @@ truthful collision reporting, and lossless migrate round-trips.
 
 ## The taxonomy library
 
-**35 public ontologies and taxonomies across 12 domains**,
-each one checked for whether it is real, whether it is maintained, and
-whether **you may ship against it**. Browse with `monty onto sources [group]`
-or the `ontology_sources` MCP tool.
+**49 public ontologies and taxonomies across 14 domains**,
+each checked for whether it is real, whether it is maintained, and whether
+**you may ship against it**. Browse with `monty onto sources [group]` or the
+`ontology_sources` MCP tool.
 
 Your vocabulary rarely starts from nothing. Where an industry has already
 agreed on a word, joining that standard beats minting a synonym — and where
 it hasn't, montology's own gate is what keeps yours honest.
 
-**How these were chosen.** There are thousands of ontologies out there —
+**How these were chosen.** There are thousands of ontologies —
 [BioPortal](https://bioportal.bioontology.org/) alone lists 1,283 — but they
 are overwhelmingly life-sciences, because genomics forced that field to agree
 on words and no comparable pressure existed elsewhere. So this is a curated
 shortlist, not a dump: entries had to be actively maintained, used by people
-other than their authors, and carry a licence that permits commercial use.
-Most of the rigorous ones follow the
+other than their authors, and carry a licence permitting commercial use. Most
+of the rigorous ones follow the
 [OBO Foundry principles](https://obofoundry.org/principles/fp-000-summary.html)
 — open licence, versioning, textual definitions, stable identifiers, a named
 authority — which is the closest thing this field has to a quality bar, and
-very close to what montology enforces on your own vocabulary.
+close to what montology enforces on your own vocabulary.
 
 **Three licence findings worth knowing before you reach for anything:**
 
@@ -284,10 +284,10 @@ very close to what montology enforces on your own vocabulary.
   They are usable; attribution is required.
 - **`google-product` grants nothing.** A bare `.txt` with no licence and no
   terms page — published so you can build a feed, which is not permission to
-  ship it inside a product. Use `shopify-product` when you need one you may
-  redistribute. It is the only 🚫 on this page, and it is here as a warning.
-- **`schemaorg` is share-alike**, the one licence here that can reach back
-  into a vocabulary you build on top of it.
+  ship it inside a product. Use `shopify-product` instead. It is the only 🚫
+  on this page, and it is here as a warning.
+- **`schemaorg`, `edam` and `owasp-llm` are share-alike** — the licences that
+  can reach back into a vocabulary you build on top of them.
 
 ### `core` — any business, any industry
 
@@ -389,13 +389,53 @@ very close to what montology enforces on your own vocabulary.
 
 - **envo** — Biomes, environmental materials and features — the vocabulary for where something is, in ESG, climate and sustainability reporting.
 
+### software & infrastructure
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **OWASP CycloneDX** | Apache-2.0 | ✅ yes | [`cyclonedx`](https://cyclonedx.org/specification/overview/) |
+| **OpenTelemetry Semantic Conventions** | Apache-2.0 | ✅ yes | [`otel-semconv`](https://opentelemetry.io/docs/specs/semconv/) |
+| **purl — Package URL specification** | MIT | ✅ yes | [`purl`](https://github.com/package-url/purl-spec) |
+| **SPDX — specification and licence list** | Community Specification Licence 1.0; pre-existing portions CC BY 3.0 | ✅ yes — attribution | [`spdx`](https://spdx.org/licenses/) |
+| **SWO — the Software Ontology** | CC BY 4.0 | ✅ yes — attribution | [`swo`](https://obofoundry.org/ontology/swo.html) |
+| **DOAP — Description of a Project** *(evaluate)* | Apache-2.0 | ✅ yes | [`doap`](https://github.com/ewilderj/doap) |
+| **OASIS TOSCA (Topology and Orchestration Specification)** *(evaluate)* | Apache-2.0 | ✅ yes | [`tosca`](https://github.com/oasis-open/tosca-community-contributions) |
+
+- **cyclonedx** — Bill of materials for software, services, hardware and ML models — what a component IS, what it depends on and where it came from.
+- **otel-semconv** — The one to reach for. Names services, hosts, containers, cloud providers, HTTP, RPC, databases, messaging and their attributes — the vocabulary your telemetry already emits, which makes it the vocabulary your infrastructure already speaks whether you wrote it down or not.
+- **purl** — One identity for a package across every ecosystem: pkg:npm/foo@1.2.3. The join key the whole supply chain agreed on, and the answer to 'is this the same dependency' across tools.
+- **spdx** — The canonical identifiers for software licences (`Apache-2.0`, `CC-BY-4.0`) plus the SBOM spec around them. Every licence string in montology's own registry is an SPDX id.
+- **swo** — What a piece of software IS — its licence, version, inputs, outputs and the task it performs. OBO-reviewed, which almost nothing else in this group is.
+- **doap** — The RDF vocabulary for describing a software project — repository, release, maintainer, language. A finished, stable spec rather than an abandoned one, but the open question is whether you need RDF at all when purl and SPDX cover identity and licensing already.
+- **tosca** — A vendor-neutral vocabulary for cloud application topology — nodes, relationships, capabilities, requirements. The open question is adoption: it is a real OASIS standard that most teams have replaced with their orchestrator's own nouns.
+
 ### security
 
 | ontology | licence | commercial | source |
 |---|---|---|---|
+| **CWE — Common Weakness Enumeration** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`cwe`](https://cwe.mitre.org/) |
+| **MITRE D3FEND — defensive countermeasures** | MIT | ✅ yes | [`d3fend`](https://d3fend.mitre.org/) |
 | **MITRE ATT&CK** | MITRE royalty-free licence (research, development AND commercial; reproduce the copyright designation) | ✅ yes — attribution | [`mitre-attack`](https://attack.mitre.org/) |
 
+- **cwe** — The classification of software weakness TYPES — what class of bug this is, as opposed to CVE's which instance. What every scanner reports in.
+- **d3fend** — The counterpart to ATT&CK: what you DO about a technique, as a real ontology with typed relations back to the attacks it addresses.
 - **mitre-attack** — Adversary tactics and techniques — the vocabulary every detection, threat-intel and red-team report already speaks. MITRE grants a royalty-free commercial licence explicitly.
+
+### AI, ML & data science
+
+| ontology | licence | commercial | source |
+|---|---|---|---|
+| **Croissant — ML dataset metadata (MLCommons)** | Apache-2.0 | ✅ yes | [`croissant`](https://github.com/mlcommons/croissant) |
+| **EDAM — data, operations, formats and identifiers** | CC BY-SA 4.0 | ⚠️ yes — share-alike | [`edam`](https://edamontology.org/) |
+| **MITRE ATLAS — adversarial threats to AI systems** | Apache-2.0 | ✅ yes | [`mitre-atlas`](https://atlas.mitre.org/) |
+| **OWASP Top 10 for LLM Applications** | CC BY-SA 4.0 | ⚠️ yes — share-alike | [`owasp-llm`](https://genai.owasp.org/llm-top-10/) |
+| **STATO — the Statistical Methods Ontology** | CC BY 3.0 | ✅ yes — attribution | [`stato`](https://obofoundry.org/ontology/stato.html) |
+
+- **croissant** — Describes an ML dataset: its records, fields, splits, provenance and licence. Built on Schema.org, adopted by Hugging Face, Kaggle and OpenML — the closest thing to a standard a dataset has.
+- **edam** — What an analysis DOES and what it consumes and produces: operations, data types, formats, identifiers. Grew up in bioinformatics and the operation/format halves are domain-neutral.
+- **mitre-atlas** — ATT&CK's shape applied to machine learning: prompt injection, model evasion, data poisoning, model theft, named and structured. The nearest thing to a settled vocabulary for how AI systems get attacked.
+- **owasp-llm** — The risk vocabulary LLM application teams actually cite — prompt injection, insecure output handling, excessive agency. A ranked list rather than an ontology, and it is what people mean by these terms.
+- **stato** — Names statistical tests, distributions, model parameters and what a result means — so 'significant' and 'confidence interval' stop being whatever the last analyst meant by them.
 
 ### geography
 
@@ -436,6 +476,14 @@ the note says which. Declined candidates are not listed — a registry that is
 one-third things nobody should use reads as a search result, not a
 recommendation. Those declines and their reasons live in the git history of
 `.monty/onto/src/montology_ontology/sources.py`.
+
+**One gap stated rather than papered over:** there is no mature ontology for
+AGENT ARCHITECTURE — agents, tools, memory, planning, handoffs. FIPA's agent
+standards are two decades old and dormant, and nothing has replaced them.
+What exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and
+dataset metadata (`croissant`), not architecture. If you are naming the parts
+of an agent system, you are genuinely early, and montology's own gate is the
+tool for it — there is no standard to join yet.
 
 *Every licence here was checked against its source on 2026-09-01 and is recorded AS PUBLISHED. This is a starting point for your own diligence, not legal advice — terms change, and an unstated licence is never a permissive one.*
 

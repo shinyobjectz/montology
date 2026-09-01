@@ -77,6 +77,17 @@ that section is long on purpose.
   dumping them in would have made the library larger and LESS multi-domain.
   Entries had to be maintained, used beyond their authors, and carry a
   licence permitting commercial use.
+- **Tech, SaaS and AI domains: 35 → 49 across 14 groups.** New
+  `software & infrastructure` (OpenTelemetry Semantic Conventions — which
+  names services, hosts, containers, cloud providers, HTTP and databases,
+  and is the strongest entry in the whole registry for anyone running
+  servers — plus purl, CycloneDX, SPDX, SWO, DOAP, TOSCA), new
+  `AI, ML & data science` (Croissant, EDAM, STATO, MITRE ATLAS, OWASP Top
+  10 for LLM Applications), and `security` gained CWE and MITRE D3FEND.
+  Stated rather than papered over: there is **no mature agent-architecture
+  ontology** — FIPA is two decades dormant and nothing replaced it — so
+  what exists for AI is risk vocabulary and dataset metadata, not
+  architecture. The README and the skill both say so.
 
 ### Changed
 

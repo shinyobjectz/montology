@@ -68,7 +68,9 @@ GROUPS: tuple[str, ...] = (
     "advertising & media",
     "agriculture & food",
     "environment & climate",
+    "software & infrastructure",
     "security",
+    "AI, ML & data science",
     "geography",
     "trade & occupations",
     "research & information",
@@ -280,6 +282,121 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "MIT (the tool; Wikidata's own data is CC0)", "yes",
     ),
 
+    # ── software & infrastructure ───────────────────────────────────────
+    TaxonomySource(
+        "otel-semconv", "OpenTelemetry Semantic Conventions",
+        "https://opentelemetry.io/docs/specs/semconv/",
+        "yaml", "software & infrastructure", "ready",
+        "The one to reach for. Names services, hosts, containers, cloud "
+        "providers, HTTP, RPC, databases, messaging and their attributes — the "
+        "vocabulary your telemetry already emits, which makes it the vocabulary "
+        "your infrastructure already speaks whether you wrote it down or not.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "purl", "purl — Package URL specification",
+        "https://github.com/package-url/purl-spec",
+        "json", "software & infrastructure", "ready",
+        "One identity for a package across every ecosystem: "
+        "pkg:npm/foo@1.2.3. The join key the whole supply chain agreed on, and "
+        "the answer to 'is this the same dependency' across tools.",
+        "MIT", "yes",
+    ),
+    TaxonomySource(
+        "cyclonedx", "OWASP CycloneDX",
+        "https://cyclonedx.org/specification/overview/",
+        "json", "software & infrastructure", "ready",
+        "Bill of materials for software, services, hardware and ML models — "
+        "what a component IS, what it depends on and where it came from.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "spdx", "SPDX — specification and licence list",
+        "https://spdx.org/licenses/",
+        "json", "software & infrastructure", "ready",
+        "The canonical identifiers for software licences (`Apache-2.0`, "
+        "`CC-BY-4.0`) plus the SBOM spec around them. Every licence string in "
+        "montology's own registry is an SPDX id.",
+        "Community Specification Licence 1.0; pre-existing portions CC BY 3.0",
+        "yes-attribution",
+    ),
+    TaxonomySource(
+        "swo", "SWO — the Software Ontology",
+        "https://obofoundry.org/ontology/swo.html",
+        "rdf", "software & infrastructure", "ready",
+        "What a piece of software IS — its licence, version, inputs, outputs "
+        "and the task it performs. OBO-reviewed, which almost nothing else in "
+        "this group is.",
+        "CC BY 4.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "doap", "DOAP — Description of a Project",
+        "https://github.com/ewilderj/doap",
+        "rdf", "software & infrastructure", "evaluate",
+        "The RDF vocabulary for describing a software project — repository, "
+        "release, maintainer, language. A finished, stable spec rather than an "
+        "abandoned one, but the open question is whether you need RDF at all "
+        "when purl and SPDX cover identity and licensing already.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "tosca", "OASIS TOSCA (Topology and Orchestration Specification)",
+        "https://github.com/oasis-open/tosca-community-contributions",
+        "yaml", "software & infrastructure", "evaluate",
+        "A vendor-neutral vocabulary for cloud application topology — nodes, "
+        "relationships, capabilities, requirements. The open question is "
+        "adoption: it is a real OASIS standard that most teams have replaced "
+        "with their orchestrator's own nouns.",
+        "Apache-2.0", "yes",
+    ),
+
+    # ── AI, ML & data science ───────────────────────────────────────────
+    TaxonomySource(
+        "croissant", "Croissant — ML dataset metadata (MLCommons)",
+        "https://github.com/mlcommons/croissant",
+        "json", "AI, ML & data science", "ready",
+        "Describes an ML dataset: its records, fields, splits, provenance and "
+        "licence. Built on Schema.org, adopted by Hugging Face, Kaggle and "
+        "OpenML — the closest thing to a standard a dataset has.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "edam", "EDAM — data, operations, formats and identifiers",
+        "https://edamontology.org/",
+        "rdf", "AI, ML & data science", "ready",
+        "What an analysis DOES and what it consumes and produces: operations, "
+        "data types, formats, identifiers. Grew up in bioinformatics and the "
+        "operation/format halves are domain-neutral.",
+        "CC BY-SA 4.0", "yes-sharealike",
+    ),
+    TaxonomySource(
+        "stato", "STATO — the Statistical Methods Ontology",
+        "https://obofoundry.org/ontology/stato.html",
+        "rdf", "AI, ML & data science", "ready",
+        "Names statistical tests, distributions, model parameters and what a "
+        "result means — so 'significant' and 'confidence interval' stop being "
+        "whatever the last analyst meant by them.",
+        "CC BY 3.0", "yes-attribution",
+    ),
+    TaxonomySource(
+        "mitre-atlas", "MITRE ATLAS — adversarial threats to AI systems",
+        "https://atlas.mitre.org/",
+        "json", "AI, ML & data science", "ready",
+        "ATT&CK's shape applied to machine learning: prompt injection, model "
+        "evasion, data poisoning, model theft, named and structured. The "
+        "nearest thing to a settled vocabulary for how AI systems get attacked.",
+        "Apache-2.0", "yes",
+    ),
+    TaxonomySource(
+        "owasp-llm", "OWASP Top 10 for LLM Applications",
+        "https://genai.owasp.org/llm-top-10/",
+        "markdown", "AI, ML & data science", "ready",
+        "The risk vocabulary LLM application teams actually cite — prompt "
+        "injection, insecure output handling, excessive agency. A ranked list "
+        "rather than an ontology, and it is what people mean by these terms.",
+        "CC BY-SA 4.0", "yes-sharealike",
+    ),
+
     # ── health & life sciences ──────────────────────────────────────────
     TaxonomySource(
         "mondo", "Mondo Disease Ontology",
@@ -381,6 +498,23 @@ SOURCES: tuple[TaxonomySource, ...] = (
         "royalty-free commercial licence explicitly.",
         "MITRE royalty-free licence (research, development AND commercial; "
         "reproduce the copyright designation)", "yes-attribution",
+    ),
+    TaxonomySource(
+        "cwe", "CWE — Common Weakness Enumeration",
+        "https://cwe.mitre.org/",
+        "json", "security", "ready",
+        "The classification of software weakness TYPES — what class of bug this "
+        "is, as opposed to CVE's which instance. What every scanner reports in.",
+        "MITRE royalty-free licence (research, development AND commercial; "
+        "reproduce the copyright designation)", "yes-attribution",
+    ),
+    TaxonomySource(
+        "d3fend", "MITRE D3FEND — defensive countermeasures",
+        "https://d3fend.mitre.org/",
+        "rdf", "security", "ready",
+        "The counterpart to ATT&CK: what you DO about a technique, as a real "
+        "ontology with typed relations back to the attacks it addresses.",
+        "MIT", "yes",
     ),
 
     # ── geography ───────────────────────────────────────────────────────

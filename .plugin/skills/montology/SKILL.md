@@ -211,12 +211,13 @@ embeddings (~30 MB, numpy-only) power it:
 
 ## The taxonomy library: don't invent what an industry already agreed
 
-`monty onto sources [group]` (or `ontology_sources`) lists 35 public
-ontologies across 12 domains, grouped by who they are for: **core** (any
+`monty onto sources [group]` (or `ontology_sources`) lists 49 public
+ontologies across 14 domains, grouped by who they are for: **core** (any
 business — Schema.org, NAICS/SIC, Dublin Core, SKOS, PROV-O, QUDT, BFO,
 RO), health & life sciences, finance, retail, advertising, agriculture,
-environment, security, geography, trade & occupations, research &
-information, general knowledge. Consult it BEFORE
+environment, software & infrastructure, security, AI/ML & data science,
+geography, trade & occupations, research & information, general
+knowledge. Consult it BEFORE
 authoring a word in a domain that already has a standard: joining one
 beats minting a synonym, and `monty onto collide <term> <system> …`
 records whose word it is.
@@ -228,6 +229,12 @@ them unlicensed); `schemaorg` is share-alike, which reaches into anything
 derived from it; and **`google-product` grants nothing at all** — never
 present it as safe to redistribute, and point at `shopify-product`
 instead when someone needs a product taxonomy they can ship.
+
+There is NO mature ontology for agent architecture — agents, tools,
+memory, planning, handoffs. Say so rather than reaching for a near-miss:
+what exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and
+dataset metadata (`croissant`). Naming the parts of an agent system is
+genuinely early work, and montology's own gate is the tool for it.
 
 ## Structural search
 
