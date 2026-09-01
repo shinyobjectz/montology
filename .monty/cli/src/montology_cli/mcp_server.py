@@ -14,10 +14,16 @@ from fastmcp import FastMCP
 mcp = FastMCP(
     "montology",
     instructions=(
-        "This repo's vocabulary as a database, enforced against the code. "
-        "CHECK BEFORE NAMING ANYTHING (ontology_check). The scan measures "
-        "what the code declares; lint reports collisions with their repair; "
-        "candidates lists names the codebase wants defined."
+        "This repo's vocabulary as a database, enforced against the code — "
+        "ALL of the code, in every language the scan parses (Python, "
+        "TypeScript, Go, Rust, Swift, Java, Ruby, Elixir, C/C++), backend "
+        "and infra as much as UI. CHECK BEFORE NAMING ANYTHING "
+        "(ontology_check) — a class, struct, function, type, module, table, "
+        "column, endpoint, event or plain concept. repo_explain orients you "
+        "on an unfamiliar codebase; scan_candidates lists names the code is "
+        "asking to have defined; ontology_lint reports collisions with their "
+        "repair; workspace_config shows and changes what the gate enforces. "
+        "Design tokens live here too, as one kind of word among many."
     ),
 )
 
@@ -134,6 +140,65 @@ def structural_search(pattern: str, lang: str = "") -> str:
     from montology_scan import sg
 
     return sg(pattern, lang)
+
+
+@mcp.tool
+def repo_explain() -> str:
+    """The one-shot anatomy of this repo: surface, vocabulary had and
+    asked-for, semantic clusters vs directory structure, design system,
+    contradictions. Run FIRST on an unfamiliar codebase — it is the fastest
+    orientation montology offers."""
+    from montology_scan import explain
+
+    return "\n".join(explain())
+
+
+@mcp.tool
+def ontology_similar(query: str, top: int = 8) -> str:
+    """Does this meaning already have a word? Run BEFORE authoring one.
+    String checks enforce one-word-one-meaning; this hears the dual — one
+    meaning, one word — which no string check can. Needs the [semantics]
+    extra, and says so with the repair when it is missing."""
+    from montology_ontology import semantic_similar
+
+    return semantic_similar(query, top=top)
+
+
+@mcp.tool
+def ontology_rule(dont_say: str, say: str, why: str = "") -> str:
+    """Record an overload ruling: from now on, X is said as Y. This is how
+    a naming argument ENDS — ontology_check on the losing term answers with
+    the ruling from then on, so the choice is inherited, never re-argued."""
+    from montology_ontology import rule
+
+    return rule(dont_say, say, why or None)
+
+
+@mcp.tool
+def workspace_config(key: str = "", value: str = "") -> str:
+    """What this workspace is tuned to, and how to change it. No arguments
+    lists every setting with its value, source and effect; a key reads one;
+    a key and a value set it. An unknown key or a disallowed value is
+    refused with the allowed set — never coerced into something meaningless.
+    """
+    from montology_core import settings as cfg
+    from montology_core import workspace_root
+
+    root = workspace_root()
+    if key and value:
+        try:
+            return "set  " + cfg.write(root, key, value)
+        except (KeyError, ValueError, FileNotFoundError) as e:
+            return f"REFUSED — {e.args[0]}"
+    rows = cfg.effective(root)
+    if key:
+        rows = [r for r in rows if r["name"] == key]
+        if not rows:
+            return (f"REFUSED — no such setting {key!r}. "
+                    f"Known: {', '.join(sorted(cfg.SETTINGS))}.")
+    return "\n".join(
+        f"{r['name']:<20} {r['value']!r:<20} ({r['source']}) — {r['effect']}"
+        for r in rows)
 
 
 def main() -> None:

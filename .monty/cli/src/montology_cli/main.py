@@ -79,11 +79,47 @@ def doctor() -> None:
     if root is not None:
         checks.insert(2, (bool(words()), "vocabulary",
                           "empty — `monty scan --candidates` lists what the code is asking for"))
+        checks += _harness_checks(root)
     from ._ui import emit
 
     for ok, label, repair in checks:
         mark = "ok " if ok else "MISSING"
         emit(f"[{mark}] {label}" + ("" if ok else f" — {repair}"))
+
+
+def _harness_checks(root) -> list[tuple[bool, str, str]]:
+    """Is the firewall actually wired, per harness?
+
+    The post-hoc half of montology is harness-agnostic; the pre-write half
+    is a hook, and a hook has a dialect. A repo can be enforced under one
+    agent and merely advisory under another with nothing saying so — which
+    is the worst shape for a gate, because the team believes it is closed.
+    Only harnesses this repo has ASKED for are reported: an absent
+    .cursor/ is a choice, not a defect.
+    """
+    out: list[tuple[bool, str, str]] = []
+    wired = [
+        ("claude", root / ".claude" / "settings.json", ("hooks", "PreToolUse"),
+         "monty init --agents claude"),
+        ("cursor", root / ".cursor" / "hooks.json", ("hooks", "preToolUse"),
+         "monty init --agents cursor"),
+    ]
+    for name, path, (top, event), repair in wired:
+        marker = root / (".claude" if name == "claude" else ".cursor")
+        if not marker.is_dir():
+            continue                       # this harness was never wired here
+        found = False
+        if path.is_file():
+            try:
+                data = json.loads(path.read_text())
+                found = "monty guard" in json.dumps(
+                    data.get(top, {}).get(event, []))
+            except json.JSONDecodeError:
+                out.append((False, f"{name} guard hook",
+                            f"{path.name} does not parse — fix it, then {repair}"))
+                continue
+        out.append((found, f"{name} guard hook (drift cannot enter)", repair))
+    return out
 
 
 def _gen_backend_ok() -> bool:
@@ -1016,6 +1052,54 @@ def guard(stats: bool = typer.Option(False, "--stats", help="Repair-following, m
         emit_all(guard_stats())
         return
     raise typer.Exit(guard_hook(_sys.stdin.read(), err=emit_err, out=emit))
+
+
+@app.command()
+def config(
+    key: str = typer.Argument("", help="A setting, e.g. scan.collisions. Omit to list every one."),
+    value: str = typer.Argument("", help="The new value. Omit to read the current one."),
+) -> None:
+    """Read or change what this workspace is tuned to.
+
+    No arguments lists every setting with its value, where that value came
+    from, and what it does. One argument reads one. Two set it — refused
+    with the allowed set rather than coerced into something meaningless.
+    """
+    from montology_core import settings as cfg
+    from montology_core import workspace_root
+
+    from ._ui import emit, next_steps
+
+    root = workspace_root()
+
+    if key and value:
+        try:
+            emit("set  " + cfg.write(root, key, value))
+        except (KeyError, ValueError, FileNotFoundError) as e:
+            # KeyError stringifies to its repr — the quotes would read as
+            # part of the repair, and a repair you cannot paste is not one.
+            emit(f"REFUSED — {e.args[0]}")
+            raise typer.Exit(2) from None
+        return
+
+    rows = cfg.effective(root)
+    if key:
+        rows = [r for r in rows if r["name"] == key]
+        if not rows:
+            emit(f"REFUSED — no such setting {key!r}. "
+                 f"Known: {', '.join(sorted(cfg.SETTINGS))}.")
+            raise typer.Exit(2)
+    width = max(len(r["name"]) for r in rows)
+    for r in rows:
+        allowed = r["allowed"]
+        emit(f"  {r['name']:<{width}}  {r['value']!r:<22} "
+             f"({r['source']}; {allowed if isinstance(allowed, str) else ' | '.join(allowed)})")
+        emit(f"  {'':<{width}}  {r['effect']}")
+    if not key:
+        next_steps([
+            ("monty config <key> <value>", "change one — refused if the value is not allowed"),
+            ("monty vitals", "what the current settings are letting through"),
+        ])
 
 
 @app.command()
