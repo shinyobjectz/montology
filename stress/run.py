@@ -112,21 +112,46 @@ def stress_one(repo: Path) -> dict:
                        and d["name"][:1].isupper() and d["name"].isalpha())
     if classish:
         victim = classish.most_common(1)[0][0]
-        monty(["onto", "add", victim.lower(), "a word meaning something else entirely",
-               "--kind", "core"], repo)
-        toml0 = repo / ".monty" / "montology.toml"
-        toml0.write_text(toml0.read_text().replace(
-            'enforced_kinds = ["core", "inner"]',
-            'enforced_kinds = ["core", "inner"]\ncollisions = "enforce"'))
-        lint1 = monty(["lint"], repo)
-        hit_file = next((d["file"] for d in surface["decls"] if d["name"] == victim), "")
-        fired = lint1.returncode == 1 and victim in lint1.stdout and hit_file in lint1.stdout
-        toml = repo / ".monty" / "montology.toml"
-        toml.write_text(toml.read_text().replace("allow = []", f'allow = ["{victim.lower()}"]'))
-        lint2 = monty(["lint"], repo)
-        row["collision"] = (f"ok ({victim} → FAIL@{hit_file.split('/')[-1]} → allow → green)"
-                            if fired and lint2.returncode == 0
-                            else f"FAIL (fired={fired}, after_allow={lint2.returncode})")
+        # `--pos` became required when a collision started being judged on what
+        # the word NAMES. This call did not have it, so every add was REFUSED,
+        # so the drill's word never existed, so the probe could not fire — and
+        # the battery reported `fired=False` on all eight repos every week
+        # since, which reads as "the collision law is broken" when what was
+        # broken was the drill. A probe has to fail LOUDLY when it cannot run.
+        added = monty(["onto", "add", victim.lower(),
+                       "a word meaning something else entirely",
+                       "--kind", "core", "--pos", "noun"], repo)
+        if added.returncode != 0:
+            # Say WHICH thing broke. "fired=False" was true and useless: it
+            # named the law when the fault was in the setup, so eight repos
+            # reported a broken gate every week and the real repair — one
+            # missing flag in this file — was nowhere in the output.
+            row["collision"] = ("BROKEN DRILL (not the law) — could not author "
+                                "the victim word: "
+                                + (added.stdout or added.stderr).strip().splitlines()[0])
+        else:
+            toml0 = repo / ".monty" / "montology.toml"
+            enforced = 'enforced_kinds = ["core", "inner"]'
+            before = toml0.read_text()
+            if enforced not in before:
+                row["collision"] = ("BROKEN DRILL (not the law) — montology.toml no "
+                                    f"longer contains {enforced!r} to switch on")
+            else:
+                toml0.write_text(before.replace(
+                    enforced, enforced + '\ncollisions = "enforce"'))
+                lint1 = monty(["lint"], repo)
+                hit_file = next((d["file"] for d in surface["decls"]
+                                 if d["name"] == victim), "")
+                fired = (lint1.returncode == 1 and victim in lint1.stdout
+                         and hit_file in lint1.stdout)
+                toml = repo / ".monty" / "montology.toml"
+                toml.write_text(toml.read_text().replace(
+                    "allow = []", f'allow = ["{victim.lower()}"]'))
+                lint2 = monty(["lint"], repo)
+                row["collision"] = (
+                    f"ok ({victim} → FAIL@{hit_file.split('/')[-1]} → allow → green)"
+                    if fired and lint2.returncode == 0
+                    else f"FAIL (fired={fired}, after_allow={lint2.returncode})")
     else:
         row["collision"] = "skipped (no class-like decls)"
 
