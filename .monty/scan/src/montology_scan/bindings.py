@@ -54,6 +54,13 @@ SHAPES: dict[str, dict] = {
 }
 SHAPES["tsx"] = SHAPES["typescript"]
 
+# Swift does not fit the left/right/annotation field model: a
+# `property_declaration` keeps its type in an unnamed `type_annotation` child,
+# and a `parameter` spells BOTH the argument name and its type with the field
+# `name`. Rather than bend the shared shape until it lies about the other
+# grammars, Swift reads through its own function below.
+SHAPES["swift"] = {"dialect": "swift"}
+
 
 def _text(node) -> str | None:
     return node.text.decode(errors="replace") if node is not None else None
@@ -79,10 +86,62 @@ def _type_name(node) -> str | None:
     if "[" in text:
         inner = text[text.index("[") + 1:].rstrip("]")
         outer = text[:text.index("[")]
-        # a container names its CONTENT; `list[Pointer]` is about pointers
-        text = inner.split(",")[-1].strip() if inner else outer
+        # a container names its CONTENT; `list[Pointer]` is about pointers, and
+        # so is Swift's `[Row]` — a dictionary by its VALUE, `[String: Row]`.
+        text = inner.split(",")[-1].split(":")[-1].strip() if inner else outer
+    # Swift's optional sigils decorate a type without changing which one it is
+    text = text.rstrip("?!").strip()
     text = text.rsplit(".", 1)[-1].strip()
     return text or None
+
+
+def _swift_bindings(tree) -> dict[str, str]:
+    """name -> type for one Swift file, read off the three places Swift says
+    it out loud: a property's annotation, a property's constructor call, and a
+    parameter's type. Swift is unusually generous here — an annotation is
+    idiomatic where Python's is optional — so the binding rate is high."""
+    out: dict[str, str] = {}
+
+    def bind(name: str | None, type_node) -> None:
+        ty = _type_name(type_node)
+        if name and ty and ty[:1].isalpha():
+            out[name] = ty
+
+    def named(node, field: str) -> list:
+        """Every child under `field` — Swift reuses `name` for both halves of
+        a parameter and of a typealias, so one lookup is never enough."""
+        return [node.child(i) for i in range(node.child_count)
+                if node.field_name_for_child(i) == field]
+
+    def walk(node):
+        if node.type == "property_declaration":
+            # `var cell: Cell = Cell()` / `let name: String`
+            name_node = node.child_by_field_name("name")
+            name = _text(name_node) if name_node is not None else None
+            ann = next((c for c in node.named_children
+                        if c.type == "type_annotation"), None)
+            if ann is not None:
+                bind(name, ann.named_children[0] if ann.named_children else None)
+            else:
+                # `let harness = Harness()` — a capitalised callee is a type by
+                # convention, the same precision-over-recall rule as elsewhere.
+                call = next((c for c in node.named_children
+                             if c.type == "call_expression"), None)
+                if call is not None and call.named_children:
+                    fn = call.named_children[0]
+                    if fn.type == "simple_identifier" and (_text(fn) or "")[:1].isupper():
+                        bind(name, fn)
+        elif node.type == "parameter":
+            # `func fly(to p: Pointer)` — the external label is not the name
+            names = named(node, "name")
+            arg = next((n for n in names if n.type == "simple_identifier"), None)
+            ty = next((n for n in names if n.type != "simple_identifier"), None)
+            bind(_text(arg) if arg is not None else None, ty)
+        for child in node.named_children:
+            walk(child)
+
+    walk(tree.root_node)
+    return out
 
 
 def bindings(tree, lang: str) -> dict[str, str]:
@@ -90,6 +149,8 @@ def bindings(tree, lang: str) -> dict[str, str]:
     shape = SHAPES.get(lang)
     if shape is None:
         return {}
+    if shape.get("dialect") == "swift":
+        return _swift_bindings(tree)
     out: dict[str, str] = {}
 
     def bind(name: str | None, type_node) -> None:

@@ -61,6 +61,11 @@ CALL_SHAPES: dict[str, dict] = {
              "verb": "field", "args": "arguments"},
     "ruby": {"node": "call", "fn": None, "recv_kind": None,
              "recv": "receiver", "verb": "method", "args": "arguments"},
+    # Swift keeps none of it in fields: the callee is child 0 of the
+    # call_expression, the verb hides in a navigation_suffix, and the arguments
+    # sit one level down inside a call_suffix. It reads through its own
+    # function rather than through a shape that would have to lie.
+    "swift": {"node": "call_expression", "dialect": "swift"},
 }
 
 # Names that are never a concept, whatever the grammar says.
@@ -90,8 +95,45 @@ def _text(node) -> str | None:
     return node.text.decode(errors="replace") if node is not None else None
 
 
+def _swift_parts(node) -> tuple[str | None, str | None, list[str]]:
+    """The receiver, verb and identifier arguments of one Swift call.
+
+    `engram.store(mention)` parses as call_expression > navigation_expression
+    (target `engram`, suffix `store`) + call_suffix > value_arguments. A
+    receiver that is itself an expression names nothing, with the one step
+    through a navigation that keeps `self.engram.store()` saying `engram`.
+    """
+    nav = node.named_children[0] if node.named_children else None
+    if nav is None or nav.type != "navigation_expression":
+        return None, None, []          # a bare `foo()` has no receiver to be about
+    suffix = nav.child_by_field_name("suffix")
+    verb_node = suffix.child_by_field_name("suffix") if suffix is not None else None
+    verb = _text(verb_node) if verb_node is not None else None
+
+    recv_node = nav.child_by_field_name("target")
+    if recv_node is not None and recv_node.type == "navigation_expression":
+        inner = recv_node.child_by_field_name("suffix")
+        recv_node = inner.child_by_field_name("suffix") if inner is not None else None
+    recv = (_text(recv_node) if recv_node is not None
+            and recv_node.type == "simple_identifier" else None)
+
+    args: list[str] = []
+    call_suffix = next((c for c in node.named_children
+                        if c.type == "call_suffix"), None)
+    values = next((c for c in call_suffix.named_children
+                   if c.type == "value_arguments"), None) if call_suffix else None
+    for arg in (values.named_children if values is not None else []):
+        # `at: index` keeps its value under `value`; a bare `row` is the value
+        value = arg.child_by_field_name("value")
+        if value is not None and value.type == "simple_identifier":
+            args.append(_text(value))
+    return recv, verb, [a for a in args if a and a not in _SKIP_NAMES]
+
+
 def _parts(node, shape) -> tuple[str | None, str | None, list[str]]:
     """The receiver, the verb and the identifier arguments of one call."""
+    if shape.get("dialect") == "swift":
+        return _swift_parts(node)
     if shape["fn"]:
         fn = node.child_by_field_name(shape["fn"])
         if fn is None or fn.type != shape["recv_kind"]:

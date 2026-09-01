@@ -19,12 +19,16 @@ from montology_core import workspace_root
 
 from .surface import LANG_BY_EXT, MAX_BYTES, _iter_files
 
-# every node type an identifier travels as, across the covered grammars
+# every node type an identifier travels as, across the covered grammars.
+# `simple_identifier` is Swift's and Kotlin's spelling of the plain name — its
+# absence made `monty migrate` report a Swift tree as already clean while every
+# function, property and enum case still said the old word, which is the worst
+# way for a sweep to fail: a confident "clean" over files it could not see.
 IDENT_TYPES = {
     "identifier", "type_identifier", "property_identifier",
     "field_identifier", "constant", "alias", "atom",
     "shorthand_property_identifier", "shorthand_property_identifier_pattern",
-    "statement_identifier",
+    "statement_identifier", "simple_identifier",
 }
 
 

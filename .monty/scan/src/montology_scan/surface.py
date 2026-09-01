@@ -87,6 +87,25 @@ DECL_QUERIES: dict[str, str] = {
         (enum_declaration name: (identifier) @name.enum)
         (method_declaration name: (identifier) @name.method)
     """,
+    # tree-sitter-swift collapses struct / class / enum / actor / extension into
+    # one `class_declaration`, told apart by the `declaration_kind` token. An
+    # extension is the useful exclusion: it carries a `user_type` where the
+    # others carry a `type_identifier`, so matching the latter means an
+    # `extension Harness` never counts as declaring `Harness` — it does not.
+    "swift": """
+        (class_declaration declaration_kind: "struct" name: (type_identifier) @name.struct)
+        (class_declaration declaration_kind: "class" name: (type_identifier) @name.class)
+        (class_declaration declaration_kind: "enum" name: (type_identifier) @name.enum)
+        (class_declaration declaration_kind: "actor" name: (type_identifier) @name.actor)
+        (protocol_declaration name: (type_identifier) @name.protocol)
+        (typealias_declaration name: (type_identifier) @name.type)
+        (associatedtype_declaration name: (type_identifier) @name.type)
+        (source_file (function_declaration name: (simple_identifier) @name.function))
+        (class_body (function_declaration name: (simple_identifier) @name.method))
+        (enum_class_body (function_declaration name: (simple_identifier) @name.method))
+        (protocol_body (protocol_function_declaration
+          name: (simple_identifier) @name.method))
+    """,
     "c": """
         (function_definition declarator: (function_declarator
           declarator: (identifier) @name.function))
@@ -132,6 +151,14 @@ TYPE_QUERIES: dict[str, str] = {
     "rust": """
         (type_item name: (type_identifier) @type.name type: (_) @type.value)
         (struct_item name: (type_identifier) @type.name body: (_) @type.value)
+    """,
+    # Swift's grammar gives `typealias RowID = String` two `name` fields — the
+    # alias and the aliased type — so the pair is taken by NODE type, not by
+    # field. Only the alias is here: a struct body is a shape, not a value, and
+    # two structs of one name in one module do not compile anyway.
+    "swift": """
+        (typealias_declaration name: (type_identifier) @type.name
+                               name: (_) @type.value)
     """,
 }
 

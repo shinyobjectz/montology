@@ -86,11 +86,16 @@ def test_plumbing_is_not_vocabulary(ws, onto_db):
 
 
 def test_a_language_with_no_query_is_skipped_and_said_to_be(ws, onto_db):
-    from montology_scan.acts import acts
+    """Kotlin parses and is not read: the extension is recognised, the call
+    shape is not written. Every such language must be COUNTED — silence would
+    read as covered, and a scan that reports nothing over a Kotlin tree is
+    indistinguishable from one that read it and found nothing."""
+    from montology_scan.acts import CALL_SHAPES, acts
 
-    (ws / "src" / "m.swift").write_text("class Thing { }")
+    assert "kotlin" not in CALL_SHAPES, "pick another uncovered language here"
+    (ws / "src" / "M.kt").write_text("class Thing { fun go() { it.run() } }\n")
     got = acts()
-    assert "swift" in got["skipped"]               # silence would read as covered
+    assert "kotlin" in got["skipped"]
 
 
 def test_the_graph_carries_what_a_word_is_made_to_do(ws, onto_db):
