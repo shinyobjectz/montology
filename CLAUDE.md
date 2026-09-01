@@ -6,8 +6,10 @@ reachable from here; this repo stands alone.
 
 **What this is:** the ontology context layer for any monorepo — a
 vocabulary as a database, enforced against the code by a tree-sitter scan.
-Nothing else. The marketing era ended at the `marketing-era` tag; do not
-resurrect it here.
+Nothing else. This repo had a marketing-tool past; none of that
+vocabulary belongs here, and it is not to be resurrected. The one thing
+kept from it is the public-taxonomy registry (`monty onto sources`),
+which is about other people's standards, not that era's product.
 
 ## The shape
 

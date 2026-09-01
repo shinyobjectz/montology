@@ -6,9 +6,7 @@ ones published to npm and PyPI.
 
 The `Unreleased` section is what is on `main` and not yet cut into a
 version — montology has shipped continuously from `main` since 0.2.0, so
-that section is long on purpose. The marketing-era codebase montology grew
-out of is preserved at the [`marketing-era`](https://github.com/shinyobjectz/montology/tree/marketing-era)
-tag and shares no code with this one.
+that section is long on purpose.
 
 ## Unreleased
 
@@ -50,6 +48,19 @@ tag and shares no code with this one.
   both ways; `genus` — the one structural relation that gates something;
   `onto review` — the anti-pattern catalogue, calibrated by running it.
 - `surfaces` and `seams` — what a repo stands on and where it touches it.
+- **The taxonomy library is back, and now says whether you may ship against
+  it.** `monty onto sources` / `ontology_sources` lists 27 vetted public
+  taxonomies — IAB, Google Product and Topics, Schema.org, Shopify,
+  NAICS/SIC, Harvard's trade and occupation classifications — across
+  advertising, retail, finance, news and government, each with a relevance
+  ruling and, for the first time, its **licence as published** and a
+  commercial verdict. The registry carried only relevance for its whole
+  first life, which is the question that matters least to somebody deciding
+  whether they may build on a vocabulary. Checking turned up two things
+  worth knowing: the IAB taxonomies declare CC BY 3.0 in a README and ship
+  no `LICENSE` file, so every automated scan reports three of the five
+  `core` entries as unlicensed when they are usable with attribution; and
+  `schemaorg` is share-alike. Also rendered at the bottom of the README.
 
 ### Changed
 
@@ -97,6 +108,8 @@ tag and shares no code with this one.
   written were inert, so scans reported confident counts over files nobody
   meant to include.
 - `onto add` no longer accepts a name a rename retired.
+- `adtech-crosswalk` in the taxonomy registry is a dead link (404) and is
+  marked as one rather than left to be discovered by whoever tries it.
 
 ## 0.2.0 — 2026-08-10
 

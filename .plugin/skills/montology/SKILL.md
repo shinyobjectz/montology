@@ -209,6 +209,23 @@ embeddings (~30 MB, numpy-only) power it:
 - A cosine score is an instrument's hint — only a ruling (merge, rename,
   re-own) makes it vocabulary.
 
+## The taxonomy library: don't invent what an industry already agreed
+
+`monty onto sources [core|extra|evaluate|skip]` (or `ontology_sources`)
+lists the public taxonomies montology has vetted — IAB, Google Product
+and Topics, Schema.org, Shopify, NAICS/SIC, Harvard's trade and
+occupation classifications and more, across advertising, retail, finance,
+news and government. Consult it BEFORE authoring a word in a domain that
+already has a standard: joining one beats minting a synonym, and
+`monty onto collide <term> <system> …` records whose word it is.
+
+Each entry carries the licence AS PUBLISHED and a commercial verdict.
+**Relay both with any recommendation** — three of the five `core` entries
+are CC BY 3.0 and need attribution (their repo has no LICENSE file, so
+every automated scan calls them unlicensed), `schemaorg` is share-alike,
+and anything marked `verify` has terms montology could not establish.
+Never present a `verify` or a `skip` as safe to ship against.
+
 ## Structural search
 
 `monty grep '<pattern>' --lang <language>` runs ast-grep: patterns parse,

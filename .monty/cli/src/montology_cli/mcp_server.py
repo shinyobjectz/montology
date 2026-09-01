@@ -143,6 +143,20 @@ def structural_search(pattern: str, lang: str = "") -> str:
 
 
 @mcp.tool
+def ontology_sources(status: str = "") -> str:
+    """Public taxonomies montology knows about (status: core | extra |
+    evaluate | skip; empty for all) — the domain each covers, where the
+    data lives, the licence as published, and whether it is commercially
+    usable. Reach for one when a user's vocabulary needs to join an
+    industry standard rather than be invented. Relay the licence with the
+    recommendation: three of the five `core` entries are CC BY 3.0 and
+    require attribution, and `schemaorg` is share-alike."""
+    from montology_ontology import render_sources
+
+    return "\n".join(render_sources(status))
+
+
+@mcp.tool
 def repo_explain() -> str:
     """The one-shot anatomy of this repo: surface, vocabulary had and
     asked-for, semantic clusters vs directory structure, design system,
