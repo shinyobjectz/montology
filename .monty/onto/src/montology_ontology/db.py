@@ -332,6 +332,19 @@ def check(name: str, c: sqlite3.Connection | None = None) -> list[str]:
         code = f" [{w['code']}]" if w["code"] else ""
         pos = f", {w['pos']}" if "pos" in w.keys() and w["pos"] else ""
         findings.append(f"TAKEN  {w['name']} ({w['kind']}{pos}){code} — {w['definition']}")
+        # WHOSE word it is, said here or said nowhere. A word ingested from a
+        # public taxonomy is that taxonomy's, and the difference between "you
+        # cannot have this name" and "this name is Schema.org's, and here is
+        # what saying it obliges you to do" is the whole reason the terms are in
+        # the database at all. The licence travels with the answer because an
+        # attribution requirement nobody is told about is one nobody meets.
+        from .ingest import source_citation
+
+        cited = source_citation(w["origin"] if "origin" in w.keys() else None)
+        if cited:
+            findings.append(f"ADOPTED  {w['name']} is {cited['name']}'s word, not yours — "
+                            f"{cited['licence']} ({cited['commercial']}: "
+                            f"{cited['obligation']}). {cited['credit']}")
     # An exception is the answer to "may I name something this?", so it
     # belongs in the same finding list as the refusals — otherwise the
     # recorded decision is invisible exactly where it would be read.
@@ -599,15 +612,21 @@ def words(kind: str | None = None) -> list[dict]:
     if DB_PATH is None and not db_path().exists():
         return []
     conn = connect(readonly=db_path().exists())
-    cols = "name, kind, owner, definition, test, code, pos"
-    if "pos" not in {r[1] for r in conn.execute("PRAGMA table_info(word)")}:
-        cols = cols.replace(", pos", "")   # a db older than the column, read-only
+    # `origin` rides along because a rendered vocabulary has to be able to say
+    # whose each word is: ours, an org's upstream, or a public taxonomy's. A
+    # render that cannot tell them apart either claims other people's words as
+    # this repo's or drops them, and both are wrong.
+    cols = "name, kind, owner, definition, test, code, pos, origin"
+    present = {r[1] for r in conn.execute("PRAGMA table_info(word)")}
+    for column in ("pos", "origin"):                  # a db older than the column,
+        if column not in present:                     # opened read-only, has neither
+            cols = cols.replace(f", {column}", "")
     sql = f"SELECT {cols} FROM word"  # noqa: S608 — the columns are ours, not a caller's
     args: list = []
     if kind:
         sql += " WHERE kind=?"
         args.append(kind)
-    return [{"pos": None, **dict(r)}
+    return [{"pos": None, "origin": None, **dict(r)}
             for r in conn.execute(sql + " ORDER BY kind, name", args)]
 
 
@@ -849,12 +868,21 @@ def amend(name: str, *, definition: str | None = None, test: str | None = None,
     out = [f"amended  {row['name']} ({when}, ledgered — the old text stays recoverable)"]
     out += [f"  {f}: {_shown(row[f])} -> {_shown(v)}" for f, v in changed.items()]
     if row["origin"]:
-        # Inherited rows are replaced wholesale on every pull — the org's
-        # vocabulary is the org's to change. Said out loud, because a
-        # correction that quietly evaporates on the next pull is worse than
-        # one that was refused.
-        out.append(f"  note: inherited from {row['origin']} — `monty onto pull` "
-                   "replaces it wholesale. Amend it upstream too, or this is temporary.")
+        # Inherited rows are replaced wholesale on every refresh — the org's
+        # vocabulary is the org's to change, and a standard is even less ours.
+        # Said out loud, because a correction that quietly evaporates on the
+        # next pull is worse than one that was refused. Which refresh will eat
+        # it depends on where the row came from, so the note names that too.
+        from .ingest import source_citation
+
+        cited = source_citation(row["origin"])
+        if cited:
+            out.append(f"  note: adopted from {cited['name']} — `monty onto sources ingest "
+                       f"{cited['source']}` replaces it wholesale. Editing a standard's term "
+                       "here changes what this repo reads, never what the standard says.")
+        else:
+            out.append(f"  note: inherited from {row['origin']} — `monty onto pull` "
+                       "replaces it wholesale. Amend it upstream too, or this is temporary.")
     return "\n".join(out)
 
 

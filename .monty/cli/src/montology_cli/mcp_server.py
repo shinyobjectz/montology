@@ -163,7 +163,14 @@ def ontology_sources(group: str = "", search: str = "", refresh: bool = False) -
     CC BY 3.0 and need attribution (their repo has no LICENSE file, so
     automated scans call them unlicensed); `schemaorg` is share-alike; and
     `google-product` grants nothing at all — never present it as safe to
-    redistribute."""
+    redistribute.
+
+    Two entries carry an ingester and say so in the listing: their terms can
+    be loaded into the vocabulary with `monty onto sources ingest <id>`, after
+    which `ontology_check` answers with the term AND its licence. That command
+    is not a tool here on purpose — it fetches a publisher's file and rewrites
+    a whole custody of the database, which is a person's decision at a
+    terminal, not one an agent makes mid-turn."""
     from montology_ontology import render_harvest, render_search, render_sources
 
     out: list[str] = []

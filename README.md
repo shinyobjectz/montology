@@ -261,6 +261,16 @@ each checked for whether it is real, whether it is maintained, and whether
 **you may ship against it**. Browse with `monty onto sources [group]` or the
 `ontology_sources` MCP tool.
 
+Two of them are more than an address: `monty onto sources ingest prov-o`
+and `monty onto sources ingest schemaorg` load those vocabularies into
+`.monty/ontology.db` as **adopted** words — 80 PROV-O terms, 2,322
+Schema.org classes and properties — so that `monty onto check Activity`
+answers "that is PROV-O's word, not yours" rather than "free". The payload
+is cached under `.monty/cache/`, so every run after the first is offline;
+your own words are never overwritten; and the licence travels with every
+answer, which for Schema.org's CC BY-SA 3.0 is the difference between a
+vocabulary you may read and one you may ship.
+
 Your vocabulary rarely starts from nothing. Where an industry has already
 agreed on a word, joining that standard beats minting a synonym — and where
 it hasn't, montology's own gate is what keeps yours honest.

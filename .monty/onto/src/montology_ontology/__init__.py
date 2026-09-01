@@ -19,6 +19,8 @@ from .seed import seed
 from .semantics import audit as semantic_audit
 from .semantics import near_pairs
 from .semantics import similar as semantic_similar
+from .ingest import (INGESTERS, ingest as ingest_source, ingested,
+                     source_citation)
 from .sources import (SOURCES, by_group as sources_by_group,
                       groups as source_groups, render as render_sources)
 # tier 2, aliased apart from tier 1 on purpose: `harvest` already belongs to
@@ -35,4 +37,5 @@ __all__ = ["POS", "RIGIDITY", "TREE_WIDE", "add", "answer", "apply_intent", "ask
            "doctrines", "except_add", "except_drop", "exceptions", "genera", "genus_add", "genus_chain",
            "genus_drop", "inherited", "rigidity_set",
            "overloads", "record_run", "rename_word", "renames",
+           "INGESTERS", "ingest_source", "ingested", "source_citation",
            "pinned_upstream", "pull", "route_analyse", "render_routes", "route_add", "route_drafts", "route_drop", "routes", "rule", "seed", "near_pairs", "semantic_audit", "semantic_similar", "SOURCES", "sources_by_group", "source_groups", "render_sources", "Harvest", "IndexEntry", "harvest_index", "render_harvest", "render_search", "search_index", "token_add", "tokens", "words"]

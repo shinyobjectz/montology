@@ -12,6 +12,36 @@ that section is long on purpose.
 
 ### Added
 
+- **The registry ingests, for two sources.** `monty onto sources ingest
+  prov-o | schemaorg` fetches what those standards publish (RDF/XML and
+  JSON-LD), parses it and writes every term into the vocabulary as an
+  **adopted** word carrying `origin = taxonomy:<id>`. The registry could say
+  where PROV-O lived and never say whether PROV-O had already named the thing
+  you were about to mint, which is the only question a reuse check asks: 80
+  PROV-O terms and 2,322 Schema.org classes and properties later, `monty onto
+  check Activity` answers "that is PROV-O's word, not yours" **with the
+  licence attached** — Schema.org's CC BY-SA 3.0 reaches into anything derived
+  from it, and an attribution requirement nobody is shown is one nobody meets.
+  Custody follows `monty onto pull`: a re-ingest replaces that source's rows
+  wholesale, a name this repo owns is never overwritten (local wins, loudly),
+  a retired name is not taken back, and a name two taxonomies both claim stays
+  with the one that said it first. The payload is cached under `.monty/cache/`,
+  so every run after the first is offline. Superseded Schema.org terms are
+  skipped — a check that answers with a word its own publisher has put down is
+  a wrong answer — and the PROV-O parse takes only the 80 terms the file marks
+  `rdfs:isDefinedBy prov-o#`, so `label`, `comment` and `todo` do not enter the
+  vocabulary as if W3C had standardised them. An id with no ingester is refused
+  with the ones that have one; a parser is written per source because each
+  publishes a different shape, and a parser nobody has run against the real
+  payload is a guess.
+- **The words skill cites a taxonomy instead of listing it.** Two thousand
+  adopted words would have blown the disclosure budget or buried this repo's
+  own thirty-five, so the ladder gained a step: adopted words demote to a
+  citation — source, count, licence, what saying them obliges — and the
+  database answers for any single term. The ladder now also walks when a
+  REFERENCE page is over its budget, not only the resident one: `PAGE_CAP` was
+  a gate the render could clear and was stopping one step short of.
+
 - **Swift is read.** `.swift` was recognised by extension and parsed to
   nothing — a Swift tree scanned clean because nothing looked at it.
   Declarations (struct, class, enum, actor, protocol, typealias,
