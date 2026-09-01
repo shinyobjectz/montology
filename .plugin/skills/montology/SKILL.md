@@ -230,6 +230,17 @@ derived from it; and **`google-product` grants nothing at all** — never
 present it as safe to redistribute, and point at `shopify-product`
 instead when someone needs a product taxonomy they can ship.
 
+**Two entries are more than an address.** `monty onto sources ingest
+prov-o` and `… ingest schemaorg` load those vocabularies INTO the
+database as adopted words — 80 PROV-O terms, 2,322 Schema.org classes and
+properties — so `monty onto check Activity` can answer "that is PROV-O's
+word, not yours" instead of "free". The payload is cached under
+`.monty/cache/`, so every run after the first is offline; a name this
+repo already owns is never overwritten; and every answer about an adopted
+word carries the licence, which for `schemaorg` is share-alike and not
+optional. Adopted words are CITED on the words skill, never listed —
+two thousand rows is a database, not a page.
+
 There is NO mature ontology for agent architecture — agents, tools,
 memory, planning, handoffs. Say so rather than reaching for a near-miss:
 what exists for AI is risk vocabulary (`mitre-atlas`, `owasp-llm`) and

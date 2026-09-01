@@ -32,6 +32,13 @@ registry was things nobody should use, which makes the whole page read as
 a search result rather than a recommendation. The declines and their
 reasons live in this file's git history instead.
 
+TWO ENTRIES ARE MORE THAN AN ADDRESS. `prov-o` and `schemaorg` can be
+loaded into the vocabulary itself — `monty onto sources ingest <id>` — so
+that `monty onto check <name>` can answer "that is Schema.org's word, not
+yours". A reuse check needs the terms, not the address of the terms. The
+parsers, the custody rules and the licence the answer carries are in
+`ingest.py`; every other entry here is a listing until something needs it.
+
 None of this is legal advice. The verdict is a starting point for your own
 check, not a substitute for it.
 """
@@ -629,10 +636,25 @@ def groups() -> list[str]:
     return [g for g in GROUPS if g in present]
 
 
+def _ingest_state() -> tuple[set[str], dict[str, int]]:
+    """Which entries can be loaded into the vocabulary, and which already are.
+
+    Imported inside the function because the ingest reads the database and this
+    module reads nothing — a registry that cannot be listed without a workspace
+    would be a registry nobody can consult before they have one."""
+    try:
+        from .ingest import INGESTERS, ingested
+
+        return set(INGESTERS), {row["source"]: row["words"] for row in ingested()}
+    except Exception:  # noqa: BLE001 — no workspace, no database: still a registry
+        return set(), {}
+
+
 def render(group: str = "") -> list[str]:
     """The registry as lines — what `monty onto sources` prints."""
     if group and group not in groups():
         return [f"no group {group!r}. Known: {', '.join(groups())}."]
+    ingestable, here = _ingest_state()
     out: list[str] = []
     current = ""
     for s in by_group(group):
@@ -645,6 +667,11 @@ def render(group: str = "") -> list[str]:
         out.append(f"  {s.id:24} {s.name}{flag}")
         out.append(f"  {'':24} {s.commercial} · {s.licence}")
         out.append(f"  {'':24} {s.url}")
+        if s.id in here:
+            out.append(f"  {'':24} ingested here — {here[s.id]} adopted word(s); "
+                       f"`monty onto check <name>` answers with this licence")
+        elif s.id in ingestable:
+            out.append(f"  {'':24} ingestable — monty onto sources ingest {s.id}")
     out.append("")
     out.append(DISCLAIMER)
     return out

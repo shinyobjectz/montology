@@ -108,7 +108,7 @@ class Plan:
     that fits is rendered whole.
     """
     renames: str = "resident"      # resident | referenced
-    adopted: str = "full"          # full | gist
+    adopted: str = "full"          # full | gist | cited
     collisions: str = "full"       # full | compact
     doctrine: str = "full"         # full | titles
     words: str = "full"            # full | gist
@@ -124,6 +124,9 @@ LADDER: tuple[tuple[str, str, str], ...] = (
      "the guard blocks a retired name at write time — the ledger enforces nothing here"),
     ("adopted", "gist",
      "adopted words carry their source's prose; one sentence resident, the full text a page away"),
+    ("adopted", "cited",
+     "a whole public taxonomy is cited, not listed — the source, the count and the licence "
+     "stay; `monty onto check <name>` answers for any one term"),
     ("collisions", "compact",
      "the ruling stays resident, the argument moves"),
     ("doctrine", "titles",
@@ -173,6 +176,55 @@ def _gist_rows(words: list[dict]) -> list[str]:
     return out
 
 
+def _cited(w: dict) -> dict | None:
+    """The taxonomy a word was ingested from, if it was — the licence and the
+    attribution requirement come back with it."""
+    from montology_ontology import source_citation
+
+    return source_citation(w.get("origin"))
+
+
+def _citations(words: list[dict]) -> list[dict]:
+    """Adopted words grouped by the public taxonomy they came from.
+
+    Counted off the words the render was handed rather than queried again: a
+    page that cites one number and lists another is a page nobody can check."""
+    out: dict[str, dict] = {}
+    for w in words:
+        source = _cited(w)
+        if not source:
+            continue
+        row = out.setdefault(source["source"], {**source, "words": 0})
+        row["words"] += 1
+    return [out[k] for k in sorted(out)]
+
+
+def _citation_block(cited: list[dict], listed: bool) -> list[str]:
+    """Whose words these are and what saying them obliges.
+
+    Rendered wherever adopted words reach the page, in every disclosure state,
+    because the licence is the part that must not fall off: Schema.org's
+    share-alike reaches anything derived from its terms, and an attribution
+    requirement nobody is shown is one nobody meets."""
+    if not cited:
+        return []
+    total = sum(c["words"] for c in cited)
+    head = [f"### Adopted from public taxonomies — {total:,} words", ""]
+    if not listed:
+        head += ["Other vocabularies' words, in the database and not on this page. "
+                 "Listing them would spend every agent's context on rows that get read "
+                 "one at a time anyway — and one at a time is what the database is for: "
+                 "`monty onto check <name>` answers with the definition, the source and "
+                 "the licence below.", ""]
+    head += ["| source | words | licence | saying them obliges |", "|---|---|---|---|"]
+    for c in cited:
+        head.append(f"| **{c['source']}** — {c['name']} | {c['words']:,} | {c['licence']} "
+                    f"| {c['obligation']} |")
+    return head + ["",
+                   "`monty onto list adopted` lists them; `monty onto sources ingest <id>` "
+                   "refreshes one from its publisher.", ""]
+
+
 def _render_words(words: list[dict], plan: Plan) -> tuple[list[str], dict[str, list[str]]]:
     """The resident words section, plus whatever it hands to reference pages."""
     pages: dict[str, list[str]] = {}
@@ -183,6 +235,19 @@ def _render_words(words: list[dict], plan: Plan) -> tuple[list[str], dict[str, l
                  "`monty onto add <name> \"<definition>\"` — check-first: a taken",
                  "name is refused with findings. `monty scan --candidates` lists",
                  "the recurring declared names the codebase is asking for.", ""], pages)
+
+    cited = _citations(words)
+    if plan.adopted == "cited":
+        # A whole standard's terms are not this repo's vocabulary and were never
+        # going to be read as a list. They stay in the database, where the check
+        # reaches them; the page keeps the citation, which is the part a reader
+        # needs and the part the licence rides on.
+        words = [w for w in words if not _cited(w)]
+        if not words:
+            return ["## The words", "",
+                    "Every word here is adopted from a public taxonomy — this repo has "
+                    "authored none of its own yet. `monty onto add <name> \"<definition>\"` "
+                    "starts one.", ""] + _citation_block(cited, listed=False), pages
 
     if plan.split:
         lines = ["## The words", "",
@@ -196,7 +261,7 @@ def _render_words(words: list[dict], plan: Plan) -> tuple[list[str], dict[str, l
             page = f"words-{area}.md"
             lines.append(f"| **{area}** ({len(here)}) | {names} | `references/{page}` |")
             pages[page] = [f"# {area} — {len(here)} words", ""] + _word_rows(here) + [""]
-        return lines + [""], pages
+        return lines + [""] + _citation_block(cited, listed=plan.adopted != "cited"), pages
 
     ours = [w for w in words if w["kind"] != "adopted"]
     adopted = [w for w in words if w["kind"] == "adopted"]
@@ -211,10 +276,11 @@ def _render_words(words: list[dict], plan: Plan) -> tuple[list[str], dict[str, l
                   ""] + _gist_rows(adopted) + [""]
         pages["adopted.md"] = ([f"# Adopted words — {len(adopted)}", "",
                                 "Taken from elsewhere and spoken here as-is.", ""]
+                               + _citation_block(cited, listed=True)
                                + _word_rows(adopted) + [""])
     else:
         lines += (_word_rows(words) if plan.words == "full" else _gist_rows(words)) + [""]
-    return lines, pages
+    return lines + _citation_block(cited, listed=plan.adopted != "cited"), pages
 
 
 def _render_collisions(rulings: list[dict], plan: Plan) -> tuple[list[str], dict[str, list[str]]]:
@@ -400,10 +466,17 @@ def render_pages(repo_name: str) -> tuple[str, dict[str, str], list[str]]:
     cap, _ = body_cap()
     plan, demoted = Plan(), []
 
+    def fits(rendered: str, produced: dict[str, str]) -> bool:
+        """Both budgets, not just the resident one. A reference page over
+        PAGE_CAP fails the lint with "split the area" — and the ladder is what
+        splits areas, so a render that stops walking while a page is oversized
+        has stopped one step short of the gate it was built to clear."""
+        _, body = parse_frontmatter(rendered)
+        return len(body) <= cap and all(len(p) <= PAGE_CAP for p in produced.values())
+
     text, pages = _render(repo_name, vocab, plan, cap)
     for field, value, why in LADDER:
-        _, body = parse_frontmatter(text)
-        if len(body) <= cap:
+        if fits(text, pages):
             break
         plan = replace(plan, **{field: value})
         demoted.append(f"{field}: {why}")

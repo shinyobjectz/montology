@@ -11,6 +11,7 @@ import json
 import os
 
 import typer
+from typer.core import TyperGroup
 
 
 def run() -> None:
@@ -373,23 +374,68 @@ def onto_audit(threshold: float = typer.Option(0.70, "--threshold", help="Cosine
     emit_all(semantic_audit(threshold, cands).splitlines())
 
 
-@onto_app.command("sources")
+class SourcesGroup(TyperGroup):
+    """`monty onto sources [group]` predates `sources ingest`.
+
+    A surface that works does not get to break because a subcommand arrived
+    under it, so a first token that names no subcommand is the group filter it
+    has always been and is routed to `list`. README, the plugin skill and the
+    MCP tool all document the old form; a rename with no ledger behind it is
+    exactly what this repo refuses everywhere else."""
+
+    def parse_args(self, ctx, args):
+        if not args or (args[0] not in self.commands and not args[0].startswith("-")):
+            args = ["list", *args]
+        return super().parse_args(ctx, args)
+
+
+sources_app = typer.Typer(
+    help="Public taxonomies: what exists, whether you may ship against it, and — for the "
+         "two that have an ingester — their terms in the vocabulary.",
+    cls=SourcesGroup)
+onto_app.add_typer(sources_app, name="sources")
+
+
+@sources_app.command("list")
 def onto_sources(group: str = typer.Argument("", help="core, or a domain group. Omit for all.")) -> None:
     """The public taxonomies montology knows about, with their licences.
 
     Grouped by who it is for: `core` is any business in any industry,
-    everything else names its domain. A catalogue, not an ingest — each
-    entry carries where the data lives, whether it is worth reaching for,
-    the licence AS PUBLISHED and the practical commercial verdict, because
-    the question that decides whether you may ship against a vocabulary is
-    the licence, and it is the one every automated scan gets wrong on the
-    IAB set.
+    everything else names its domain. Mostly a catalogue — each entry carries
+    where the data lives, whether it is worth reaching for, the licence AS
+    PUBLISHED and the practical commercial verdict, because the question that
+    decides whether you may ship against a vocabulary is the licence, and it is
+    the one every automated scan gets wrong on the IAB set. Two entries go
+    further and can be loaded into the vocabulary: `monty onto sources ingest`.
     """
     from montology_ontology import render_sources
 
     from ._ui import emit_all
 
     emit_all(render_sources(group))
+
+
+@sources_app.command("ingest")
+def onto_sources_ingest(
+    source: str = typer.Argument(..., help="A registry id that has an ingester: prov-o, schemaorg."),
+    refresh: bool = typer.Option(False, "--refresh", help="Re-fetch the payload instead of reading the cache."),
+) -> None:
+    """Load one public taxonomy's terms into the vocabulary as adopted words.
+
+    So that `monty onto check <name>` can answer "that is Schema.org's word,
+    not yours" — which a catalogue cannot answer and a reuse check needs. The
+    payload is cached under `.monty/cache/`, so every run after the first is
+    offline; the words carry the source they came from, this repo's own words
+    are never overwritten, and the licence travels with every answer about
+    them. An id with no ingester is refused with the ones that have one.
+    """
+    from montology_ontology import ingest_source
+
+    from ._ui import emit_all
+
+    line = ingest_source(source, refresh=refresh)
+    emit_all(line.splitlines())
+    raise typer.Exit(1 if line.startswith("REFUSED") else 0)
 
 
 @onto_app.command("list")
