@@ -1,12 +1,20 @@
 <p align="center"><img src="docs/banner.png" alt="montology — your codebase's vocabulary, enforced" width="100%"></p>
 
 **Your codebase's vocabulary, enforced — and your agents can't drift it.**
-Words, design tokens, and rulings live in a database; a tree-sitter scan
-checks every named thing in ten languages against them; a pre-write hook
+Words and rulings live in a database; a tree-sitter scan checks every
+named thing your code declares against them — classes, structs, functions,
+types, modules, protocols — across twelve languages; a pre-write hook
 corrects your coding agent before drift ever lands.
 
+montology reads what your code *already declares* — every named thing in
+Python, TypeScript, Go, Rust, Swift, Java, Ruby, Elixir, C and C++ (and,
+where there is a UI, the Tailwind theme and the CSS) — and turns it into
+an ontology with a gate: drift fails CI with the file, the line, and the
+repair. It is a vocabulary layer for **all** of your code, not a styling
+tool; a repo with no UI in it uses every part of this except the last.
+
 ```sh
-# the CLI, works today
+# the CLI — works today, from nothing but `uv`
 uvx --from "git+https://github.com/shinyobjectz/montology#subdirectory=.monty/cli" monty init
 
 # the agent skill (Claude Code, Cursor, and friends)
@@ -16,58 +24,57 @@ npx skills add shinyobjectz/montology
 npm install -g montology
 ```
 
-# montology
-
-**Your design system and your vocabulary, enforced — in any repo, by one
-command.** montology reads what your code *already declares* — the
-Tailwind theme, the CSS, every class and every named thing in ten
-languages — and turns it into an ontology with a gate: drift fails CI
-with the file, the line, and the repair.
-
 ![monty init + lint: theme adopted, drift receipted](docs/demo.gif)
 
-```sh
-uvx --from "git+https://github.com/shinyobjectz/montology#subdirectory=.monty/cli" monty init
-```
-
-*(that one-liner works today, from nothing but `uv`; `npm install -g
-montology` and PyPI are landing)*
+[**Changelog**](CHANGELOG.md) · [Research notes](research/FINDINGS.md) ·
+[Surfaces](docs/SURFACES.md)
 
 ## Sixty seconds to a drift report
 
 ```sh
 cd your-repo
-monty init            # .monty/, agent wiring — and your Tailwind theme
-                      # auto-adopted as design tokens (the theme is the law)
-monty lint
+monty init            # .monty/, agent wiring, the pre-write guard hook
+monty explain         # the X-ray: what this repo is, in one pass
+monty scan --candidates   # the words your code is already asking for
+monty lint            # the gate — every finding carries its repair
+monty config          # what the gate enforces, and how to change it
 monty intake ask …    # no words yet? the agent's `intake` skill asks the team
                       # in a form, round by round, and ends in a glossary
 ```
 
 ```
-warn design: rogue color #121212 ×2 (first at css/app.scss:37)
+FAIL collision: struct 'Harness' at Sources/Runner.swift:14 is the word
+     'harness' — "the thing that runs a scenario end to end". Rename it,
+     or record the exception: monty onto except harness --where … --why …
+FAIL divergence: type 'RowID' is declared as String (db/rows.ts:8) and as
+     Int (api/rows.ts:12) — one noun, two things
+warn retired: 'pointer' was RENAMED to 'cursor' (the word moved when the
+     UI stopped owning it). Name it 'cursor' — the old name stays retired.
+note design: rogue color #121212 ×2 (first at css/app.scss:37)
      — nearest token: ink #1b1b1f (Δ31)
-note design: #ffffff and #fafafa are Δ15 apart (11× / 4×) — one job,
-     two values; pick one and tokenize it
-note design: class 'ghost-panel' used 6× but defined in no stylesheet
-note design: 3 Tailwind arbitrary value(s) — each left the scale
-     (p-[13px], text-[#123456]…)
 ```
 
-No config, no authoring — the theme you already wrote becomes the law,
-and every literal that escaped it gets a receipt. Recurring utility
-compositions surface too: `monty design recipes` mines the class strings
-your markup repeats (`flex flex-wrap gap-2 items-center` ×102 — on
-shadcn/ui's own repo) so they can become *named* things.
+Every finding names the file, the line and the repair. The first three
+are about the CODE — a struct wearing a word that means something else, a
+type declared as two different things, a name a ruling retired — and the
+last is the same contract applied to a hex code, which is a word that
+means one thing. If your repo has no UI you will never see that line.
+
+Where there IS a UI, the same machinery goes further: `monty design
+recipes` mines the class strings your markup repeats (`flex flex-wrap
+gap-2 items-center` ×102 — on shadcn/ui's own repo) so they can become
+*named* things.
 
 ## The firewall: your agent cannot write drift
 
 ![the guard denies the edit before it lands, with the tokens to use](docs/guard.gif)
 
 Everything above is post-hoc. The guard runs **before the write**:
-`monty init` installs a PreToolUse hook (merge-safe, into
-`.claude/settings.json`) that lints every proposed Write/Edit against the
-ontology in milliseconds — a declaration named after a **retired** word
+`monty init` installs a pre-write hook in every harness it wires
+(merge-safe — `.claude/settings.json` and `.cursor/hooks.json`), and the
+plugin ships its own, so a plugin install is guarded without an init. It
+lints every proposed Write/Edit/NotebookEdit against the ontology in
+milliseconds — a declaration named after a **retired** word
 (renames are rulings; always blocks), a collision with an enforced word,
 a rogue hex when tokens exist. Deny is exit 2 with the repair on stderr:
 the harness feeds it straight back to the model, which corrects and
@@ -75,7 +82,8 @@ retries. The agent *physically cannot* introduce a second gray or resurrect
 a renamed concept — it gets the token or the current word handed to it
 mid-edit. The guard **fails open** (malformed payload, no workspace, any
 internal error → allow silently) so it can never break an editor; humans
-in vim never meet it. Config: `[guard] names/design = block | warn | off`.
+in vim never meet it. `monty doctor` says, per harness, whether it is
+actually wired; `monty config guard.names block|warn|off` tunes it.
 
 ## `monty explain` — the one-shot conceptual X-ray
 
@@ -96,7 +104,7 @@ A repo's concepts drift exactly like its colors. montology's vocabulary
 is a **database, not a doc** — one word, one meaning, a one-line test,
 an optional dotted code — rendered into a generated agent skill and
 enforced against every declaration tree-sitter can parse (python,
-ts/tsx, js, go, rust, elixir, ruby, java, c, c++):
+ts/tsx, js, go, rust, swift, elixir, ruby, java, c, c++):
 
 ![candidates → check-first → advisory collisions](docs/words.gif)
 
@@ -168,7 +176,8 @@ Three instruments make a repo's meaning a *tracked quantity*:
   closes the literature's *text-action disconnect*.
 
 The research notes — instruments, first measurements, prior art, open
-protocols — live in [`research/FINDINGS.md`](research/FINDINGS.md).
+protocols — live in [`research/FINDINGS.md`](research/FINDINGS.md), and
+what has changed release to release is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Semantic hearing
 
@@ -217,12 +226,23 @@ drafter available, and the gate never needs a model at all.
 ## For agents
 
 `monty init` wires the repo for Claude Code, Cursor, and Codex
-(merge-safe: sections are appended, JSON keys merged, global config
-never touched). The generated `words` skill carries the whole vocabulary
-— words, tokens, recipes, rulings, doctrine — and the MCP server exposes
-`ontology_check`, `scan_candidates`, `ontology_lint`, `structural_search`
-and friends. Prose is rendered from the database, never authored; a
-stale render fails the build.
+(merge-safe: sections are appended, JSON keys merged, global config never
+touched) — MCP server, the instructions section, and the pre-write guard
+hook in each harness's own dialect. `monty doctor` reports which of those
+actually landed.
+
+Two skills ship: **`montology`** routes the work (new repo → set up,
+empty vocabulary → build one, working repo → the check-first contract),
+and **`intake`** runs the guided walkthrough for a codebase whose words
+were never written down. The generated **`words`** skill carries the whole
+vocabulary — words, tokens, recipes, rulings, doctrine — tiering into
+reference pages rather than truncating when it outgrows its budget.
+
+The MCP server exposes `ontology_check`, `ontology_add`, `ontology_amend`,
+`ontology_rule`, `ontology_similar`, `ontology_words`, `ontology_lint`,
+`scan_surface`, `scan_candidates`, `structural_search`, `repo_explain`,
+`repo_vitals` and `workspace_config`. Prose is rendered from the database,
+never authored; a stale render fails the build.
 
 ## Under the hood
 
@@ -243,4 +263,7 @@ just check                   # the gate (montology lints itself, strictly:
                              # its own toml sets collisions = "enforce")
 ```
 
-The marketing-era codebase lives at the `marketing-era` tag.
+Changes go in [`CHANGELOG.md`](CHANGELOG.md) under `Unreleased`. The
+marketing-era codebase montology grew out of lives at the
+[`marketing-era`](https://github.com/shinyobjectz/montology/tree/marketing-era)
+tag and shares no code with this one.
