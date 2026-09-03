@@ -24,7 +24,7 @@ STAMP = STATIC / "BUILD.json"
 # What the bundle is built FROM. node_modules and the lockfile are deliberately
 # out: a dependency bump that changes no source changes no meaning, and a hash
 # that moves for reasons nobody can see is a hash people learn to ignore.
-SOURCES = ("index.html", "vite.config.js", "svelte.config.js", "package.json")
+SOURCES = ("index.html", "vite.config.js", "package.json")
 SOURCE_DIR = "src"
 
 

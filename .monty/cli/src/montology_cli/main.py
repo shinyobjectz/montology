@@ -1214,6 +1214,16 @@ def canvas_stamp_cmd() -> None:
     typer.echo(stamp())
 
 
+@canvas_app.command("export")
+def canvas_export_cmd(
+    fmt: str = typer.Argument("ttl", help="Format: ttl, xml, or vowl."),
+) -> None:
+    """The vocabulary as standard RDF (Turtle, RDF/XML) or WebVOWL JSON."""
+    from montology_canvas import export
+
+    typer.echo(export(fmt))
+
+
 @canvas_app.command("graph")
 def canvas_graph_cmd(
     no_scan: bool = typer.Option(False, "--no-scan", help="The vocabulary only — skip the tree-sitter sweep."),

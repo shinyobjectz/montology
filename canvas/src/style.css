@@ -1,0 +1,92 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f4ef;
+  --fg: #1a1814;
+  --dim: #6b6560;
+  --bar: #ece8df;
+  --accent: #2f5a45;
+  --error: #8b2e2e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141412;
+    --fg: #eceae4;
+    --dim: #9a9590;
+    --bar: #1e1d1a;
+    --accent: #7cb899;
+    --error: #e88888;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: var(--bar);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dim { color: var(--dim); margin: 0; }
+
+#error {
+  margin: 1rem;
+  color: var(--error);
+}
+
+#graph {
+  width: 100%;
+  height: calc(100vh - 3rem);
+  position: relative;
+}
+
+/* WebVOWL ships its own chrome; hide the bits we do not need in Montology. */
+#graph .logo,
+#graph #logo,
+#graph .version,
+#graph #version,
+#graph .select .IRI,
+#graph #iri-converter-form,
+#graph #file-converter-form,
+#graph #direct-upload,
+#graph #menu-container,
+#graph #exportMenu,
+#graph #filterOption,
+#graph #sidebar,
+#graph #detailsArea {
+  display: none !important;
+}
+
+#graph svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Read-only viewer: hide WebVOWL editor handles (property draggers, delete, add). */
+#graph .editContainer,
+#graph .classNodeDragPath,
+#graph .classDraggerNode,
+#graph .classDraggerNodeHovered,
+#graph .deleteParentElement,
+#graph .addDataPropertyElement {
+  display: none !important;
+  pointer-events: none !important;
+}

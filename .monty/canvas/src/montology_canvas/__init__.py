@@ -6,7 +6,8 @@ typed it or dragged it.
 """
 
 from .bundle import lint, stamp
+from .export import export, rdfxml, turtle, vowl
 from .graph import graph
 from .serve import serve
 
-__all__ = ["graph", "lint", "serve", "stamp"]
+__all__ = ["export", "graph", "lint", "rdfxml", "serve", "stamp", "turtle", "vowl"]

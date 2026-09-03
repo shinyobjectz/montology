@@ -1,13 +1,25 @@
 # montology-canvas
 
-The ontology as a graph — the vocabulary AND the code it governs — served on
-localhost for building, writing and reviewing.
+The vocabulary as a **standard ontology graph** — [WebVOWL](https://github.com/VisualDataWeb/WebVOWL)
+renders the exported VOWL JSON. Montology stays the source of truth in SQLite; the
+canvas is a thin shell around the real renderer.
 
-`graph()` is an instrument: deterministic, model-free, assembled from the
-database and the scan. What cannot be measured is absent, never invented.
+    monty canvas export          # Turtle (default)
+    monty canvas export xml      # RDF/XML
+    monty canvas export vowl     # WebVOWL JSON (what the viewer loads)
+    monty canvas                 # serve the graph, open the browser
 
-    monty canvas graph          # the graph as JSON
-    monty canvas                # serve it, open the browser
+The page fetches **`/api/ontology.vowl.json`**. Native **`/api/graph`** remains for
+tools and tests; the viewer does not use it.
 
-Nothing leaves localhost. The canvas is a FACE on the engine: every write goes
-through the same functions the CLI calls, so every law applies identically.
+Nothing leaves localhost.
+
+## Building the bundle
+
+From repo root (requires Node):
+
+    cd canvas && npm install && npm run build
+    monty canvas stamp
+
+The output lands in `.monty/canvas/src/montology_canvas/static/` (including
+`vendor/webvowl.js`) and is committed so `uvx monty canvas` works without Node.

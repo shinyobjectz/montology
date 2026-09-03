@@ -155,7 +155,7 @@ def test_a_bundle_built_from_older_sources_is_stale(tmp_path, monkeypatch):
     canvas = tmp_path / "canvas"
     (canvas / "src").mkdir(parents=True)
     (canvas / "package.json").write_text('{"name":"probe"}')
-    (canvas / "src" / "App.svelte").write_text("<p>one</p>")
+    (canvas / "src" / "main.js").write_text("console.log('one')")
     monkeypatch.setenv("MONTOLOGY_WORKSPACE", str(tmp_path))
     (tmp_path / ".monty").mkdir()
 
@@ -183,7 +183,7 @@ def test_the_fingerprint_ignores_what_carries_no_meaning(tmp_path, monkeypatch):
     canvas = tmp_path / "canvas"
     (canvas / "src").mkdir(parents=True)
     (canvas / "package.json").write_text('{"name":"probe"}')
-    (canvas / "src" / "App.svelte").write_text("<p>one</p>")
+    (canvas / "src" / "main.js").write_text("console.log('one')")
     before = bundle.source_fingerprint(canvas)
 
     (canvas / "package-lock.json").write_text('{"lockfileVersion": 3}')

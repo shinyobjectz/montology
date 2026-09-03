@@ -1,9 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>montology — the lexicon</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Montology</title>
+    <meta name="description" content="Montology — the vocabulary as a standard ontology graph." />
+    <link rel="stylesheet" href="./vendor/webvowl.css" />
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+  <body>
+    <header class="bar">
+      <h1>Montology</h1>
+      <p id="subtitle" class="dim">reading the ontology…</p>
+    </header>
+    <main id="graph" aria-label="ontology graph"></main>
+    <p id="error" class="error" hidden></p>
+    <script src="./vendor/webvowl.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>

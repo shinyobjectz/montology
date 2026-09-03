@@ -43,6 +43,30 @@ def _handler(state: dict):
 
         def do_GET(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
+            if path in ("/api/ontology.ttl", "/api/ontology.ttl/"):
+                from .export import turtle
+
+                try:
+                    self._send(200, turtle().encode(), "text/turtle; charset=utf-8")
+                except Exception as e:  # noqa: BLE001
+                    self._json(500, {"error": f"{type(e).__name__}: {e}"})
+                return
+            if path in ("/api/ontology.vowl.json", "/api/ontology.vowl.json/"):
+                from .export import vowl
+
+                try:
+                    self._json(200, vowl())
+                except Exception as e:  # noqa: BLE001
+                    self._json(500, {"error": f"{type(e).__name__}: {e}"})
+                return
+            if path in ("/api/ontology.xml", "/api/ontology.xml/"):
+                from .export import rdfxml
+
+                try:
+                    self._send(200, rdfxml().encode(), "application/rdf+xml; charset=utf-8")
+                except Exception as e:  # noqa: BLE001
+                    self._json(500, {"error": f"{type(e).__name__}: {e}"})
+                return
             if path in ("/api/graph", "/api/graph/"):
                 from .graph import graph
                 from montology_ontology.intents import catalogue
