@@ -144,3 +144,17 @@ def test_drift_measures_history(tmp_path):
     assert rows[0]["colors"] == 0 and rows[1]["colors"] == 2
     out = "\n".join(render_drift(rows))
     assert "drift:" in out and "lexicon 1" in out
+
+
+def test_swift_declarations(tmp_path):
+    from montology_scan import declarations
+
+    (tmp_path / "a.swift").write_text(
+        "struct Ledger {}\nenum Kind { case a }\nprotocol Holder {}\n"
+        "typealias Id = String\nfunc holdings() {}\n"
+    )
+    got = declarations(tmp_path)
+    assert "swift" not in got["skipped_langs"]
+    names = {(d["name"], d["kind"]) for d in got["decls"]}
+    assert {("Ledger", "class"), ("Kind", "class"), ("Holder", "protocol"),
+            ("Id", "type"), ("holdings", "function")} <= names

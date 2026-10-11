@@ -86,6 +86,12 @@ DECL_QUERIES: dict[str, str] = {
         (enum_declaration name: (identifier) @name.enum)
         (method_declaration name: (identifier) @name.method)
     """,
+    "swift": """
+        (class_declaration name: (type_identifier) @name.class)
+        (protocol_declaration name: (type_identifier) @name.protocol)
+        (function_declaration name: (simple_identifier) @name.function)
+        (typealias_declaration name: (type_identifier) @name.type)
+    """,
     "c": """
         (function_definition declarator: (function_declarator
           declarator: (identifier) @name.function))
